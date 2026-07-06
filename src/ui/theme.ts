@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { t, type StringKey } from '../i18n/i18n';
+import { sfx } from '../audio/sfx';
 import type { ArmorType, AttackType, Role } from '../model/Types';
 
 export const COLORS = {
@@ -106,6 +107,7 @@ export class UIButton {
       if (!this.enabled) return;
       this.bg.setFillStyle(0x4a5a80);
       scene.time.delayedCall(90, () => this.bg.setFillStyle(this.enabled ? this.baseColor : 0x171c29));
+      sfx.play('tap');
       onClick();
     });
   }

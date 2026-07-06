@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import type { Difficulty, GameMode } from '../model/Types';
 import { getLang, setLang, t, type StringKey } from '../i18n/i18n';
+import { sfx } from '../audio/sfx';
 import { COLORS, txt, UIButton } from '../ui/theme';
 import { L } from '../ui/layout';
 
@@ -21,6 +22,11 @@ export class MainMenuScene extends Phaser.Scene {
     new UIButton(this, L.width - 78, 30, 128, 32, t('menu.language'), 12, () => {
       setLang(getLang() === 'de' ? 'en' : 'de');
       this.scene.restart();
+    });
+    const soundState = () => t(sfx.isMuted() ? 'common.off' : 'common.on');
+    const soundBtn = new UIButton(this, 78, 30, 128, 32, t('menu.sound', { state: soundState() }), 12, () => {
+      sfx.toggleMuted();
+      soundBtn.setText(t('menu.sound', { state: soundState() }));
     });
 
     txt(this, L.width / 2, 300, t('menu.gameMode'), 16).setOrigin(0.5);

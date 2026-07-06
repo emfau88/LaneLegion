@@ -55,6 +55,7 @@ const STRINGS = {
     en: 'Fully offline • no accounts • no network'
   },
   'menu.language': { de: 'Sprache: DE', en: 'Language: EN' },
+  'menu.sound': { de: 'Sound: {state}', en: 'Sound: {state}' },
 
   'diff.easy': { de: 'Leicht', en: 'Easy' },
   'diff.normal': { de: 'Normal', en: 'Normal' },

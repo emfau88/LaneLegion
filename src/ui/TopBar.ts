@@ -5,6 +5,7 @@ import { kingOf } from '../systems/KingSystem';
 import { waveByNumber } from '../data/waves';
 import { enemyTeamOf, playerFighterValue } from '../core/util';
 import { t } from '../i18n/i18n';
+import { sfx } from '../audio/sfx';
 import { L } from './layout';
 import { COLORS, panel, txt, UIButton } from './theme';
 
@@ -35,6 +36,10 @@ export class TopBar {
     this.waveText = txt(scene, 10, 8, '', 14);
     this.valueText = txt(scene, 262, 10, '', 12);
     this.readyBtn = new UIButton(scene, 480, 17, 100, 26, t('topbar.ready'), 14, cb.onReady, 0x2f6b3a);
+    const muteBtn = new UIButton(scene, 404, 17, 40, 26, sfx.isMuted() ? '✕' : '♪', 13, () => {
+      sfx.toggleMuted();
+      muteBtn.setText(sfx.isMuted() ? '✕' : '♪');
+    });
 
     this.goldText = txt(scene, 10, 38, '', 14, COLORS.gold);
     this.mythText = txt(scene, 108, 38, '', 14, COLORS.mythium);

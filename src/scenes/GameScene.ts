@@ -15,6 +15,7 @@ import { offenseMultVsWave } from '../core/matchup';
 import type { ArmorType } from '../model/Types';
 import { t } from '../i18n/i18n';
 import { factionName, fighterDesc, fighterTierName, playerName, unitDisplayName } from '../i18n/names';
+import { sfx } from '../audio/sfx';
 import { TopBar } from '../ui/TopBar';
 import { LaneStatusCards } from '../ui/LaneStatusCards';
 import { BottomShop } from '../ui/BottomShop';
@@ -92,7 +93,9 @@ export class GameScene extends Phaser.Scene {
 
     this.topBar = new TopBar(this, {
       onReady: () => this.sim.ready(),
-      onBuyWorker: () => this.sim.buyWorker()
+      onBuyWorker: () => {
+        if (this.sim.buyWorker()) sfx.play('worker');
+      }
     });
     this.statusCards = new LaneStatusCards(this, this.sim.state, (pid) => this.showPeek(pid));
     this.shop = new BottomShop(this, this.sim.state, {
@@ -101,9 +104,13 @@ export class GameScene extends Phaser.Scene {
         this.hideActionMenu();
       },
       onShowFighterInfo: (defId) => this.showFighterInfo(defId),
-      onSendMerc: (mercId) => this.sim.sendMercenary(mercId),
+      onSendMerc: (mercId) => {
+        if (this.sim.sendMercenary(mercId)) sfx.play('send');
+      },
       onToggleAutoSend: () => this.sim.toggleAutoSend(),
-      onKingUpgrade: (t) => this.sim.buyKingUpgrade(t)
+      onKingUpgrade: (type) => {
+        if (this.sim.buyKingUpgrade(type)) sfx.play('upgrade');
+      }
     });
 
     this.createActionMenu();
@@ -169,7 +176,7 @@ export class GameScene extends Phaser.Scene {
       if (!this.placementSelection || this.sim.state.phase !== 'build') return;
       const cell = screenToCell(pointer.worldX, pointer.worldY);
       if (!cell) return;
-      this.sim.placeFighter(this.placementSelection, cell.col, cell.row);
+      if (this.sim.placeFighter(this.placementSelection, cell.col, cell.row)) sfx.play('place');
     });
   }
 
@@ -310,11 +317,11 @@ export class GameScene extends Phaser.Scene {
     this.actionTitle = txt(this, 0, -38, '', 12).setOrigin(0.5).setFontStyle('bold');
     const bg = this.add.rectangle(0, 0, 190, 104, 0x1a2030, 0.97).setStrokeStyle(1, COLORS.panelStroke);
     this.upgradeBtn = new UIButton(this, 0, -12, 168, 30, '', 12, () => {
-      if (this.actionUnitId !== null) this.sim.upgradeFighter(this.actionUnitId);
+      if (this.actionUnitId !== null && this.sim.upgradeFighter(this.actionUnitId)) sfx.play('upgrade');
       this.hideActionMenu();
     }, 0x2f6b3a);
     this.sellBtn = new UIButton(this, 0, 26, 168, 30, '', 12, () => {
-      if (this.actionUnitId !== null) this.sim.sellFighter(this.actionUnitId);
+      if (this.actionUnitId !== null && this.sim.sellFighter(this.actionUnitId)) sfx.play('sell');
       this.hideActionMenu();
     }, 0x6b2f35);
     this.actionMenu = this.add
@@ -609,6 +616,7 @@ export class GameScene extends Phaser.Scene {
       switch (ev.type) {
         case 'attack': {
           if (!this.zoneVisible(ev.zoneId)) break;
+          sfx.play('hit');
           const to = this.screenOf(ev.zoneId, ev.toPos);
           const playHit = () => this.playEffectSprite(hitEffectKey(ev.attackType), to.x, to.y, 34);
           if (ev.ranged) {
@@ -635,6 +643,7 @@ export class GameScene extends Phaser.Scene {
         }
         case 'death': {
           if (!this.zoneVisible(ev.zoneId)) break;
+          sfx.play('death');
           const sp = this.screenOf(ev.zoneId, ev.pos);
           const puff = this.add
             .circle(sp.x, sp.y, 9, ev.kind === 'creep' ? COLORS.hostile : 0xbfcbe8, 0.8)
@@ -659,6 +668,7 @@ export class GameScene extends Phaser.Scene {
         }
         case 'leak': {
           if (ev.laneId === this.humanLaneId()) {
+            sfx.play('leak');
             const flash = this.add
               .rectangle(L.lane.left, L.lane.top + (CFG.grid.rows - 1) * L.lane.cellH, L.lane.w, L.lane.cellH, 0xef5f6a, 0.45)
               .setOrigin(0)
@@ -670,6 +680,7 @@ export class GameScene extends Phaser.Scene {
         }
         case 'kingSpell': {
           if (!this.zoneVisible(ev.zoneId)) break;
+          sfx.play('kingSpell');
           const sp = this.screenOf(ev.zoneId, ev.pos);
           const ring = this.add.circle(sp.x, sp.y, 12, 0xf5c542, 0.35).setDepth(DEPTH_FX);
           this.tweens.add({
@@ -683,6 +694,7 @@ export class GameScene extends Phaser.Scene {
         }
         case 'heal': {
           if (!this.zoneVisible(ev.zoneId)) break;
+          sfx.play('heal');
           const sp = this.screenOf(ev.zoneId, ev.pos);
           this.playEffectSprite(SUPPORT_EFFECT_SPRITES.heal.key, sp.x, sp.y, 38, 360);
           this.floatText(sp.x, sp.y - 14, '+', COLORS.ok);
@@ -710,9 +722,13 @@ export class GameScene extends Phaser.Scene {
         this.hideActionMenu();
         this.shop.setMode('battle');
         this.hideReport();
+        sfx.play('waveStart');
       } else if (state.phase === 'build') {
         this.shop.setMode('build');
-        if (this.lastPhase === 'battle') this.showWaveReport();
+        if (this.lastPhase === 'battle') {
+          this.showWaveReport();
+          sfx.play('buildStart');
+        }
       }
       this.lastPhase = state.phase;
     }
@@ -729,6 +745,7 @@ export class GameScene extends Phaser.Scene {
     if (state.phase === 'ended' && !this.endedHandled) {
       this.endedHandled = true;
       const win = state.winnerTeamId === this.humanTeamId();
+      sfx.play(win ? 'victory' : 'defeat');
       this.time.delayedCall(1100, () => {
         this.scene.start('Result', {
           win,
