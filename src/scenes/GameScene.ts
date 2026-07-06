@@ -10,13 +10,15 @@ import { arenaZoneId, type GameSetup } from '../model/GameState';
 import type { CombatUnit } from '../model/CombatUnit';
 import type { AttackType, GameEvent } from '../model/Types';
 import { isCellFree } from '../systems/PlacementSystem';
+import { DAMAGE_MATRIX, damageMultiplier } from '../data/damageMatrix';
+import type { ArmorType } from '../model/Types';
 import { t } from '../i18n/i18n';
 import { factionName, fighterDesc, fighterTierName, playerName, unitDisplayName } from '../i18n/names';
 import { TopBar } from '../ui/TopBar';
 import { LaneStatusCards } from '../ui/LaneStatusCards';
 import { BottomShop } from '../ui/BottomShop';
 import { L, arenaToScreen, laneToScreen, screenToCell } from '../ui/layout';
-import { ARM_LABEL, ATK_LABEL, COLORS, ROLE_LETTER, roleLabel, txt, UIButton } from '../ui/theme';
+import { COLORS, ROLE_LETTER, armLabel, atkLabel, roleLabel, txt, UIButton } from '../ui/theme';
 
 interface UnitView {
   root: Phaser.GameObjects.Container;
@@ -378,13 +380,38 @@ export class GameScene extends Phaser.Scene {
       .setVisible(false);
   }
 
+  /** Matchup lines for the fighter's attack and armor type, generated from the damage matrix. */
+  private matchupLines(def: ReturnType<typeof fighterById>): string[] {
+    const armorTypes = Object.keys(DAMAGE_MATRIX[def.attackType]) as ArmorType[];
+    const attackTypes = Object.keys(DAMAGE_MATRIX) as AttackType[];
+
+    const strong = armorTypes.filter((a) => damageMultiplier(def.attackType, a) > 1).map(armLabel);
+    const weak = armorTypes.filter((a) => damageMultiplier(def.attackType, a) < 1).map(armLabel);
+    const atkParts: string[] = [];
+    if (strong.length > 0) atkParts.push(t('matchup.strongVs', { list: strong.join(', ') }));
+    if (weak.length > 0) atkParts.push(t('matchup.weakVs', { list: weak.join(', ') }));
+    if (atkParts.length === 0) atkParts.push(t('matchup.neutral'));
+
+    const vulnerable = attackTypes.filter((a) => damageMultiplier(a, def.armorType) > 1).map(atkLabel);
+    const resists = attackTypes.filter((a) => damageMultiplier(a, def.armorType) < 1).map(atkLabel);
+    const armParts: string[] = [];
+    if (vulnerable.length > 0) armParts.push(t('matchup.takesMore', { list: vulnerable.join(', ') }));
+    if (resists.length > 0) armParts.push(t('matchup.takesLess', { list: resists.join(', ') }));
+    if (armParts.length === 0) armParts.push(t('matchup.neutral'));
+
+    return [
+      `${atkLabel(def.attackType)}: ${atkParts.join(' · ')}`,
+      `${armLabel(def.armorType)}: ${armParts.join(' · ')}`
+    ];
+  }
+
   private showFighterInfo(defId: string): void {
     const def = fighterById(defId);
     const [b, up] = def.tiers;
     this.infoTitle.setText(`${fighterTierName(def, 0)}  (${roleLabel(def.role)})`);
     this.infoBody.setText(
       [
-        t('popup.attackArmor', { atk: ATK_LABEL[def.attackType], arm: ARM_LABEL[def.armorType] }),
+        t('popup.attackArmor', { atk: atkLabel(def.attackType), arm: armLabel(def.armorType) }),
         `${fighterDesc(def)}`,
         '',
         t('popup.base', { cost: b.cost }),
@@ -393,7 +420,7 @@ export class GameScene extends Phaser.Scene {
         t('popup.upgrade', { name: fighterTierName(def, 1), cost: up.cost }),
         `  ${t('popup.statLine', { hp: up.hp, dmg: up.damage, as: up.attackSpeed, range: up.range })}`,
         '',
-        'PRC>LGT  IMP>ARM  MAG>MAS',
+        ...this.matchupLines(def),
         '',
         t('common.tapToClose')
       ].join('\n')

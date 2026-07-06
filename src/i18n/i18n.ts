@@ -155,6 +155,14 @@ const STRINGS = {
   'arm.arcane': { de: 'Arkan', en: 'Arcane' },
   'arm.massive': { de: 'Massiv', en: 'Massive' },
 
+  // ---------- damage matchups ----------
+  'matchup.strongVs': { de: 'stark gegen {list}', en: 'strong vs {list}' },
+  'matchup.weakVs': { de: 'schwach gegen {list}', en: 'weak vs {list}' },
+  'matchup.takesMore': { de: 'anfällig für {list}', en: 'takes extra from {list}' },
+  'matchup.takesLess': { de: 'widersteht {list}', en: 'resists {list}' },
+  'matchup.neutral': { de: 'neutral gegen alles', en: 'neutral vs everything' },
+  'info.legendPrefix': { de: 'Stark:', en: 'Strong:' },
+
   // ---------- lane status ----------
   'status.clear': { de: 'Frei', en: 'Clear' },
   'status.fighting': { de: 'Kämpft', en: 'Fighting' },

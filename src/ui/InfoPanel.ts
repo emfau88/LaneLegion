@@ -1,28 +1,83 @@
 import Phaser from 'phaser';
 import { waveByNumber } from '../data/waves';
+import { DAMAGE_MATRIX } from '../data/damageMatrix';
 import type { GameState } from '../model/GameState';
+import type { ArmorType, AttackType } from '../model/Types';
 import { playerFighterValue } from '../core/util';
-import { t } from '../i18n/i18n';
+import { getLang, t } from '../i18n/i18n';
 import { creepDefId, creepName, waveHint, waveName, waveWarning } from '../i18n/names';
-import { ARM_LABEL, ATK_LABEL, COLORS, txt } from './theme';
+import { ARM_STYLE, ATK_STYLE, COLORS, armLabel, atkLabel, txt } from './theme';
 
 /** Info tab: what the next wave brings and whether your defense value keeps up. */
 export class InfoPanel {
   readonly container: Phaser.GameObjects.Container;
+  private scene: Phaser.Scene;
   private title: Phaser.GameObjects.Text;
   private warning: Phaser.GameObjects.Text;
-  private comp: Phaser.GameObjects.Text;
+  private compRows: Phaser.GameObjects.Container;
+  private compKey = '';
   private value: Phaser.GameObjects.Text;
   private hint: Phaser.GameObjects.Text;
 
   constructor(scene: Phaser.Scene, x: number, y: number) {
+    this.scene = scene;
     this.container = scene.add.container(x, y);
     this.title = txt(scene, 8, 0, '', 14).setFontStyle('bold');
-    this.warning = txt(scene, 8, 24, '', 12, COLORS.danger);
-    this.comp = txt(scene, 8, 46, '', 11, '#b8c4de');
-    this.value = txt(scene, 8, 90, '', 12);
-    this.hint = txt(scene, 8, 114, '', 11, COLORS.textDim, { wordWrap: { width: 510 } });
-    this.container.add([this.title, this.warning, this.comp, this.value, this.hint]);
+    this.warning = txt(scene, 8, 22, '', 12, COLORS.danger);
+    this.compRows = scene.add.container(8, 42);
+    this.value = txt(scene, 8, 96, '', 12);
+    this.hint = txt(scene, 8, 118, '', 11, COLORS.textDim, { wordWrap: { width: 510 } });
+    const legend = txt(scene, 8, 152, this.legendText(), 9, COLORS.textDim).setAlpha(0.8);
+    this.container.add([this.title, this.warning, this.compRows, this.value, this.hint, legend]);
+  }
+
+  /** "Stark: ➤ Stich → ○ Leicht · ..." — generated from the damage matrix. */
+  private legendText(): string {
+    const parts: string[] = [];
+    for (const atk of Object.keys(DAMAGE_MATRIX) as AttackType[]) {
+      const row = DAMAGE_MATRIX[atk];
+      const strong = (Object.keys(row) as ArmorType[]).filter((arm) => row[arm] > 1);
+      if (strong.length > 0) {
+        parts.push(`${atkLabel(atk)} → ${strong.map((a) => armLabel(a)).join(', ')}`);
+      }
+    }
+    return `${t('info.legendPrefix')} ${parts.join('  ·  ')}`;
+  }
+
+  private rebuildComp(waveNumber: number): void {
+    const key = `${waveNumber}|${getLang()}`;
+    if (key === this.compKey) return;
+    this.compKey = key;
+    this.compRows.removeAll(true);
+    const wave = waveByNumber(waveNumber);
+    wave.groups.forEach((g, i) => {
+      const y = i * 17;
+      const main = txt(
+        this.scene,
+        0,
+        y,
+        `${g.count}× ${creepName(creepDefId(g.stats.name), g.stats.name)}  (${g.stats.hp} HP)`,
+        10,
+        '#b8c4de'
+      );
+      const atkSeg = txt(
+        this.scene,
+        main.width + 10,
+        y,
+        atkLabel(g.stats.attackType),
+        10,
+        ATK_STYLE[g.stats.attackType].color
+      );
+      const armSeg = txt(
+        this.scene,
+        main.width + 10 + atkSeg.width + 8,
+        y,
+        armLabel(g.stats.armorType),
+        10,
+        ARM_STYLE[g.stats.armorType].color
+      );
+      this.compRows.add([main, atkSeg, armSeg]);
+    });
   }
 
   update(state: GameState): void {
@@ -31,11 +86,12 @@ export class InfoPanel {
     if (state.phase === 'battle' && state.waveNumber >= state.maxWaves) {
       this.title.setText(t('info.finalWave'));
       this.warning.setText('');
-      this.comp.setText('');
+      this.compRows.setVisible(false);
       this.value.setText('');
       this.hint.setText(t('info.finalHint'));
       return;
     }
+    this.compRows.setVisible(true);
     const wave = waveByNumber(upcoming);
     this.title.setText(
       t(state.phase === 'build' ? 'info.incoming' : 'info.next', {
@@ -44,14 +100,7 @@ export class InfoPanel {
       })
     );
     this.warning.setText(`⚠ ${waveWarning(wave)}`);
-    this.comp.setText(
-      wave.groups
-        .map(
-          (g) =>
-            `${g.count}× ${creepName(creepDefId(g.stats.name), g.stats.name)}  (${ATK_LABEL[g.stats.attackType]} / ${ARM_LABEL[g.stats.armorType]}, ${g.stats.hp} HP)`
-        )
-        .join('\n')
-    );
+    this.rebuildComp(upcoming);
     const own = playerFighterValue(state, state.humanPlayerId);
     const ok = own >= wave.recommendedFighterValue;
     this.value.setText(t('info.recValue', { rec: wave.recommendedFighterValue, own: Math.floor(own) }));

@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { t, type StringKey } from '../i18n/i18n';
-import type { Role } from '../model/Types';
+import type { ArmorType, AttackType, Role } from '../model/Types';
 
 export const COLORS = {
   bg: 0x0c0f1a,
@@ -29,18 +29,29 @@ export const COLORS = {
 
 export const FONT = 'Verdana, Geneva, sans-serif';
 
-export const ATK_LABEL: Record<string, string> = {
-  pierce: 'PRC',
-  impact: 'IMP',
-  magic: 'MAG',
-  pure: 'PURE'
+/** Icon + fixed color per attack/armor type — the visual language of the counter system. */
+export interface TypeStyle {
+  glyph: string;
+  color: string;
+}
+
+export const ATK_STYLE: Record<AttackType, TypeStyle> = {
+  pierce: { glyph: '➤', color: '#e8c34a' },
+  impact: { glyph: '⚒', color: '#e0824f' },
+  magic: { glyph: '✦', color: '#b48ae0' },
+  pure: { glyph: '✸', color: '#f0f2f8' }
 };
-export const ARM_LABEL: Record<string, string> = {
-  light: 'LGT',
-  armored: 'ARM',
-  arcane: 'ARC',
-  massive: 'MAS'
+
+export const ARM_STYLE: Record<ArmorType, TypeStyle> = {
+  light: { glyph: '○', color: '#6fd4c3' },
+  armored: { glyph: '▣', color: '#9db3d6' },
+  arcane: { glyph: '✧', color: '#c39ae8' },
+  massive: { glyph: '⬢', color: '#e0705f' }
 };
+
+/** "➤ Stich" / "➤ Pierce" — glyph plus localized type name. */
+export const atkLabel = (a: AttackType): string => `${ATK_STYLE[a].glyph} ${t(`atk.${a}` as StringKey)}`;
+export const armLabel = (a: ArmorType): string => `${ARM_STYLE[a].glyph} ${t(`arm.${a}` as StringKey)}`;
 export const roleLabel = (role: Role): string => t(`role.${role}` as StringKey);
 export const ROLE_LETTER: Record<string, string> = {
   tank: 'T',

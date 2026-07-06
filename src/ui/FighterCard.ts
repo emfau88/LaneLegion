@@ -4,7 +4,7 @@ import type { FighterDefinition } from '../model/UnitDefinition';
 import type { GameState } from '../model/GameState';
 import { t } from '../i18n/i18n';
 import { fighterTierName } from '../i18n/names';
-import { ARM_LABEL, ATK_LABEL, COLORS, roleLabel, txt } from './theme';
+import { ARM_STYLE, ATK_STYLE, COLORS, armLabel, atkLabel, roleLabel, txt } from './theme';
 
 export const CARD_W = 172;
 export const CARD_H = 88;
@@ -36,13 +36,14 @@ export class FighterCard {
     const name = txt(scene, 8, 6, fighterTierName(def, 0), 12).setFontStyle('bold');
     const cost = txt(scene, CARD_W - 8, 6, `${tier.cost}g`, 12, COLORS.gold).setOrigin(1, 0);
     const role = txt(scene, 8, 26, roleLabel(def.role), 11, COLORS.textDim);
-    const types = txt(
+    const atkSeg = txt(scene, 8, 44, atkLabel(def.attackType), 10, ATK_STYLE[def.attackType].color);
+    const armSeg = txt(
       scene,
-      8,
+      8 + atkSeg.width + 10,
       44,
-      `${ATK_LABEL[def.attackType]} → / ${ARM_LABEL[def.armorType]} ▣`,
-      11,
-      '#b8c4de'
+      armLabel(def.armorType),
+      10,
+      ARM_STYLE[def.armorType].color
     );
     const stats = txt(scene, 8, 62, t('card.stats', { hp: tier.hp, dmg: tier.damage }), 11, COLORS.textDim);
     const spriteKey = fighterSpriteKey(def.id);
@@ -70,7 +71,7 @@ export class FighterCard {
     this.container = scene.add.container(
       x,
       y,
-      [this.bg, name, cost, role, types, stats, ...(icon ? [icon] : []), infoBg, infoTxt]
+      [this.bg, name, cost, role, atkSeg, armSeg, stats, ...(icon ? [icon] : []), infoBg, infoTxt]
     );
   }
 
