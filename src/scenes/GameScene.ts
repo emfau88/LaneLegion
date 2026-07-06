@@ -11,6 +11,7 @@ import type { CombatUnit } from '../model/CombatUnit';
 import type { AttackType, GameEvent } from '../model/Types';
 import { isCellFree } from '../systems/PlacementSystem';
 import { DAMAGE_MATRIX, damageMultiplier } from '../data/damageMatrix';
+import { offenseMultVsWave } from '../core/matchup';
 import type { ArmorType } from '../model/Types';
 import { t } from '../i18n/i18n';
 import { factionName, fighterDesc, fighterTierName, playerName, unitDisplayName } from '../i18n/names';
@@ -408,6 +409,16 @@ export class GameScene extends Phaser.Scene {
   private showFighterInfo(defId: string): void {
     const def = fighterById(defId);
     const [b, up] = def.tiers;
+    const state = this.sim.state;
+    const vsWaveLine =
+      state.phase === 'build'
+        ? [
+            t('popup.vsWave', {
+              n: state.waveNumber,
+              mult: offenseMultVsWave(def.attackType, state.waveNumber).toFixed(2).replace(/\.?0+$/, '')
+            })
+          ]
+        : [];
     this.infoTitle.setText(`${fighterTierName(def, 0)}  (${roleLabel(def.role)})`);
     this.infoBody.setText(
       [
@@ -421,6 +432,7 @@ export class GameScene extends Phaser.Scene {
         `  ${t('popup.statLine', { hp: up.hp, dmg: up.damage, as: up.attackSpeed, range: up.range })}`,
         '',
         ...this.matchupLines(def),
+        ...vsWaveLine,
         '',
         t('common.tapToClose')
       ].join('\n')

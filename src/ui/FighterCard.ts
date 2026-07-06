@@ -4,6 +4,7 @@ import type { FighterDefinition } from '../model/UnitDefinition';
 import type { GameState } from '../model/GameState';
 import { t } from '../i18n/i18n';
 import { fighterTierName } from '../i18n/names';
+import { defenseMultVsWave, offenseMultVsWave } from '../core/matchup';
 import { ARM_STYLE, ATK_STYLE, COLORS, armLabel, atkLabel, roleLabel, txt } from './theme';
 
 export const CARD_W = 172;
@@ -14,6 +15,10 @@ export class FighterCard {
   readonly container: Phaser.GameObjects.Container;
   private readonly bg: Phaser.GameObjects.Rectangle;
   private readonly def: FighterDefinition;
+  /** Counter badges vs the upcoming wave (offense verdict + defense warning). */
+  private readonly offBadge: Phaser.GameObjects.Text;
+  private readonly defBadge: Phaser.GameObjects.Text;
+  private badgeWave = 0;
 
   constructor(
     scene: Phaser.Scene,
@@ -68,11 +73,49 @@ export class FighterCard {
     );
     const infoTxt = txt(scene, CARD_W - 18, CARD_H - 16, 'i', 12, '#8fb7f0').setOrigin(0.5);
 
+    this.defBadge = txt(scene, CARD_W - 52, 27, '⚠', 10, '#e0a04f').setOrigin(1, 0).setVisible(false);
+    this.offBadge = txt(scene, CARD_W - 52, 27, '', 10).setOrigin(1, 0).setVisible(false);
+
     this.container = scene.add.container(
       x,
       y,
-      [this.bg, name, cost, role, atkSeg, armSeg, stats, ...(icon ? [icon] : []), infoBg, infoTxt]
+      [this.bg, name, cost, role, atkSeg, armSeg, stats, this.offBadge, this.defBadge, ...(icon ? [icon] : []), infoBg, infoTxt]
     );
+  }
+
+  /** Refresh the "strong/weak vs upcoming wave" badges (build phase only). */
+  private updateBadges(state: GameState): void {
+    if (state.phase !== 'build') {
+      if (this.offBadge.visible || this.defBadge.visible) {
+        this.offBadge.setVisible(false);
+        this.defBadge.setVisible(false);
+      }
+      this.badgeWave = 0;
+      return;
+    }
+    if (this.badgeWave === state.waveNumber) return;
+    this.badgeWave = state.waveNumber;
+
+    const off = offenseMultVsWave(this.def.attackType, state.waveNumber);
+    const def = defenseMultVsWave(this.def.armorType, state.waveNumber);
+
+    if (off >= 1.2) {
+      this.offBadge.setText(t('card.strong')).setColor(COLORS.ok).setVisible(true);
+    } else if (off <= 0.8) {
+      this.offBadge.setText(t('card.weak')).setColor(COLORS.danger).setVisible(true);
+    } else {
+      this.offBadge.setText('').setVisible(false);
+    }
+
+    this.defBadge.setVisible(def >= 1.2);
+    // Lay out right-aligned: ⚠ sits at the fixed right edge, verdict text to its left.
+    const right = CARD_W - 52;
+    if (this.defBadge.visible) {
+      this.defBadge.setX(right);
+      this.offBadge.setX(right - this.defBadge.width - 4);
+    } else {
+      this.offBadge.setX(right);
+    }
   }
 
   update(state: GameState, selectedDefId: string | null): void {
@@ -80,5 +123,6 @@ export class FighterCard {
     const affordable = human.gold >= this.def.tiers[0].cost && state.phase === 'build';
     this.container.setAlpha(affordable ? 1 : 0.45);
     this.bg.setFillStyle(selectedDefId === this.def.id ? 0x3d5a45 : COLORS.panelLight);
+    this.updateBadges(state);
   }
 }

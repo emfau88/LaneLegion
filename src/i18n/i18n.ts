@@ -130,6 +130,12 @@ const STRINGS = {
 
   // ---------- fighter card / info popup ----------
   'card.stats': { de: '{hp} HP  {dmg} Schaden', en: '{hp} HP  {dmg} DMG' },
+  'card.strong': { de: '▲ stark', en: '▲ strong' },
+  'card.weak': { de: '▼ schwach', en: '▼ weak' },
+  'popup.vsWave': {
+    de: 'Gegen Welle {n}: {mult}× Schaden',
+    en: 'Vs wave {n}: {mult}× damage'
+  },
   'popup.attackArmor': { de: 'Angriff: {atk}   Rüstung: {arm}', en: 'Attack: {atk}   Armor: {arm}' },
   'popup.base': { de: 'Basis — {cost}g', en: 'Base — {cost}g' },
   'popup.upgrade': { de: 'Ausbau: {name} — +{cost}g', en: 'Upgrade: {name} — +{cost}g' },
