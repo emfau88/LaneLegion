@@ -1,0 +1,59 @@
+import type { CombatUnit } from './CombatUnit';
+import type { LaneState } from './LaneState';
+import type { PlayerState } from './PlayerState';
+import type { TeamState } from './TeamState';
+import type { CreepStats } from './UnitDefinition';
+import type { Difficulty, GameEvent, GameMode, Phase } from './Types';
+
+export interface GameSetup {
+  mode: GameMode;
+  difficulty: Difficulty;
+  playerFactionId: string;
+  seed: number;
+}
+
+/** One pending creep spawn during a battle phase. */
+export interface SpawnJob {
+  /** Seconds after battle start. */
+  at: number;
+  laneId: string;
+  stats: CreepStats;
+  col: number;
+  teamId: string;
+  defenderPlayerId: string;
+  isMerc: boolean;
+}
+
+export interface BattleState {
+  spawnQueue: SpawnJob[];
+  startedAt: number;
+}
+
+export interface GameState {
+  setup: GameSetup;
+  time: number;
+  phase: Phase;
+  phaseEndsAt: number;
+  waveNumber: number;
+  maxWaves: number;
+
+  units: Map<number, CombatUnit>;
+  nextUnitId: number;
+
+  players: Record<string, PlayerState>;
+  playerOrder: string[];
+  teams: Record<string, TeamState>;
+  teamOrder: string[];
+  lanes: Record<string, LaneState>;
+  humanPlayerId: string;
+
+  battle: BattleState | null;
+  winnerTeamId: string | null;
+  winReason: string;
+
+  events: GameEvent[];
+  rngState: number;
+}
+
+export const laneZoneId = (playerId: string) => `lane_${playerId}`;
+export const arenaZoneId = (teamId: string) => `arena_${teamId}`;

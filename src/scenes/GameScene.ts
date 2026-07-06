@@ -1,0 +1,567 @@
+import Phaser from 'phaser';
+import { CFG } from '../data/gameConfig';
+import { factionById } from '../data/factions';
+import { fighterById } from '../data/fighters';
+import { Simulation } from '../core/Simulation';
+import { arenaZoneId, type GameSetup } from '../model/GameState';
+import type { CombatUnit } from '../model/CombatUnit';
+import type { GameEvent } from '../model/Types';
+import { isCellFree } from '../systems/PlacementSystem';
+import { TopBar } from '../ui/TopBar';
+import { LaneStatusCards } from '../ui/LaneStatusCards';
+import { BottomShop } from '../ui/BottomShop';
+import { L, arenaToScreen, laneToScreen, screenToCell } from '../ui/layout';
+import { ARM_LABEL, ATK_LABEL, COLORS, ROLE_LABEL, ROLE_LETTER, txt, UIButton } from '../ui/theme';
+
+interface UnitView {
+  root: Phaser.GameObjects.Container;
+  body: Phaser.GameObjects.Shape;
+  hpBar: Phaser.GameObjects.Rectangle;
+  hpBarW: number;
+  tier: number;
+  radius: number;
+}
+
+const DEPTH_LANE_INPUT = 1;
+const DEPTH_HIGHLIGHT = 2;
+const DEPTH_UNITS = 5;
+const DEPTH_FX = 8;
+const DEPTH_POPUP = 20;
+
+export class GameScene extends Phaser.Scene {
+  private sim!: Simulation;
+  private setup!: GameSetup;
+  private views = new Map<number, UnitView>();
+  private placementSelection: string | null = null;
+  private lastPhase = 'build';
+  private endedHandled = false;
+
+  private topBar!: TopBar;
+  private statusCards!: LaneStatusCards;
+  private shop!: BottomShop;
+  private highlightGfx!: Phaser.GameObjects.Graphics;
+
+  private actionMenu!: Phaser.GameObjects.Container;
+  private actionTitle!: Phaser.GameObjects.Text;
+  private upgradeBtn!: UIButton;
+  private sellBtn!: UIButton;
+  private actionUnitId: number | null = null;
+
+  private infoPopup!: Phaser.GameObjects.Container;
+  private infoTitle!: Phaser.GameObjects.Text;
+  private infoBody!: Phaser.GameObjects.Text;
+
+  private peekOverlay!: Phaser.GameObjects.Container;
+  private peekTitle!: Phaser.GameObjects.Text;
+  private peekGfx!: Phaser.GameObjects.Graphics;
+  private peekPid: string | null = null;
+
+  constructor() {
+    super('Game');
+  }
+
+  init(data: GameSetup): void {
+    this.setup = data;
+    this.views = new Map();
+    this.placementSelection = null;
+    this.lastPhase = 'build';
+    this.endedHandled = false;
+    this.actionUnitId = null;
+    this.peekPid = null;
+  }
+
+  create(): void {
+    this.sim = new Simulation(this.setup);
+    this.drawStaticLane();
+    this.createLaneInput();
+    this.highlightGfx = this.add.graphics().setDepth(DEPTH_HIGHLIGHT);
+
+    this.topBar = new TopBar(this, {
+      onReady: () => this.sim.ready(),
+      onBuyWorker: () => this.sim.buyWorker()
+    });
+    this.statusCards = new LaneStatusCards(this, this.sim.state, (pid) => this.showPeek(pid));
+    this.shop = new BottomShop(this, this.sim.state, {
+      onSelectFighter: (defId) => {
+        this.placementSelection = defId;
+        this.hideActionMenu();
+      },
+      onShowFighterInfo: (defId) => this.showFighterInfo(defId),
+      onSendMerc: (mercId) => this.sim.sendMercenary(mercId),
+      onToggleAutoSend: () => this.sim.toggleAutoSend(),
+      onKingUpgrade: (t) => this.sim.buyKingUpgrade(t)
+    });
+
+    this.createActionMenu();
+    this.createInfoPopup();
+    this.createPeekOverlay();
+  }
+
+  // ---------- static rendering ----------
+
+  private drawStaticLane(): void {
+    const g = this.add.graphics();
+    const { left, top, cellW, cellH } = L.lane;
+    const w = L.lane.w;
+    const rowRect = (row: number, count: number, color: number) =>
+      g.fillStyle(color, 1).fillRect(left, top + row * cellH, w, cellH * count);
+
+    rowRect(0, 1, COLORS.spawnZone);
+    rowRect(1, 3, COLORS.approachZone);
+    rowRect(CFG.grid.buildRowStart, CFG.grid.buildRowEnd - CFG.grid.buildRowStart + 1, COLORS.buildZone);
+    rowRect(CFG.grid.rows - 1, 1, COLORS.leakZone);
+
+    g.lineStyle(1, COLORS.gridLine, 0.55);
+    for (let c = 0; c <= CFG.grid.cols; c++) {
+      g.lineBetween(left + c * cellW, top, left + c * cellW, top + L.lane.h);
+    }
+    for (let r = 0; r <= CFG.grid.rows; r++) {
+      g.lineBetween(left, top + r * cellH, left + w, top + r * cellH);
+    }
+    g.lineStyle(2, COLORS.panelStroke, 1).strokeRect(left, top, w, L.lane.h);
+
+    txt(this, left + w / 2, top + cellH / 2, 'ENEMY SPAWN', 10, '#c98a96').setOrigin(0.5).setAlpha(0.9);
+    txt(this, left + w / 2, top + (CFG.grid.buildRowStart + 0.1) * cellH, 'BUILD ZONE', 10, '#6f9a78')
+      .setOrigin(0.5, 0)
+      .setAlpha(0.7);
+    txt(this, left + w / 2, top + (CFG.grid.rows - 0.5) * cellH, 'LEAK GATE ▼', 10, '#c98a96')
+      .setOrigin(0.5)
+      .setAlpha(0.9);
+
+    // King arena strip.
+    const a = L.arena;
+    this.add.rectangle(a.left, a.top, a.w, a.h, 0x1c1f30).setOrigin(0).setStrokeStyle(2, 0x5a5330);
+    txt(this, a.left + 6, a.top + 4, '♛ KING ARENA — leaks land here', 10, '#c9b76a').setAlpha(0.9);
+  }
+
+  private createLaneInput(): void {
+    const rect = this.add
+      .rectangle(L.lane.left, L.lane.top, L.lane.w, L.lane.h, 0xffffff, 0.001)
+      .setOrigin(0)
+      .setDepth(DEPTH_LANE_INPUT)
+      .setInteractive();
+    rect.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+      this.hideActionMenu();
+      if (!this.placementSelection || this.sim.state.phase !== 'build') return;
+      const cell = screenToCell(pointer.worldX, pointer.worldY);
+      if (!cell) return;
+      this.sim.placeFighter(this.placementSelection, cell.col, cell.row);
+    });
+  }
+
+  // ---------- unit views ----------
+
+  private createView(u: CombatUnit): UnitView {
+    const isLane = u.zoneId === this.humanLaneId();
+    const sp = isLane ? laneToScreen(u.pos) : arenaToScreen(u.pos);
+    const root = this.add.container(sp.x, sp.y).setDepth(DEPTH_UNITS);
+    let body: Phaser.GameObjects.Shape;
+    let radius = 12;
+    let hpBarW = 26;
+
+    if (u.kind === 'king') {
+      radius = 17;
+      hpBarW = 54;
+      body = this.add.rectangle(0, 0, 34, 30, COLORS.king).setStrokeStyle(2, 0xffffff, 0.7);
+      root.add(body);
+      root.add(txt(this, 0, 0, '♛', 18, '#3a2f10').setOrigin(0.5));
+    } else if (u.kind === 'fighter') {
+      const faction = factionById(u.factionId ?? 'ironclad');
+      radius = u.tier === 1 ? 14 : 12;
+      body = this.add.circle(0, 0, radius, faction.color);
+      if (u.tier === 1) (body as Phaser.GameObjects.Arc).setStrokeStyle(2.5, 0xf5c542);
+      else (body as Phaser.GameObjects.Arc).setStrokeStyle(1.5, 0xffffff, 0.4);
+      root.add(body);
+      root.add(
+        txt(this, 0, 0, ROLE_LETTER[u.role], 12, '#101319').setOrigin(0.5).setFontStyle('bold')
+      );
+      body.setInteractive();
+      body.on('pointerdown', (_p: Phaser.Input.Pointer, _x: number, _y: number, ev: Phaser.Types.Input.EventData) => {
+        ev.stopPropagation();
+        this.onFighterTap(u.id);
+      });
+    } else {
+      radius = Math.min(15, Math.max(7, u.collisionRadius * 28));
+      hpBarW = Math.max(18, radius * 1.8);
+      body = this.add.circle(0, 0, radius, COLORS.hostile).setStrokeStyle(1.5, COLORS.hostileDark);
+      root.add(body);
+      if (radius >= 12) {
+        root.add(txt(this, 0, 0, u.name.charAt(0), 11, '#2a0f10').setOrigin(0.5).setFontStyle('bold'));
+      }
+    }
+
+    const barY = -radius - 8;
+    root.add(this.add.rectangle(0, barY, hpBarW + 2, 5, 0x11141f).setOrigin(0.5));
+    const hpBar = this.add
+      .rectangle(-hpBarW / 2, barY, hpBarW, 3, u.teamId === this.humanTeamId() ? 0x4caf50 : 0xe0654f)
+      .setOrigin(0, 0.5);
+    root.add(hpBar);
+
+    const view: UnitView = { root, body, hpBar, hpBarW, tier: u.tier, radius };
+    this.views.set(u.id, view);
+    return view;
+  }
+
+  private humanLaneId(): string {
+    return this.sim.state.players[this.sim.state.humanPlayerId].laneId;
+  }
+  private humanTeamId(): string {
+    return this.sim.state.players[this.sim.state.humanPlayerId].teamId;
+  }
+
+  private syncUnits(): void {
+    const state = this.sim.state;
+    const laneId = this.humanLaneId();
+    const arenaId = arenaZoneId(this.humanTeamId());
+    const seen = new Set<number>();
+
+    for (const u of state.units.values()) {
+      if (u.state === 'dead') continue;
+      if (u.zoneId !== laneId && u.zoneId !== arenaId) continue;
+      seen.add(u.id);
+
+      let view = this.views.get(u.id);
+      if (view && view.tier !== u.tier) {
+        view.root.destroy();
+        this.views.delete(u.id);
+        view = undefined;
+      }
+      if (!view) view = this.createView(u);
+
+      const sp = u.zoneId === laneId ? laneToScreen(u.pos) : arenaToScreen(u.pos);
+      view.root.x += (sp.x - view.root.x) * 0.45;
+      view.root.y += (sp.y - view.root.y) * 0.45;
+      view.hpBar.width = view.hpBarW * Math.max(0, u.hp / u.maxHp);
+    }
+
+    for (const [id, view] of this.views) {
+      if (!seen.has(id)) {
+        view.root.destroy();
+        this.views.delete(id);
+      }
+    }
+  }
+
+  // ---------- placement highlight ----------
+
+  private drawHighlights(): void {
+    this.highlightGfx.clear();
+    if (!this.placementSelection || this.sim.state.phase !== 'build') return;
+    const laneId = this.humanLaneId();
+    const { left, top, cellW, cellH } = L.lane;
+    for (let row = CFG.grid.buildRowStart; row <= CFG.grid.buildRowEnd; row++) {
+      for (let col = 0; col < CFG.grid.cols; col++) {
+        const free = isCellFree(this.sim.state, laneId, col, row);
+        this.highlightGfx
+          .fillStyle(free ? COLORS.highlightOk : COLORS.highlightBad, free ? 0.28 : 0.18)
+          .fillRect(left + col * cellW + 2, top + row * cellH + 2, cellW - 4, cellH - 4);
+      }
+    }
+  }
+
+  // ---------- action menu (upgrade / sell) ----------
+
+  private createActionMenu(): void {
+    this.actionTitle = txt(this, 0, -38, '', 12).setOrigin(0.5).setFontStyle('bold');
+    const bg = this.add.rectangle(0, 0, 190, 104, 0x1a2030, 0.97).setStrokeStyle(1, COLORS.panelStroke);
+    this.upgradeBtn = new UIButton(this, 0, -12, 168, 30, '', 12, () => {
+      if (this.actionUnitId !== null) this.sim.upgradeFighter(this.actionUnitId);
+      this.hideActionMenu();
+    }, 0x2f6b3a);
+    this.sellBtn = new UIButton(this, 0, 26, 168, 30, '', 12, () => {
+      if (this.actionUnitId !== null) this.sim.sellFighter(this.actionUnitId);
+      this.hideActionMenu();
+    }, 0x6b2f35);
+    this.actionMenu = this.add
+      .container(0, 0, [bg, this.actionTitle, this.upgradeBtn.container, this.sellBtn.container])
+      .setDepth(DEPTH_POPUP)
+      .setVisible(false);
+  }
+
+  private onFighterTap(unitId: number): void {
+    const state = this.sim.state;
+    const u = state.units.get(unitId);
+    if (!u || u.ownerId !== state.humanPlayerId || state.phase !== 'build') return;
+    this.placementSelection = null;
+    this.shop.clearSelection();
+    this.actionUnitId = unitId;
+
+    const sp = laneToScreen(u.pos);
+    this.actionMenu.setPosition(
+      Math.min(Math.max(sp.x, 105), L.width - 105),
+      Math.min(Math.max(sp.y - 70, 190), 600)
+    );
+    this.refreshActionMenu();
+    this.actionMenu.setVisible(true);
+  }
+
+  private refreshActionMenu(): void {
+    if (this.actionUnitId === null) return;
+    const state = this.sim.state;
+    const u = state.units.get(this.actionUnitId);
+    if (!u) {
+      this.hideActionMenu();
+      return;
+    }
+    const human = state.players[state.humanPlayerId];
+    this.actionTitle.setText(u.name);
+    if (u.tier === 0) {
+      const upCost = fighterById(u.defId).tiers[1].cost;
+      this.upgradeBtn.setText(`Upgrade  ${upCost}g`);
+      this.upgradeBtn.setEnabled(human.gold >= upCost && state.phase === 'build');
+    } else {
+      this.upgradeBtn.setText('Fully upgraded');
+      this.upgradeBtn.setEnabled(false);
+    }
+    this.sellBtn.setText(`Sell  +${Math.floor(u.investedGold * CFG.sellRefundRate)}g`);
+    this.sellBtn.setEnabled(state.phase === 'build');
+  }
+
+  private hideActionMenu(): void {
+    this.actionUnitId = null;
+    this.actionMenu.setVisible(false);
+  }
+
+  // ---------- fighter info popup ----------
+
+  private createInfoPopup(): void {
+    const shade = this.add
+      .rectangle(L.width / 2, L.height / 2, L.width, L.height, 0x000000, 0.55)
+      .setInteractive();
+    shade.on('pointerdown', () => this.infoPopup.setVisible(false));
+    const panel = this.add
+      .rectangle(L.width / 2, 430, 420, 330, 0x1a2030, 0.98)
+      .setStrokeStyle(2, COLORS.panelStroke);
+    this.infoTitle = txt(this, L.width / 2, 290, '', 16).setOrigin(0.5, 0).setFontStyle('bold');
+    this.infoBody = txt(this, L.width / 2 - 190, 322, '', 12, '#c8d2e8', {
+      wordWrap: { width: 380 },
+      lineSpacing: 5
+    });
+    this.infoPopup = this.add
+      .container(0, 0, [shade, panel, this.infoTitle, this.infoBody])
+      .setDepth(DEPTH_POPUP)
+      .setVisible(false);
+  }
+
+  private showFighterInfo(defId: string): void {
+    const def = fighterById(defId);
+    const [b, up] = def.tiers;
+    this.infoTitle.setText(`${b.name}  (${ROLE_LABEL[def.role]})`);
+    this.infoBody.setText(
+      [
+        `Attack: ${ATK_LABEL[def.attackType]}   Armor: ${ARM_LABEL[def.armorType]}`,
+        `${def.desc}`,
+        '',
+        `Base — ${b.cost}g`,
+        `  ${b.hp} HP, ${b.damage} dmg, ${b.attackSpeed}/s, range ${b.range}`,
+        '',
+        `Upgrade: ${up.name} — +${up.cost}g`,
+        `  ${up.hp} HP, ${up.damage} dmg, ${up.attackSpeed}/s, range ${up.range}`,
+        '',
+        'PRC>LGT  IMP>ARM  MAG>MAS  (weak: PRC<ARM, IMP<ARC, MAG<ARM)',
+        '',
+        '(tap anywhere to close)'
+      ].join('\n')
+    );
+    this.infoPopup.setVisible(true);
+  }
+
+  // ---------- other-lane peek overlay ----------
+
+  private createPeekOverlay(): void {
+    const shade = this.add
+      .rectangle(L.width / 2, L.height / 2, L.width, L.height, 0x000000, 0.7)
+      .setInteractive();
+    shade.on('pointerdown', () => {
+      this.peekOverlay.setVisible(false);
+      this.peekPid = null;
+    });
+    const panel = this.add.rectangle(L.width / 2, 470, 300, 520, 0x141824, 0.98).setStrokeStyle(2, COLORS.panelStroke);
+    this.peekTitle = txt(this, L.width / 2, 195, '', 15).setOrigin(0.5).setFontStyle('bold');
+    this.peekGfx = this.add.graphics();
+    const hint = txt(this, L.width / 2, 745, '(tap anywhere to close)', 11, COLORS.textDim).setOrigin(0.5);
+    this.peekOverlay = this.add
+      .container(0, 0, [shade, panel, this.peekTitle, this.peekGfx, hint])
+      .setDepth(DEPTH_POPUP + 1)
+      .setVisible(false);
+  }
+
+  private showPeek(pid: string): void {
+    this.peekPid = pid;
+    const p = this.sim.state.players[pid];
+    this.peekTitle.setText(`${p.name} — ${factionById(p.factionId).name}`);
+    this.peekOverlay.setVisible(true);
+  }
+
+  private drawPeek(): void {
+    if (!this.peekPid || !this.peekOverlay.visible) return;
+    const state = this.sim.state;
+    const p = state.players[this.peekPid];
+    const g = this.peekGfx;
+    const px = L.width / 2 - 130;
+    const py = 220;
+    const pw = 260;
+    const ph = 480;
+    g.clear();
+    g.fillStyle(0x1d2434, 1).fillRect(px, py, pw, ph);
+    g.fillStyle(COLORS.buildZone, 1).fillRect(
+      px,
+      py + (CFG.grid.buildRowStart / CFG.grid.rows) * ph,
+      pw,
+      ((CFG.grid.buildRowEnd - CFG.grid.buildRowStart + 1) / CFG.grid.rows) * ph
+    );
+    g.lineStyle(1, COLORS.gridLine, 0.8).strokeRect(px, py, pw, ph);
+
+    const factionColor = factionById(p.factionId).color;
+    for (const u of state.units.values()) {
+      if (u.zoneId !== p.laneId || u.state === 'dead') continue;
+      const x = px + (u.pos.x / CFG.grid.cols) * pw;
+      const y = py + (u.pos.y / CFG.grid.rows) * ph;
+      if (u.kind === 'fighter') {
+        g.fillStyle(factionColor, 1).fillCircle(x, y, u.tier === 1 ? 7 : 5.5);
+      } else {
+        g.fillStyle(COLORS.hostile, 1).fillCircle(x, y, Math.max(4, u.collisionRadius * 14));
+      }
+    }
+  }
+
+  // ---------- event effects ----------
+
+  private zoneVisible(zoneId: string): boolean {
+    return zoneId === this.humanLaneId() || zoneId === arenaZoneId(this.humanTeamId());
+  }
+
+  private screenOf(zoneId: string, pos: { x: number; y: number }): { x: number; y: number } {
+    return zoneId === this.humanLaneId() ? laneToScreen(pos) : arenaToScreen(pos);
+  }
+
+  private handleEvents(events: GameEvent[]): void {
+    for (const ev of events) {
+      switch (ev.type) {
+        case 'attack': {
+          if (!this.zoneVisible(ev.zoneId)) break;
+          if (ev.ranged) {
+            const from = this.screenOf(ev.zoneId, ev.fromPos);
+            const to = this.screenOf(ev.zoneId, ev.toPos);
+            const color =
+              ev.attackType === 'magic' ? 0x9ad0ff : ev.attackType === 'pierce' ? 0xe8e0a0 : 0xd8d8d8;
+            const proj = this.add.circle(from.x, from.y, 3.5, color).setDepth(DEPTH_FX);
+            this.tweens.add({
+              targets: proj,
+              x: to.x,
+              y: to.y,
+              duration: 130,
+              onComplete: () => proj.destroy()
+            });
+          } else {
+            const view = this.views.get(ev.fromId);
+            if (view) {
+              this.tweens.add({ targets: view.root, scale: 1.22, duration: 70, yoyo: true });
+            }
+          }
+          break;
+        }
+        case 'death': {
+          if (!this.zoneVisible(ev.zoneId)) break;
+          const sp = this.screenOf(ev.zoneId, ev.pos);
+          const puff = this.add
+            .circle(sp.x, sp.y, 9, ev.kind === 'creep' ? COLORS.hostile : 0xbfcbe8, 0.8)
+            .setDepth(DEPTH_FX);
+          this.tweens.add({
+            targets: puff,
+            scale: 1.9,
+            alpha: 0,
+            duration: 260,
+            onComplete: () => puff.destroy()
+          });
+          const unit = this.sim.state.units.get(ev.unitId);
+          if (
+            unit &&
+            unit.kind === 'creep' &&
+            unit.defenderPlayerId === this.sim.state.humanPlayerId &&
+            unit.bounty >= 0.5
+          ) {
+            this.floatText(sp.x, sp.y - 12, `+${Math.round(unit.bounty)}g`, COLORS.gold);
+          }
+          break;
+        }
+        case 'leak': {
+          if (ev.laneId === this.humanLaneId()) {
+            const flash = this.add
+              .rectangle(L.lane.left, L.lane.top + (CFG.grid.rows - 1) * L.lane.cellH, L.lane.w, L.lane.cellH, 0xef5f6a, 0.45)
+              .setOrigin(0)
+              .setDepth(DEPTH_FX);
+            this.tweens.add({ targets: flash, alpha: 0, duration: 420, onComplete: () => flash.destroy() });
+            this.floatText(L.lane.left + L.lane.w / 2, L.lane.top + L.lane.h - 30, 'LEAK!', COLORS.danger);
+          }
+          break;
+        }
+        case 'kingSpell': {
+          if (!this.zoneVisible(ev.zoneId)) break;
+          const sp = this.screenOf(ev.zoneId, ev.pos);
+          const ring = this.add.circle(sp.x, sp.y, 12, 0xf5c542, 0.35).setDepth(DEPTH_FX);
+          this.tweens.add({
+            targets: ring,
+            scale: 5,
+            alpha: 0,
+            duration: 400,
+            onComplete: () => ring.destroy()
+          });
+          break;
+        }
+        case 'heal': {
+          if (!this.zoneVisible(ev.zoneId)) break;
+          const sp = this.screenOf(ev.zoneId, ev.pos);
+          this.floatText(sp.x, sp.y - 14, '+', COLORS.ok);
+          break;
+        }
+      }
+    }
+  }
+
+  private floatText(x: number, y: number, s: string, color: string): void {
+    const t = txt(this, x, y, s, 12, color).setOrigin(0.5).setDepth(DEPTH_FX).setFontStyle('bold');
+    this.tweens.add({ targets: t, y: y - 22, alpha: 0, duration: 700, onComplete: () => t.destroy() });
+  }
+
+  // ---------- main loop ----------
+
+  update(_time: number, delta: number): void {
+    this.sim.update(delta);
+    const state = this.sim.state;
+
+    if (state.phase !== this.lastPhase) {
+      if (state.phase === 'battle') {
+        this.placementSelection = null;
+        this.shop.clearSelection();
+        this.hideActionMenu();
+        this.shop.setMode('battle');
+      } else if (state.phase === 'build') {
+        this.shop.setMode('build');
+      }
+      this.lastPhase = state.phase;
+    }
+
+    this.syncUnits();
+    this.drawHighlights();
+    this.handleEvents(this.sim.drainEvents());
+    this.topBar.update(state);
+    this.statusCards.update(state);
+    this.shop.update(state);
+    if (this.actionMenu.visible) this.refreshActionMenu();
+    this.drawPeek();
+
+    if (state.phase === 'ended' && !this.endedHandled) {
+      this.endedHandled = true;
+      const win = state.winnerTeamId === this.humanTeamId();
+      this.time.delayedCall(1100, () => {
+        this.scene.start('Result', {
+          win,
+          reason: state.winReason,
+          wavesPlayed: state.waveNumber,
+          setup: this.setup
+        });
+      });
+    }
+  }
+}
