@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { SUPPORT_EFFECT_SPRITES, hitEffectKey } from '../assets/effectSprites';
+import { FIGHTER_SHEET_FRAME, fighterSheet } from '../assets/fighterSheets';
 import { fighterSpriteKey } from '../assets/unitSprites';
 import { waveSpriteKey } from '../assets/waveSprites';
 import { CFG } from '../data/gameConfig';
@@ -25,10 +26,12 @@ import { COLORS, ROLE_LETTER, armLabel, atkLabel, roleLabel, txt, UIButton } fro
 interface UnitView {
   root: Phaser.GameObjects.Container;
   body: Phaser.GameObjects.GameObject;
+  spriteBody?: Phaser.GameObjects.Sprite;
   hpBar: Phaser.GameObjects.Rectangle;
   hpBarW: number;
   tier: number;
   radius: number;
+  resetFrameTimer?: Phaser.Time.TimerEvent;
 }
 
 const DEPTH_LANE_INPUT = 1;
@@ -198,10 +201,18 @@ export class GameScene extends Phaser.Scene {
       root.add(txt(this, 0, 0, '♛', 18, '#3a2f10').setOrigin(0.5));
     } else if (u.kind === 'fighter') {
       const faction = factionById(u.factionId ?? 'ironclad');
+      const sheet = fighterSheet(u.defId);
       const spriteKey = fighterSpriteKey(u.defId);
       radius = u.tier === 1 ? 16 : 14;
       root.add(this.add.ellipse(0, radius - 2, radius * 1.55, 7, 0x05070b, 0.32));
-      if (spriteKey) {
+      if (sheet) {
+        if (u.tier === 1) {
+          root.add(this.add.circle(0, 0, radius + 3, 0xf5c542, 0.18).setStrokeStyle(2, 0xf5c542, 0.75));
+        }
+        const sprite = this.add.sprite(0, 0, sheet.key, FIGHTER_SHEET_FRAME.idle).setDisplaySize(radius * 2.8, radius * 2.8);
+        body = sprite;
+        root.add(body);
+      } else if (spriteKey) {
         if (u.tier === 1) {
           root.add(this.add.circle(0, 0, radius + 3, 0xf5c542, 0.18).setStrokeStyle(2, 0xf5c542, 0.75));
         }
@@ -249,7 +260,15 @@ export class GameScene extends Phaser.Scene {
       .setOrigin(0, 0.5);
     root.add(hpBar);
 
-    const view: UnitView = { root, body, hpBar, hpBarW, tier: u.tier, radius };
+    const view: UnitView = {
+      root,
+      body,
+      spriteBody: body instanceof Phaser.GameObjects.Sprite ? body : undefined,
+      hpBar,
+      hpBarW,
+      tier: u.tier,
+      radius
+    };
     this.views.set(u.id, view);
     return view;
   }
@@ -611,6 +630,21 @@ export class GameScene extends Phaser.Scene {
     });
   }
 
+  private setFighterFrame(unitId: number, frame: keyof typeof FIGHTER_SHEET_FRAME, resetDelay = 180): void {
+    const view = this.views.get(unitId);
+    if (!view?.spriteBody) return;
+    view.resetFrameTimer?.remove();
+    view.spriteBody.setFrame(FIGHTER_SHEET_FRAME[frame]);
+    if (frame === 'idle') {
+      view.resetFrameTimer = undefined;
+      return;
+    }
+    view.resetFrameTimer = this.time.delayedCall(resetDelay, () => {
+      if (view.spriteBody?.active) view.spriteBody.setFrame(FIGHTER_SHEET_FRAME.idle);
+      view.resetFrameTimer = undefined;
+    });
+  }
+
   private handleEvents(events: GameEvent[]): void {
     for (const ev of events) {
       switch (ev.type) {
@@ -619,6 +653,8 @@ export class GameScene extends Phaser.Scene {
           sfx.play('hit');
           const to = this.screenOf(ev.zoneId, ev.toPos);
           const playHit = () => this.playEffectSprite(hitEffectKey(ev.attackType), to.x, to.y, 34);
+          this.setFighterFrame(ev.fromId, 'attack', 180);
+          this.setFighterFrame(ev.toId, 'hit', 150);
           if (ev.ranged) {
             const from = this.screenOf(ev.zoneId, ev.fromPos);
             const proj = this.add.circle(from.x, from.y, 3.5, this.projectileColor(ev.attackType)).setDepth(DEPTH_FX);
@@ -645,6 +681,7 @@ export class GameScene extends Phaser.Scene {
           if (!this.zoneVisible(ev.zoneId)) break;
           sfx.play('death');
           const sp = this.screenOf(ev.zoneId, ev.pos);
+          this.setFighterFrame(ev.unitId, 'death', 260);
           const puff = this.add
             .circle(sp.x, sp.y, 9, ev.kind === 'creep' ? COLORS.hostile : 0xbfcbe8, 0.8)
             .setDepth(DEPTH_FX);
