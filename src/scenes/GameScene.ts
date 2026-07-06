@@ -138,12 +138,12 @@ export class GameScene extends Phaser.Scene {
     const rowRect = (row: number, count: number, color: number, alpha: number) =>
       g.fillStyle(color, alpha).fillRect(left, top + row * cellH, w, cellH * count);
 
-    rowRect(0, 1, COLORS.spawnZone, 0.22);
-    rowRect(1, 3, COLORS.approachZone, 0.08);
-    rowRect(CFG.grid.buildRowStart, CFG.grid.buildRowEnd - CFG.grid.buildRowStart + 1, COLORS.buildZone, 0.14);
-    rowRect(CFG.grid.rows - 1, 1, COLORS.leakZone, 0.18);
+    rowRect(0, 1, COLORS.spawnZone, 0.1);
+    rowRect(1, 3, COLORS.approachZone, 0.04);
+    rowRect(CFG.grid.buildRowStart, CFG.grid.buildRowEnd - CFG.grid.buildRowStart + 1, COLORS.buildZone, 0.06);
+    rowRect(CFG.grid.rows - 1, 1, COLORS.leakZone, 0.09);
 
-    g.lineStyle(1, COLORS.gridLine, 0.42);
+    g.lineStyle(1, COLORS.gridLine, 0.28);
     for (let c = 0; c <= CFG.grid.cols; c++) {
       g.lineBetween(left + c * cellW, top, left + c * cellW, top + L.lane.h);
     }

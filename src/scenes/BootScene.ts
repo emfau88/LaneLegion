@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { HIT_EFFECT_SPRITES, SUPPORT_EFFECT_SPRITES } from '../assets/effectSprites';
 import { FIGHTER_SHEETS } from '../assets/fighterSheets';
-import laneArenaBoardUrl from '../assets/lane-arena-board.svg';
+import laneArenaBoardUrl from '../assets/lane-arena-board.png';
 import { FIGHTER_SPRITES } from '../assets/unitSprites';
 import { WAVE_SPRITES } from '../assets/waveSprites';
 
