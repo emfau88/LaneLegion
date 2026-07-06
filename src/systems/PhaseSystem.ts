@@ -1,5 +1,5 @@
 import { CFG } from '../data/gameConfig';
-import type { GameState } from '../model/GameState';
+import type { GameState, WaveReport } from '../model/GameState';
 import { cellCenter, playerFighterValue } from '../core/util';
 import { payIncome } from './EconomySystem';
 import { spendAllOnIncome } from './SendSystem';
@@ -60,7 +60,23 @@ const resolveMatchEnd = (state: GameState): void => {
   state.winReason = 'higherValue';
 };
 
+/** Capture leaks, king damage and income payout of the finished wave. */
+const recordWaveReport = (state: GameState): void => {
+  const report: WaveReport = { waveNumber: state.waveNumber, perPlayer: {}, kingDamage: {} };
+  for (const pid of state.playerOrder) {
+    const p = state.players[pid];
+    report.perPlayer[pid] = { leaks: p.leaksThisWave, incomePaid: p.income };
+  }
+  for (const teamId of state.teamOrder) {
+    const king = kingOf(state, teamId);
+    const start = state.battle?.kingHpAtStart[teamId] ?? king?.maxHp ?? 0;
+    report.kingDamage[teamId] = Math.max(0, Math.round(start - (king?.hp ?? 0)));
+  }
+  state.waveReport = report;
+};
+
 const endBattlePhase = (state: GameState): void => {
+  recordWaveReport(state);
   payIncome(state);
   if (state.waveNumber >= state.maxWaves) {
     resolveMatchEnd(state);

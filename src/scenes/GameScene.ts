@@ -64,6 +64,11 @@ export class GameScene extends Phaser.Scene {
   private peekGfx!: Phaser.GameObjects.Graphics;
   private peekPid: string | null = null;
 
+  private reportPanel!: Phaser.GameObjects.Container;
+  private reportTitle!: Phaser.GameObjects.Text;
+  private reportBody!: Phaser.GameObjects.Text;
+  private reportHideTimer: Phaser.Time.TimerEvent | null = null;
+
   constructor() {
     super('Game');
   }
@@ -76,6 +81,7 @@ export class GameScene extends Phaser.Scene {
     this.endedHandled = false;
     this.actionUnitId = null;
     this.peekPid = null;
+    this.reportHideTimer = null;
   }
 
   create(): void {
@@ -103,6 +109,7 @@ export class GameScene extends Phaser.Scene {
     this.createActionMenu();
     this.createInfoPopup();
     this.createPeekOverlay();
+    this.createReportPanel();
   }
 
   // ---------- static rendering ----------
@@ -440,6 +447,64 @@ export class GameScene extends Phaser.Scene {
     this.infoPopup.setVisible(true);
   }
 
+  // ---------- post-wave report ----------
+
+  private createReportPanel(): void {
+    const bg = this.add
+      .rectangle(0, 0, 420, 158, 0x1a2030, 0.97)
+      .setStrokeStyle(2, COLORS.panelStroke)
+      .setInteractive();
+    bg.on('pointerdown', () => this.hideReport());
+    this.reportTitle = txt(this, 0, -60, '', 15).setOrigin(0.5, 0).setFontStyle('bold');
+    this.reportBody = txt(this, -194, -32, '', 12, '#c8d2e8', { lineSpacing: 6 });
+    this.reportPanel = this.add
+      .container(L.width / 2, 400, [bg, this.reportTitle, this.reportBody])
+      .setDepth(DEPTH_POPUP)
+      .setVisible(false);
+  }
+
+  private hideReport(): void {
+    this.reportPanel.setVisible(false);
+    if (this.reportHideTimer) {
+      this.reportHideTimer.remove();
+      this.reportHideTimer = null;
+    }
+  }
+
+  private showWaveReport(): void {
+    const state = this.sim.state;
+    const report = state.waveReport;
+    if (!report) return;
+    const humanTeam = this.humanTeamId();
+    const enemyTeam = state.teamOrder.find((tid) => tid !== humanTeam)!;
+
+    const lines: string[] = [];
+    for (const pid of state.playerOrder) {
+      const p = state.players[pid];
+      const entry = report.perPlayer[pid];
+      if (!entry) continue;
+      lines.push(
+        entry.leaks > 0
+          ? t('report.leaksLine', { name: playerName(p), n: entry.leaks })
+          : t('report.noLeaks', { name: playerName(p) })
+      );
+    }
+    lines.push('');
+    lines.push(
+      t('report.kingDmg', {
+        own: report.kingDamage[humanTeam] ?? 0,
+        enemy: report.kingDamage[enemyTeam] ?? 0
+      })
+    );
+    lines.push(t('report.income', { n: report.perPlayer[state.humanPlayerId]?.incomePaid ?? 0 }));
+
+    this.reportTitle.setText(t('report.title', { n: report.waveNumber }));
+    this.reportBody.setText(lines.join('\n'));
+    this.reportPanel.setVisible(true);
+    if (this.reportHideTimer) this.reportHideTimer.remove();
+    this.reportHideTimer = this.time.delayedCall(6000, () => this.hideReport());
+  }
+
   // ---------- other-lane peek overlay ----------
 
   private createPeekOverlay(): void {
@@ -644,8 +709,10 @@ export class GameScene extends Phaser.Scene {
         this.shop.clearSelection();
         this.hideActionMenu();
         this.shop.setMode('battle');
+        this.hideReport();
       } else if (state.phase === 'build') {
         this.shop.setMode('build');
+        if (this.lastPhase === 'battle') this.showWaveReport();
       }
       this.lastPhase = state.phase;
     }

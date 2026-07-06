@@ -2,7 +2,8 @@ import Phaser from 'phaser';
 import { CFG } from '../data/gameConfig';
 import type { GameState } from '../model/GameState';
 import { kingOf } from '../systems/KingSystem';
-import { enemyTeamOf } from '../core/util';
+import { waveByNumber } from '../data/waves';
+import { enemyTeamOf, playerFighterValue } from '../core/util';
 import { t } from '../i18n/i18n';
 import { L } from './layout';
 import { COLORS, panel, txt, UIButton } from './theme';
@@ -15,6 +16,7 @@ export interface TopBarCallbacks {
 /** Compact top bar: wave/phase/timer, resources, both king HP bars. */
 export class TopBar {
   private waveText: Phaser.GameObjects.Text;
+  private valueText: Phaser.GameObjects.Text;
   private goldText: Phaser.GameObjects.Text;
   private mythText: Phaser.GameObjects.Text;
   private incomeText: Phaser.GameObjects.Text;
@@ -31,6 +33,7 @@ export class TopBar {
     panel(scene, 0, 0, L.topBar.w, L.topBar.h, COLORS.panel);
 
     this.waveText = txt(scene, 10, 8, '', 14);
+    this.valueText = txt(scene, 262, 10, '', 12);
     this.readyBtn = new UIButton(scene, 480, 17, 100, 26, t('topbar.ready'), 14, cb.onReady, 0x2f6b3a);
 
     this.goldText = txt(scene, 10, 38, '', 14, COLORS.gold);
@@ -65,6 +68,20 @@ export class TopBar {
     this.waveText.setText(
       `${t('topbar.wave', { n: state.waveNumber, max: state.maxWaves })}  •  ${phaseName}  ${state.phase === 'build' ? `${mm}:${ss}` : ''}`
     );
+
+    // Build phase: fighter value vs the wave's recommendation. Battle: own leak count.
+    if (state.phase === 'build') {
+      const wave = waveByNumber(Math.min(state.waveNumber, state.maxWaves));
+      const own = Math.floor(playerFighterValue(state, state.humanPlayerId));
+      const ok = own >= wave.recommendedFighterValue;
+      this.valueText
+        .setText(`${t('topbar.value', { own, rec: wave.recommendedFighterValue })}${ok ? '' : ' ⚠'}`)
+        .setColor(ok ? COLORS.ok : COLORS.danger);
+    } else if (state.phase === 'battle' && human.leaksThisWave > 0) {
+      this.valueText.setText(t('topbar.leaks', { n: human.leaksThisWave })).setColor(COLORS.danger);
+    } else {
+      this.valueText.setText('');
+    }
 
     this.goldText.setText(`g ${Math.floor(human.gold)}`);
     this.mythText.setText(`◆ ${Math.floor(human.mythium)}`);

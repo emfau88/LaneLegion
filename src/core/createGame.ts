@@ -102,6 +102,7 @@ export const createGame = (setup: GameSetup): GameState => {
     lanes: {},
     humanPlayerId: 'p1',
     battle: null,
+    waveReport: null,
     winnerTeamId: null,
     winReason: '',
     events: [],

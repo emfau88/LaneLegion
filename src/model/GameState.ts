@@ -27,6 +27,22 @@ export interface SpawnJob {
 export interface BattleState {
   spawnQueue: SpawnJob[];
   startedAt: number;
+  /** King HP per team when the battle began (for the post-wave report). */
+  kingHpAtStart: Record<string, number>;
+}
+
+export interface WaveReportEntry {
+  leaks: number;
+  /** Gold income paid out to this player at the end of the wave. */
+  incomePaid: number;
+}
+
+/** Summary of the last finished battle phase, shown between waves. */
+export interface WaveReport {
+  waveNumber: number;
+  perPlayer: Record<string, WaveReportEntry>;
+  /** King damage taken during the wave, per team. */
+  kingDamage: Record<string, number>;
 }
 
 export interface GameState {
@@ -48,6 +64,7 @@ export interface GameState {
   humanPlayerId: string;
 
   battle: BattleState | null;
+  waveReport: WaveReport | null;
   winnerTeamId: string | null;
   winReason: WinReason;
 

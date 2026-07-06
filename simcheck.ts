@@ -82,6 +82,7 @@ function runMatch(mode: GameMode, difficulty: Difficulty, faction: string, seed:
 
   check(s.phase === 'ended', 'match ended');
   check(s.winnerTeamId === 'T1' || s.winnerTeamId === 'T2', 'winner set');
+  check(s.waveReport !== null || s.winReason === 'kingDestroyed', 'wave report recorded');
   check(safety < 60000, 'no infinite loop');
   check(deaths > 20, `units died in combat (deaths=${deaths})`);
   check(attacks > 100, `attacks happened (attacks=${attacks})`);

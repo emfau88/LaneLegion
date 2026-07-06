@@ -90,6 +90,18 @@ const STRINGS = {
   'topbar.buyWorker': { de: '⚒ Arbeiter kaufen · {cost}g  ({n})', en: '⚒ Buy worker · {cost}g  ({n})' },
   'topbar.you': { de: '♛ DU', en: '♛ YOU' },
   'topbar.enemy': { de: 'GEGNER ♛', en: 'ENEMY ♛' },
+  'topbar.value': { de: 'Wert {own}/{rec}', en: 'Value {own}/{rec}' },
+  'topbar.leaks': { de: 'Leaks: {n}', en: 'Leaks: {n}' },
+
+  // ---------- wave report ----------
+  'report.title': { de: 'Welle {n} abgeschlossen', en: 'Wave {n} complete' },
+  'report.leaksLine': { de: '{name}: {n} Leaks', en: '{name}: {n} leaks' },
+  'report.noLeaks': { de: '{name}: dicht gehalten ✓', en: '{name}: held the line ✓' },
+  'report.kingDmg': {
+    de: 'König-Schaden — dein Team: {own} · Gegner: {enemy}',
+    en: 'King damage — your team: {own} · enemy: {enemy}'
+  },
+  'report.income': { de: '+{n} Gold Einkommen erhalten', en: '+{n} gold income received' },
 
   // ---------- bottom shop ----------
   'tab.fighters': { de: 'Kämpfer', en: 'Fighters' },

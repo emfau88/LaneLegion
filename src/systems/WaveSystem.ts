@@ -5,6 +5,7 @@ import type { CombatUnit } from '../model/CombatUnit';
 import type { CreepStats } from '../model/UnitDefinition';
 import type { GameState, SpawnJob } from '../model/GameState';
 import { enemyTeamOf, rng } from '../core/util';
+import { kingOf } from './KingSystem';
 
 const createCreep = (state: GameState, job: SpawnJob): CombatUnit => {
   const s = job.stats;
@@ -116,7 +117,11 @@ export const startBattle = (state: GameState): void => {
   }
 
   queue.sort((a, b) => a.at - b.at);
-  state.battle = { spawnQueue: queue, startedAt: state.time };
+  const kingHpAtStart: Record<string, number> = {};
+  for (const teamId of state.teamOrder) {
+    kingHpAtStart[teamId] = kingOf(state, teamId)?.hp ?? 0;
+  }
+  state.battle = { spawnQueue: queue, startedAt: state.time, kingHpAtStart };
   state.phase = 'battle';
   state.phaseEndsAt = state.time + CFG.maxBattleDuration;
 };
