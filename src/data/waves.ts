@@ -27,18 +27,18 @@ export const WAVES: WaveDefinition[] = [
   {
     waveNumber: 1,
     name: 'Grubling Rush',
-    groups: [{ stats: c('Grubling', 45, 7, 1.1, 'impact', 'light'), count: 10 }],
+    groups: [{ stats: c('Grubling', 38, 6, 1.05, 'impact', 'light'), count: 9 }],
     goldRewardTotal: 40,
-    recommendedFighterValue: 90,
+    recommendedFighterValue: 80,
     shortHint: 'Many weak enemies. Any simple defense holds.',
     warning: 'Many weak enemies'
   },
   {
     waveNumber: 2,
     name: 'Stone Beetles',
-    groups: [{ stats: c('Stone Beetle', 95, 10, 0.9, 'impact', 'armored'), count: 8 }],
+    groups: [{ stats: c('Stone Beetle', 82, 9, 0.85, 'impact', 'armored'), count: 7 }],
     goldRewardTotal: 50,
-    recommendedFighterValue: 150,
+    recommendedFighterValue: 130,
     shortHint: 'Tougher shells. Good moment for a first worker.',
     warning: 'Armored enemies'
   },
