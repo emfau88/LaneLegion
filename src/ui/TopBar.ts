@@ -33,9 +33,11 @@ export class TopBar {
     this.readyBtn = new UIButton(scene, 480, 17, 100, 26, 'READY', 14, cb.onReady, 0x2f6b3a);
 
     this.goldText = txt(scene, 10, 38, '', 14, COLORS.gold);
-    this.mythText = txt(scene, 120, 38, '', 14, COLORS.mythium);
+    this.mythText = txt(scene, 108, 38, '', 14, COLORS.mythium);
     this.incomeText = txt(scene, 240, 38, '', 14, COLORS.income);
-    this.workerBtn = new UIButton(scene, 460, 47, 140, 22, '', 12, cb.onBuyWorker, 0x33305a);
+    // Hint on what mythium/workers are for — the mechanic is otherwise unexplained.
+    txt(scene, 108, 54, '◆ = Söldner senden', 9, COLORS.textDim).setAlpha(0.8);
+    this.workerBtn = new UIButton(scene, 442, 47, 176, 26, '', 12, cb.onBuyWorker, 0x33305a);
 
     // King HP bars.
     txt(scene, 10, 64, '♛ YOU', 11, COLORS.textDim);
@@ -65,7 +67,7 @@ export class TopBar {
     this.goldText.setText(`g ${Math.floor(human.gold)}`);
     this.mythText.setText(`◆ ${Math.floor(human.mythium)}`);
     this.incomeText.setText(`↑ ${human.income}`);
-    this.workerBtn.setText(`⚒ ${human.workers}  +${CFG.workerCost}g`);
+    this.workerBtn.setText(`⚒ Arbeiter kaufen · ${CFG.workerCost}g  (${human.workers})`);
     this.workerBtn.setEnabled(state.phase === 'build' && human.gold >= CFG.workerCost);
     this.readyBtn.setEnabled(state.phase === 'build');
     this.readyBtn.container.setVisible(state.phase === 'build');

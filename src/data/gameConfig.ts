@@ -20,7 +20,7 @@ export const CFG = {
   maxBattleDuration: 90,
   maxWaves: 10,
 
-  startGold: 100,
+  startGold: 120,
   startWorkers: 1,
   startIncome: 0,
   startMythium: 0,
