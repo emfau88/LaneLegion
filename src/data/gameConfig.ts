@@ -18,7 +18,7 @@ export const CFG = {
   tickRate: 20,
   buildDuration: 30,
   maxBattleDuration: 90,
-  maxWaves: 10,
+  maxWaves: 15,
 
   startGold: 120,
   startWorkers: 1,
@@ -36,8 +36,8 @@ export const CFG = {
   kingDamageGoldRate: 0.01,
 
   king: {
-    hp1v1: 5000,
-    hp2v2: 8000,
+    hp1v1: 6500,
+    hp2v2: 10500,
     damage: 55,
     attackSpeed: 0.9,
     range: 2.4,

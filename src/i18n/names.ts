@@ -118,6 +118,15 @@ const CREEP_DE: Record<string, string> = {
   swarmling: 'Schwärmling',
   dread_cultist: 'Schreckenskultist',
   dread_colossus: 'Schreckenskoloss',
+  arcane_wisp: 'Arkangeist',
+  warpack_bruiser: 'Kriegstrupp-Schläger',
+  field_mender: 'Feldscher',
+  sapper: 'Sappeur',
+  stormling: 'Sturmling',
+  thunder_brute: 'Donnerbrecher',
+  void_cultist: 'Leerenkultist',
+  void_mender: 'Leerenheiler',
+  void_lord: 'Leerenfürst',
   crawler: 'Krabbler',
   brute: 'Rohling',
   saboteur: 'Saboteur',
@@ -146,7 +155,12 @@ const WAVE_DE: Record<number, [string, string, string]> = {
   7: ['Eisenpanzer', 'Schwere Panzerung. Wucht und Magie glänzen, Stich versagt.', 'Gepanzerte Gegner'],
   8: ['Verwüster', 'Fernkampf und bösartig. Du brauchst echte Tanks und Support.', 'Hoher Schaden'],
   9: ['Endloser Schwarm', 'Eine Flut aus Körpern. Fläche und Ausdauer gewinnen hier.', 'Viele schwache Gegner'],
-  10: ['Schreckenskoloss', 'Der Endboss. Alles, was du hast — jetzt.', 'Boss-Welle']
+  10: ['Schreckenskoloss', 'Massiver Boss mit Flächenschaden. Hier beginnt das Endspiel.', 'Boss-Welle'],
+  11: ['Arkangeister', 'Schnelle Magie-Geister. Arkanrüstung steckt Wucht-Schaden locker weg.', 'Magische Gegner'],
+  12: ['Kriegstrupp', 'Feldscher heilen die Meute ständig. Fokus- und Flächenschaden schlagen durch.', 'Heiler-Welle'],
+  13: ['Sappeure', 'Ihre Treffer verlangsamen dein Angriffstempo. Viele Angreifer schlagen wenige.', 'Verlangsamer'],
+  14: ['Doppelsturm', 'Erst der Schwarm, dann die Brocken. Nur ausgewogene Boards halten beides.', 'Gemischte Gegner'],
+  15: ['Leerenfürst', 'Der wahre Endboss. Erledige zuerst die Heiler.', 'Boss-Welle']
 };
 
 export const waveName = (w: WaveDefinition): string =>

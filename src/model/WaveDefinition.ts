@@ -3,6 +3,8 @@ import type { CreepStats } from './UnitDefinition';
 export interface WaveGroup {
   stats: CreepStats;
   count: number;
+  /** Extra seconds before this group starts spawning (two-phase waves). */
+  delay?: number;
 }
 
 export interface WaveDefinition {

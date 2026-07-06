@@ -142,7 +142,105 @@ export const WAVES: WaveDefinition[] = [
     ],
     goldRewardTotal: 180,
     recommendedFighterValue: 950,
-    shortHint: 'The final boss. Everything you have, now.',
+    shortHint: 'Massive boss with splash damage. The endgame starts here.',
+    warning: 'Boss wave'
+  },
+  {
+    waveNumber: 11,
+    name: 'Arcane Wisps',
+    groups: [
+      {
+        stats: c('Arcane Wisp', 210, 24, 1.5, 'magic', 'arcane', { attackRange: 1.4 }),
+        count: 14
+      }
+    ],
+    goldRewardTotal: 200,
+    recommendedFighterValue: 1090,
+    shortHint: 'Fast magic wisps. Arcane armor shrugs off impact damage.',
+    warning: 'Magic enemies'
+  },
+  {
+    waveNumber: 12,
+    name: 'Warpack',
+    groups: [
+      {
+        stats: c('Warpack Bruiser', 560, 30, 1.0, 'impact', 'armored', { collisionRadius: 0.34 }),
+        count: 6
+      },
+      {
+        stats: c('Field Mender', 260, 12, 1.0, 'magic', 'arcane', {
+          attackRange: 2.0,
+          passive: { kind: 'healPulse', radius: 2.4, amount: 60, interval: 1.5 }
+        }),
+        count: 3
+      }
+    ],
+    goldRewardTotal: 225,
+    recommendedFighterValue: 1240,
+    shortHint: 'Menders keep healing the pack. Focus fire and splash cut through.',
+    warning: 'Healer wave'
+  },
+  {
+    waveNumber: 13,
+    name: 'Sappers',
+    groups: [
+      {
+        stats: c('Sapper', 440, 34, 1.1, 'impact', 'armored', {
+          collisionRadius: 0.32,
+          passive: { kind: 'onHitSlow', pct: 0.08, duration: 2.5, maxStacks: 3 }
+        }),
+        count: 9
+      }
+    ],
+    goldRewardTotal: 250,
+    recommendedFighterValue: 1390,
+    shortHint: 'Their hits slow your attack speed. Many attackers beat few.',
+    warning: 'Slowing enemies'
+  },
+  {
+    waveNumber: 14,
+    name: 'Twin Storm',
+    groups: [
+      { stats: c('Stormling', 140, 16, 1.5, 'pierce', 'light'), count: 20 },
+      {
+        stats: c('Thunder Brute', 1150, 48, 0.85, 'impact', 'massive', {
+          collisionRadius: 0.4,
+          attackSpeed: 0.8
+        }),
+        count: 4,
+        delay: 4
+      }
+    ],
+    goldRewardTotal: 280,
+    recommendedFighterValue: 1550,
+    shortHint: 'First the swarm, then the bruisers. Balanced boards hold both.',
+    warning: 'Mixed enemies'
+  },
+  {
+    waveNumber: 15,
+    name: 'Void Lord',
+    groups: [
+      { stats: c('Void Cultist', 240, 20, 1.2, 'magic', 'arcane'), count: 8 },
+      {
+        stats: c('Void Mender', 380, 14, 1.0, 'magic', 'arcane', {
+          attackRange: 2.2,
+          passive: { kind: 'healPulse', radius: 2.6, amount: 120, interval: 2.0 }
+        }),
+        count: 2
+      },
+      {
+        stats: c('Void Lord', 7200, 115, 0.65, 'impact', 'massive', {
+          collisionRadius: 0.55,
+          attackSpeed: 0.7,
+          splash: { radius: 1.0, pct: 0.5 }
+        }),
+        count: 1,
+        delay: 2
+      }
+    ],
+    goldRewardTotal: 330,
+    recommendedFighterValue: 1720,
+    shortHint: 'The true final boss. Kill the menders first.',
     warning: 'Boss wave'
   }
 ];

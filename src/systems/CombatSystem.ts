@@ -99,8 +99,9 @@ const tickHealPulse = (state: GameState, u: CombatUnit): void => {
   if (!u.passive || u.passive.kind !== 'healPulse') return;
   if (state.time < u.nextPassiveAt) return;
   const p = u.passive;
+  // Heal same-kind allies: shamans heal fighters, healer creeps heal creeps.
   const allies = livingAlliesInZone(state, u.zoneId, u.teamId).filter(
-    (a) => a.kind === 'fighter' && a.hp < a.maxHp && dist(u.pos, a.pos) <= p.radius
+    (a) => a.kind === u.kind && a.hp < a.maxHp && dist(u.pos, a.pos) <= p.radius
   );
   if (allies.length === 0) return;
   allies.sort((a, b) => a.hp / a.maxHp - b.hp / b.maxHp);

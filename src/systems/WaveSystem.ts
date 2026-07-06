@@ -70,6 +70,7 @@ export const startBattle = (state: GameState): void => {
     let t = 0;
     let i = 0;
     for (const group of wave.groups) {
+      t += group.delay ?? 0;
       for (let k = 0; k < group.count; k++) {
         queue.push({
           at: t,
