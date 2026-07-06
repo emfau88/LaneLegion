@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="396" height="590" viewBox="0 0 396 590">
+  <defs>
+    <linearGradient id="stone" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#262d39"/>
+      <stop offset="0.48" stop-color="#303b39"/>
+      <stop offset="1" stop-color="#202634"/>
+    </linearGradient>
+    <linearGradient id="build" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#304035"/>
+      <stop offset="1" stop-color="#243227"/>
+    </linearGradient>
+    <linearGradient id="arena" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#29313b"/>
+      <stop offset="0.5" stop-color="#363d3d"/>
+      <stop offset="1" stop-color="#202632"/>
+    </linearGradient>
+    <filter id="rough" x="-5%" y="-5%" width="110%" height="110%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.045" numOctaves="3" seed="18"/>
+      <feColorMatrix type="saturate" values="0"/>
+      <feComponentTransfer>
+        <feFuncA type="table" tableValues="0 0.18"/>
+      </feComponentTransfer>
+    </filter>
+    <pattern id="stoneSpecks" width="66" height="51" patternUnits="userSpaceOnUse">
+      <path d="M4 8h22v12H4zM31 5h28v17H31zM11 26h31v18H11zM47 28h15v15H47z" fill="none" stroke="#56616a" stroke-opacity="0.16" stroke-width="1"/>
+      <path d="M7 47h18M39 24h20M2 23h10" stroke="#151922" stroke-opacity="0.28" stroke-width="1"/>
+    </pattern>
+  </defs>
+
+  <rect x="0" y="0" width="396" height="590" fill="#0c0f1a"/>
+
+  <!-- Exact 6 x 10 lane footprint: 396 x 510. -->
+  <rect x="0" y="0" width="396" height="510" fill="url(#stone)"/>
+  <rect x="0" y="0" width="396" height="510" fill="#ffffff" filter="url(#rough)" opacity="0.28"/>
+  <rect x="0" y="0" width="396" height="510" fill="url(#stoneSpecks)" opacity="0.85"/>
+
+  <!-- Gameplay rows, matching CFG.grid exactly. -->
+  <rect x="0" y="0" width="396" height="51" fill="#45222c" opacity="0.38"/>
+  <rect x="0" y="51" width="396" height="153" fill="#222a37" opacity="0.3"/>
+  <rect x="0" y="204" width="396" height="255" fill="url(#build)" opacity="0.68"/>
+  <rect x="0" y="459" width="396" height="51" fill="#4b2630" opacity="0.42"/>
+
+  <!-- Row separators align with the code grid but stay subtle under the Phaser grid overlay. -->
+  <g stroke="#6f7b83" stroke-opacity="0.12" stroke-width="1">
+    <path d="M0 51h396M0 102h396M0 153h396M0 204h396M0 255h396M0 306h396M0 357h396M0 408h396M0 459h396"/>
+    <path d="M66 0v510M132 0v510M198 0v510M264 0v510M330 0v510"/>
+  </g>
+
+  <!-- Exact buildable area callout: rows 4-8, cols 0-5. -->
+  <rect x="4" y="208" width="388" height="247" fill="none" stroke="#6fae72" stroke-opacity="0.28" stroke-width="2"/>
+  <path d="M8 212h32M8 212v32M388 212h-32M388 212v32M8 451h32M8 451v-32M388 451h-32M388 451v-32" fill="none" stroke="#9dcf9e" stroke-opacity="0.35" stroke-width="2"/>
+
+  <!-- Simple board frame; it marks the playable rectangle without stealing cell space. -->
+  <rect x="1.5" y="1.5" width="393" height="507" fill="none" stroke="#293958" stroke-width="3"/>
+  <rect x="8" y="8" width="380" height="494" fill="none" stroke="#0e121b" stroke-opacity="0.55" stroke-width="2"/>
+
+  <!-- Top spawn and bottom leak gates align to row 0 and row 9. -->
+  <rect x="88" y="8" width="220" height="31" rx="4" fill="#241820" stroke="#793a45" stroke-opacity="0.55"/>
+  <path d="M98 39h200" stroke="#b34a56" stroke-opacity="0.42" stroke-width="2"/>
+  <rect x="88" y="471" width="220" height="28" rx="4" fill="#251821" stroke="#873d49" stroke-opacity="0.58"/>
+  <path d="M98 471h200" stroke="#d15b62" stroke-opacity="0.36" stroke-width="2"/>
+
+  <!-- Small neutral gap between lane and king arena, matching layout y=646..652. -->
+  <rect x="0" y="510" width="396" height="6" fill="#0c0f1a"/>
+
+  <!-- Exact king arena footprint: 396 x 74. -->
+  <rect x="0" y="516" width="396" height="74" fill="url(#arena)"/>
+  <rect x="1.5" y="517.5" width="393" height="71" fill="none" stroke="#735f2e" stroke-width="3"/>
+  <rect x="17" y="530" width="362" height="47" rx="4" fill="#2b3338" stroke="#4d5963" stroke-opacity="0.55"/>
+  <ellipse cx="198" cy="553" rx="54" ry="18" fill="none" stroke="#a99556" stroke-opacity="0.32" stroke-width="2"/>
+  <path d="M28 553h128M240 553h128M198 532v42" stroke="#88919a" stroke-opacity="0.18"/>
+  <circle cx="40" cy="553" r="9" fill="#d09138" opacity="0.45"/>
+  <circle cx="356" cy="553" r="9" fill="#d09138" opacity="0.45"/>
+  <rect x="170" y="568" width="56" height="14" rx="2" fill="#1d2532" stroke="#776234" stroke-opacity="0.55"/>
+</svg>

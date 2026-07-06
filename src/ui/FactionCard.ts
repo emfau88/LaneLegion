@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { fighterSpriteKey } from '../assets/unitSprites';
 import type { FactionDefinition } from '../model/FactionDefinition';
 import { fighterById } from '../data/fighters';
 import { COLORS, ROLE_LETTER, txt } from './theme';
@@ -47,8 +48,13 @@ export class FactionCard {
       const row = Math.floor(i / 3);
       const cx = 42 + col * 86;
       const cy = 236 + row * 42;
-      items.push(scene.add.circle(cx, cy, 13, faction.color).setStrokeStyle(1, 0xffffff, 0.5));
-      items.push(txt(scene, cx, cy, ROLE_LETTER[def.role], 12, '#101319').setOrigin(0.5).setFontStyle('bold'));
+      const spriteKey = fighterSpriteKey(fid);
+      if (spriteKey) {
+        items.push(scene.add.image(cx, cy, spriteKey).setDisplaySize(31, 31));
+      } else {
+        items.push(scene.add.circle(cx, cy, 13, faction.color).setStrokeStyle(1, 0xffffff, 0.5));
+        items.push(txt(scene, cx, cy, ROLE_LETTER[def.role], 12, '#101319').setOrigin(0.5).setFontStyle('bold'));
+      }
       items.push(txt(scene, cx, cy + 16, `${def.tiers[0].cost}g`, 9, COLORS.textDim).setOrigin(0.5, 0));
     });
 

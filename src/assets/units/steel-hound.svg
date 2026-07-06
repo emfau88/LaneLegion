@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <ellipse cx="32" cy="51" rx="22" ry="7" fill="#05070b" opacity="0.35"/>
+  <path d="M15 38l7-13h22l7 13-8 10H23z" fill="#5e748d" stroke="#172130" stroke-width="3"/>
+  <path d="M21 25l-5-11 11 5M43 25l5-11-11 5" fill="#8399b2" stroke="#172130" stroke-width="3"/>
+  <path d="M24 39h16" stroke="#d7b957" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="25" cy="31" r="3" fill="#9fd5ff"/>
+  <circle cx="39" cy="31" r="3" fill="#9fd5ff"/>
+  <path d="M13 46l-7 7M51 46l7 7" stroke="#8399b2" stroke-width="4" stroke-linecap="round"/>
+</svg>

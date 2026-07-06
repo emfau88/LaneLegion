@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { fighterSpriteKey } from '../assets/unitSprites';
 import type { FighterDefinition } from '../model/UnitDefinition';
 import type { GameState } from '../model/GameState';
 import { ARM_LABEL, ATK_LABEL, COLORS, ROLE_LABEL, txt } from './theme';
@@ -42,6 +43,13 @@ export class FighterCard {
       '#b8c4de'
     );
     const stats = txt(scene, 8, 62, `${t.hp} HP  ${t.damage} DMG`, 11, COLORS.textDim);
+    const spriteKey = fighterSpriteKey(def.id);
+    const icon = spriteKey
+      ? scene.add
+          .image(CARD_W - 30, 43, spriteKey)
+          .setDisplaySize(34, 34)
+          .setAlpha(0.92)
+      : null;
 
     const infoBg = scene.add
       .rectangle(CARD_W - 4, CARD_H - 4, 28, 24, 0x1a2030)
@@ -57,7 +65,11 @@ export class FighterCard {
     );
     const infoTxt = txt(scene, CARD_W - 18, CARD_H - 16, 'i', 12, '#8fb7f0').setOrigin(0.5);
 
-    this.container = scene.add.container(x, y, [this.bg, name, cost, role, types, stats, infoBg, infoTxt]);
+    this.container = scene.add.container(
+      x,
+      y,
+      [this.bg, name, cost, role, types, stats, ...(icon ? [icon] : []), infoBg, infoTxt]
+    );
   }
 
   update(state: GameState, selectedDefId: string | null): void {

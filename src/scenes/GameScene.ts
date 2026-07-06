@@ -1,11 +1,14 @@
 import Phaser from 'phaser';
+import { SUPPORT_EFFECT_SPRITES, hitEffectKey } from '../assets/effectSprites';
+import { fighterSpriteKey } from '../assets/unitSprites';
+import { waveSpriteKey } from '../assets/waveSprites';
 import { CFG } from '../data/gameConfig';
 import { factionById } from '../data/factions';
 import { fighterById } from '../data/fighters';
 import { Simulation } from '../core/Simulation';
 import { arenaZoneId, type GameSetup } from '../model/GameState';
 import type { CombatUnit } from '../model/CombatUnit';
-import type { GameEvent } from '../model/Types';
+import type { AttackType, GameEvent } from '../model/Types';
 import { isCellFree } from '../systems/PlacementSystem';
 import { TopBar } from '../ui/TopBar';
 import { LaneStatusCards } from '../ui/LaneStatusCards';
@@ -15,7 +18,7 @@ import { ARM_LABEL, ATK_LABEL, COLORS, ROLE_LABEL, ROLE_LETTER, txt, UIButton } 
 
 interface UnitView {
   root: Phaser.GameObjects.Container;
-  body: Phaser.GameObjects.Shape;
+  body: Phaser.GameObjects.GameObject;
   hpBar: Phaser.GameObjects.Rectangle;
   hpBarW: number;
   tier: number;
@@ -100,18 +103,25 @@ export class GameScene extends Phaser.Scene {
   // ---------- static rendering ----------
 
   private drawStaticLane(): void {
+    const laneArenaTop = L.lane.top;
+    const laneArenaH = L.arena.top + L.arena.h - laneArenaTop;
+    this.add
+      .image(L.lane.left, laneArenaTop, 'lane-arena-board')
+      .setOrigin(0)
+      .setDisplaySize(L.lane.w, laneArenaH);
+
     const g = this.add.graphics();
     const { left, top, cellW, cellH } = L.lane;
     const w = L.lane.w;
-    const rowRect = (row: number, count: number, color: number) =>
-      g.fillStyle(color, 1).fillRect(left, top + row * cellH, w, cellH * count);
+    const rowRect = (row: number, count: number, color: number, alpha: number) =>
+      g.fillStyle(color, alpha).fillRect(left, top + row * cellH, w, cellH * count);
 
-    rowRect(0, 1, COLORS.spawnZone);
-    rowRect(1, 3, COLORS.approachZone);
-    rowRect(CFG.grid.buildRowStart, CFG.grid.buildRowEnd - CFG.grid.buildRowStart + 1, COLORS.buildZone);
-    rowRect(CFG.grid.rows - 1, 1, COLORS.leakZone);
+    rowRect(0, 1, COLORS.spawnZone, 0.22);
+    rowRect(1, 3, COLORS.approachZone, 0.08);
+    rowRect(CFG.grid.buildRowStart, CFG.grid.buildRowEnd - CFG.grid.buildRowStart + 1, COLORS.buildZone, 0.14);
+    rowRect(CFG.grid.rows - 1, 1, COLORS.leakZone, 0.18);
 
-    g.lineStyle(1, COLORS.gridLine, 0.55);
+    g.lineStyle(1, COLORS.gridLine, 0.42);
     for (let c = 0; c <= CFG.grid.cols; c++) {
       g.lineBetween(left + c * cellW, top, left + c * cellW, top + L.lane.h);
     }
@@ -130,13 +140,15 @@ export class GameScene extends Phaser.Scene {
 
     // King arena strip.
     const a = L.arena;
-    this.add.rectangle(a.left, a.top, a.w, a.h, 0x1c1f30).setOrigin(0).setStrokeStyle(2, 0x5a5330);
+    this.add.rectangle(a.left, a.top, a.w, a.h, 0x1c1f30, 0.12).setOrigin(0).setStrokeStyle(2, 0x5a5330);
     txt(this, a.left + 6, a.top + 4, '♛ KING ARENA — leaks land here', 10, '#c9b76a').setAlpha(0.9);
   }
 
   private createLaneInput(): void {
+    const buildTop = L.lane.top + CFG.grid.buildRowStart * L.lane.cellH;
+    const buildH = (CFG.grid.buildRowEnd - CFG.grid.buildRowStart + 1) * L.lane.cellH;
     const rect = this.add
-      .rectangle(L.lane.left, L.lane.top, L.lane.w, L.lane.h, 0xffffff, 0.001)
+      .rectangle(L.lane.left, buildTop, L.lane.w, buildH, 0xffffff, 0.001)
       .setOrigin(0)
       .setDepth(DEPTH_LANE_INPUT)
       .setInteractive();
@@ -155,7 +167,7 @@ export class GameScene extends Phaser.Scene {
     const isLane = u.zoneId === this.humanLaneId();
     const sp = isLane ? laneToScreen(u.pos) : arenaToScreen(u.pos);
     const root = this.add.container(sp.x, sp.y).setDepth(DEPTH_UNITS);
-    let body: Phaser.GameObjects.Shape;
+    let body: Phaser.GameObjects.GameObject;
     let radius = 12;
     let hpBarW = 26;
 
@@ -167,26 +179,47 @@ export class GameScene extends Phaser.Scene {
       root.add(txt(this, 0, 0, '♛', 18, '#3a2f10').setOrigin(0.5));
     } else if (u.kind === 'fighter') {
       const faction = factionById(u.factionId ?? 'ironclad');
-      radius = u.tier === 1 ? 14 : 12;
-      body = this.add.circle(0, 0, radius, faction.color);
-      if (u.tier === 1) (body as Phaser.GameObjects.Arc).setStrokeStyle(2.5, 0xf5c542);
-      else (body as Phaser.GameObjects.Arc).setStrokeStyle(1.5, 0xffffff, 0.4);
-      root.add(body);
-      root.add(
-        txt(this, 0, 0, ROLE_LETTER[u.role], 12, '#101319').setOrigin(0.5).setFontStyle('bold')
-      );
+      const spriteKey = fighterSpriteKey(u.defId);
+      radius = u.tier === 1 ? 16 : 14;
+      root.add(this.add.ellipse(0, radius - 2, radius * 1.55, 7, 0x05070b, 0.32));
+      if (spriteKey) {
+        if (u.tier === 1) {
+          root.add(this.add.circle(0, 0, radius + 3, 0xf5c542, 0.18).setStrokeStyle(2, 0xf5c542, 0.75));
+        }
+        body = this.add.image(0, 0, spriteKey).setDisplaySize(radius * 2.55, radius * 2.55);
+        root.add(body);
+      } else {
+        body = this.add.circle(0, 0, radius, faction.color);
+        if (u.tier === 1) (body as Phaser.GameObjects.Arc).setStrokeStyle(2.5, 0xf5c542);
+        else (body as Phaser.GameObjects.Arc).setStrokeStyle(1.5, 0xffffff, 0.4);
+        root.add(body);
+        root.add(
+          txt(this, 0, 0, ROLE_LETTER[u.role], 12, '#101319').setOrigin(0.5).setFontStyle('bold')
+        );
+      }
       body.setInteractive();
       body.on('pointerdown', (_p: Phaser.Input.Pointer, _x: number, _y: number, ev: Phaser.Types.Input.EventData) => {
         ev.stopPropagation();
         this.onFighterTap(u.id);
       });
     } else {
-      radius = Math.min(15, Math.max(7, u.collisionRadius * 28));
-      hpBarW = Math.max(18, radius * 1.8);
-      body = this.add.circle(0, 0, radius, COLORS.hostile).setStrokeStyle(1.5, COLORS.hostileDark);
-      root.add(body);
-      if (radius >= 12) {
-        root.add(txt(this, 0, 0, u.name.charAt(0), 11, '#2a0f10').setOrigin(0.5).setFontStyle('bold'));
+      const spriteKey = waveSpriteKey(u.defId);
+      radius = Math.min(17, Math.max(8, u.collisionRadius * 33));
+      hpBarW = Math.max(20, radius * 2.1);
+      root.add(this.add.ellipse(0, radius - 2, radius * 1.6, 7, 0x05070b, 0.28));
+      if (spriteKey) {
+        const spriteSize = Math.max(30, radius * 3.15);
+        if (u.maxHp >= 1000) {
+          root.add(this.add.circle(0, 0, radius + 5, COLORS.hostile, 0.18).setStrokeStyle(2, COLORS.hostile, 0.65));
+        }
+        body = this.add.image(0, 0, spriteKey).setDisplaySize(spriteSize, spriteSize);
+        root.add(body);
+      } else {
+        body = this.add.circle(0, 0, radius, COLORS.hostile).setStrokeStyle(1.5, COLORS.hostileDark);
+        root.add(body);
+        if (radius >= 12) {
+          root.add(txt(this, 0, 0, u.name.charAt(0), 11, '#2a0f10').setOrigin(0.5).setFontStyle('bold'));
+        }
       }
     }
 
@@ -435,29 +468,62 @@ export class GameScene extends Phaser.Scene {
     return zoneId === this.humanLaneId() ? laneToScreen(pos) : arenaToScreen(pos);
   }
 
+  private projectileColor(attackType: AttackType): number {
+    switch (attackType) {
+      case 'magic':
+        return 0x9ad0ff;
+      case 'pierce':
+        return 0xe8e0a0;
+      case 'pure':
+        return 0xfff0a0;
+      case 'impact':
+      default:
+        return 0xd8d8d8;
+    }
+  }
+
+  private playEffectSprite(key: string, x: number, y: number, size: number, duration = 230): void {
+    const fx = this.add.image(x, y, key).setDisplaySize(size, size).setDepth(DEPTH_FX).setAlpha(0.95);
+    const targetScaleX = fx.scaleX;
+    const targetScaleY = fx.scaleY;
+    fx.setScale(targetScaleX * 0.72, targetScaleY * 0.72);
+    this.tweens.add({
+      targets: fx,
+      scaleX: targetScaleX * 1.12,
+      scaleY: targetScaleY * 1.12,
+      alpha: 0,
+      duration,
+      ease: 'Quad.easeOut',
+      onComplete: () => fx.destroy()
+    });
+  }
+
   private handleEvents(events: GameEvent[]): void {
     for (const ev of events) {
       switch (ev.type) {
         case 'attack': {
           if (!this.zoneVisible(ev.zoneId)) break;
+          const to = this.screenOf(ev.zoneId, ev.toPos);
+          const playHit = () => this.playEffectSprite(hitEffectKey(ev.attackType), to.x, to.y, 34);
           if (ev.ranged) {
             const from = this.screenOf(ev.zoneId, ev.fromPos);
-            const to = this.screenOf(ev.zoneId, ev.toPos);
-            const color =
-              ev.attackType === 'magic' ? 0x9ad0ff : ev.attackType === 'pierce' ? 0xe8e0a0 : 0xd8d8d8;
-            const proj = this.add.circle(from.x, from.y, 3.5, color).setDepth(DEPTH_FX);
+            const proj = this.add.circle(from.x, from.y, 3.5, this.projectileColor(ev.attackType)).setDepth(DEPTH_FX);
             this.tweens.add({
               targets: proj,
               x: to.x,
               y: to.y,
               duration: 130,
-              onComplete: () => proj.destroy()
+              onComplete: () => {
+                proj.destroy();
+                playHit();
+              }
             });
           } else {
             const view = this.views.get(ev.fromId);
             if (view) {
               this.tweens.add({ targets: view.root, scale: 1.22, duration: 70, yoyo: true });
             }
+            playHit();
           }
           break;
         }
@@ -512,6 +578,7 @@ export class GameScene extends Phaser.Scene {
         case 'heal': {
           if (!this.zoneVisible(ev.zoneId)) break;
           const sp = this.screenOf(ev.zoneId, ev.pos);
+          this.playEffectSprite(SUPPORT_EFFECT_SPRITES.heal.key, sp.x, sp.y, 38, 360);
           this.floatText(sp.x, sp.y - 14, '+', COLORS.ok);
           break;
         }
