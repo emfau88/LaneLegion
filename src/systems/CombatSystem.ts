@@ -17,7 +17,7 @@ const killUnit = (state: GameState, u: CombatUnit): void => {
   if (u.kind === 'king' && state.phase !== 'ended') {
     state.phase = 'ended';
     state.winnerTeamId = state.teamOrder.find((t) => t !== u.teamId) ?? null;
-    state.winReason = 'King destroyed';
+    state.winReason = 'kingDestroyed';
   }
 };
 

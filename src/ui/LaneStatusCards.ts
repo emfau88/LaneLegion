@@ -2,6 +2,8 @@ import Phaser from 'phaser';
 import type { GameState } from '../model/GameState';
 import type { LaneDisplayStatus } from '../model/Types';
 import { otherPlayersLaneStatus } from '../core/util';
+import { t, type StringKey } from '../i18n/i18n';
+import { playerName } from '../i18n/names';
 import { L } from './layout';
 import { COLORS, txt } from './theme';
 
@@ -28,11 +30,11 @@ export class LaneStatusCards {
         .setStrokeStyle(1, COLORS.panelStroke)
         .setInteractive({ useHandCursor: true });
       bg.on('pointerdown', () => onPeek(pid));
-      const label = txt(scene, x + w / 2, L.statusRow.y + 16, p.name, 11).setOrigin(0.5);
+      const label = txt(scene, x + w / 2, L.statusRow.y + 16, playerName(p), 11).setOrigin(0.5);
       this.chips.push({ pid, bg, label });
       x += w + 8;
     }
-    txt(scene, L.width - 8, L.statusRow.y + 16, 'tap to view', 10, COLORS.textDim).setOrigin(1, 0.5);
+    txt(scene, L.width - 8, L.statusRow.y + 16, t('lane.tapToView'), 10, COLORS.textDim).setOrigin(1, 0.5);
   }
 
   update(state: GameState): void {
@@ -40,7 +42,7 @@ export class LaneStatusCards {
       const p = state.players[chip.pid];
       const status = otherPlayersLaneStatus(state, chip.pid);
       chip.bg.setFillStyle(STATUS_COLOR[status]);
-      chip.label.setText(`${p.name}: ${status.charAt(0).toUpperCase() + status.slice(1)}`);
+      chip.label.setText(`${playerName(p)}: ${t(`status.${status}` as StringKey)}`);
     }
   }
 }

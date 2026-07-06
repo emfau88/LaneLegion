@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import type { Difficulty, GameMode } from '../model/Types';
+import { getLang, setLang, t, type StringKey } from '../i18n/i18n';
 import { COLORS, txt, UIButton } from '../ui/theme';
 import { L } from '../ui/layout';
 
@@ -15,9 +16,14 @@ export class MainMenuScene extends Phaser.Scene {
 
   create(): void {
     txt(this, L.width / 2, 150, 'LANE LEGION', 44, '#f0d080').setOrigin(0.5).setFontStyle('bold');
-    txt(this, L.width / 2, 205, 'Offline Lane Defense Autobattler', 14, COLORS.textDim).setOrigin(0.5);
+    txt(this, L.width / 2, 205, t('menu.subtitle'), 14, COLORS.textDim).setOrigin(0.5);
 
-    txt(this, L.width / 2, 300, 'Game Mode', 16).setOrigin(0.5);
+    new UIButton(this, L.width - 78, 30, 128, 32, t('menu.language'), 12, () => {
+      setLang(getLang() === 'de' ? 'en' : 'de');
+      this.scene.restart();
+    });
+
+    txt(this, L.width / 2, 300, t('menu.gameMode'), 16).setOrigin(0.5);
     (['1v1', '2v2'] as GameMode[]).forEach((mode, i) => {
       const btn = new UIButton(
         this,
@@ -31,9 +37,9 @@ export class MainMenuScene extends Phaser.Scene {
       );
       this.modeBtns[mode] = btn;
     });
-    txt(this, L.width / 2, 415, 'In 2v2 an AI ally fights beside you. Teams share a king.', 11, COLORS.textDim).setOrigin(0.5);
+    txt(this, L.width / 2, 415, t('menu.hint2v2'), 11, COLORS.textDim).setOrigin(0.5);
 
-    txt(this, L.width / 2, 490, 'AI Difficulty', 16).setOrigin(0.5);
+    txt(this, L.width / 2, 490, t('menu.difficulty'), 16).setOrigin(0.5);
     (['easy', 'normal', 'hard'] as Difficulty[]).forEach((d, i) => {
       const btn = new UIButton(
         this,
@@ -41,18 +47,18 @@ export class MainMenuScene extends Phaser.Scene {
         545,
         118,
         46,
-        d.charAt(0).toUpperCase() + d.slice(1),
+        t(`diff.${d}` as StringKey),
         15,
         () => this.setDifficulty(d)
       );
       this.diffBtns[d] = btn;
     });
 
-    new UIButton(this, L.width / 2, 700, 260, 66, 'CHOOSE FACTION ▶', 18, () => {
+    new UIButton(this, L.width / 2, 700, 260, 66, t('menu.chooseFaction'), 18, () => {
       this.scene.start('FactionSelect', { mode: this.mode, difficulty: this.difficulty });
     }, 0x2f6b3a);
 
-    txt(this, L.width / 2, 900, 'Fully offline • no accounts • no network', 11, COLORS.textDim).setOrigin(0.5);
+    txt(this, L.width / 2, 900, t('menu.offline'), 11, COLORS.textDim).setOrigin(0.5);
 
     this.setMode(this.mode);
     this.setDifficulty(this.difficulty);

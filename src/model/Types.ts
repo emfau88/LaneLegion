@@ -8,6 +8,8 @@ export type LaneDisplayStatus = 'clear' | 'fighting' | 'leaking' | 'dead';
 export type UnitKind = 'fighter' | 'creep' | 'king';
 export type UnitBehaviorState = 'idle' | 'moving' | 'attacking' | 'dead';
 export type KingUpgradeType = 'attack' | 'regen' | 'spell';
+/** Why the match ended; translated by the UI layer. */
+export type WinReason = 'kingDestroyed' | 'moreKingHp' | 'higherValue' | '';
 
 export interface Vec2 {
   x: number;

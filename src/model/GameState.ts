@@ -3,7 +3,7 @@ import type { LaneState } from './LaneState';
 import type { PlayerState } from './PlayerState';
 import type { TeamState } from './TeamState';
 import type { CreepStats } from './UnitDefinition';
-import type { Difficulty, GameEvent, GameMode, Phase } from './Types';
+import type { Difficulty, GameEvent, GameMode, Phase, WinReason } from './Types';
 
 export interface GameSetup {
   mode: GameMode;
@@ -49,7 +49,7 @@ export interface GameState {
 
   battle: BattleState | null;
   winnerTeamId: string | null;
-  winReason: string;
+  winReason: WinReason;
 
   events: GameEvent[];
   rngState: number;

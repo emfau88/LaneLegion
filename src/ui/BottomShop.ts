@@ -4,6 +4,8 @@ import { fighterById } from '../data/fighters';
 import { MERCENARIES } from '../data/mercenaries';
 import type { GameState } from '../model/GameState';
 import type { KingUpgradeType } from '../model/Types';
+import { t } from '../i18n/i18n';
+import { mercName } from '../i18n/names';
 import { CARD_W, CARD_H, FighterCard } from './FighterCard';
 import { MERC_W, MercenaryCard } from './MercenaryCard';
 import { KingPanel } from './KingPanel';
@@ -62,10 +64,10 @@ export class BottomShop {
     this.buildRoot.add(bg);
 
     const tabs: { id: TabId; label: string }[] = [
-      { id: 'fighters', label: 'Fighters' },
-      { id: 'mercs', label: 'Mercs' },
-      { id: 'king', label: 'King' },
-      { id: 'info', label: 'Info' }
+      { id: 'fighters', label: t('tab.fighters') },
+      { id: 'mercs', label: t('tab.mercs') },
+      { id: 'king', label: t('tab.king') },
+      { id: 'info', label: t('tab.info') }
     ];
     this.tabButtons = {} as Record<TabId, UIButton>;
     tabs.forEach((tab, i) => {
@@ -139,7 +141,7 @@ export class BottomShop {
       .setStrokeStyle(1, COLORS.panelStroke)
       .setInteractive();
     this.battleRoot.add(bbg);
-    this.battleRoot.add(txt(scene, 8, 5, 'Queue sends for next wave:', 11, COLORS.textDim));
+    this.battleRoot.add(txt(scene, 8, 5, t('shop.queueTitle'), 11, COLORS.textDim));
     MERCENARIES.forEach((merc, i) => {
       const btn = new UIButton(
         scene,
@@ -147,7 +149,7 @@ export class BottomShop {
         40,
         100,
         32,
-        `${merc.name} ${merc.cost}◆`,
+        `${mercName(merc)} ${merc.cost}◆`,
         10,
         () => cb.onSendMerc(merc.id),
         0x33305a
@@ -195,9 +197,9 @@ export class BottomShop {
     const human = state.players[state.humanPlayerId];
     const queued =
       human.pendingSends.length === 0
-        ? 'No sends queued'
-        : `Queued: ${human.pendingSends.length} send${human.pendingSends.length > 1 ? 's' : ''}`;
-    const autoLabel = `Auto-Send: ${human.autoSend ? 'ON' : 'OFF'}`;
+        ? t('shop.noSends')
+        : t('shop.queued', { n: human.pendingSends.length });
+    const autoLabel = t('shop.autoSend', { state: t(human.autoSend ? 'common.on' : 'common.off') });
 
     if (this.mode === 'build') {
       for (const card of this.fighterCards) card.update(state, this.selectedFighter);

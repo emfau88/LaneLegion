@@ -1,4 +1,6 @@
 import Phaser from 'phaser';
+import { t, type StringKey } from '../i18n/i18n';
+import type { Role } from '../model/Types';
 
 export const COLORS = {
   bg: 0x0c0f1a,
@@ -39,13 +41,7 @@ export const ARM_LABEL: Record<string, string> = {
   arcane: 'ARC',
   massive: 'MAS'
 };
-export const ROLE_LABEL: Record<string, string> = {
-  tank: 'Tank',
-  melee: 'Melee',
-  ranged: 'Ranged',
-  aoe: 'AOE',
-  support: 'Support'
-};
+export const roleLabel = (role: Role): string => t(`role.${role}` as StringKey);
 export const ROLE_LETTER: Record<string, string> = {
   tank: 'T',
   melee: 'M',

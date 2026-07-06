@@ -51,13 +51,13 @@ const resolveMatchEnd = (state: GameState): void => {
   state.phase = 'ended';
   if (Math.abs(hp1 - hp2) > 0.5) {
     state.winnerTeamId = hp1 > hp2 ? t1 : t2;
-    state.winReason = 'More king HP after the final wave';
+    state.winReason = 'moreKingHp';
     return;
   }
   const v1 = state.teams[t1].playerIds.reduce((s, pid) => s + playerFighterValue(state, pid), 0);
   const v2 = state.teams[t2].playerIds.reduce((s, pid) => s + playerFighterValue(state, pid), 0);
   state.winnerTeamId = v1 >= v2 ? t1 : t2;
-  state.winReason = 'Higher total fighter value';
+  state.winReason = 'higherValue';
 };
 
 const endBattlePhase = (state: GameState): void => {

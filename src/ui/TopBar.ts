@@ -3,6 +3,7 @@ import { CFG } from '../data/gameConfig';
 import type { GameState } from '../model/GameState';
 import { kingOf } from '../systems/KingSystem';
 import { enemyTeamOf } from '../core/util';
+import { t } from '../i18n/i18n';
 import { L } from './layout';
 import { COLORS, panel, txt, UIButton } from './theme';
 
@@ -30,23 +31,23 @@ export class TopBar {
     panel(scene, 0, 0, L.topBar.w, L.topBar.h, COLORS.panel);
 
     this.waveText = txt(scene, 10, 8, '', 14);
-    this.readyBtn = new UIButton(scene, 480, 17, 100, 26, 'READY', 14, cb.onReady, 0x2f6b3a);
+    this.readyBtn = new UIButton(scene, 480, 17, 100, 26, t('topbar.ready'), 14, cb.onReady, 0x2f6b3a);
 
     this.goldText = txt(scene, 10, 38, '', 14, COLORS.gold);
     this.mythText = txt(scene, 108, 38, '', 14, COLORS.mythium);
     this.incomeText = txt(scene, 240, 38, '', 14, COLORS.income);
     // Hint on what mythium/workers are for — the mechanic is otherwise unexplained.
-    txt(scene, 108, 54, '◆ = Söldner senden', 9, COLORS.textDim).setAlpha(0.8);
+    txt(scene, 108, 54, t('topbar.mythHint'), 9, COLORS.textDim).setAlpha(0.8);
     this.workerBtn = new UIButton(scene, 442, 47, 176, 26, '', 12, cb.onBuyWorker, 0x33305a);
 
     // King HP bars.
-    txt(scene, 10, 64, '♛ YOU', 11, COLORS.textDim);
+    txt(scene, 10, 64, t('topbar.you'), 11, COLORS.textDim);
     scene.add.rectangle(10, 80, this.barW, 12, 0x11141f).setOrigin(0);
     this.ownKingBar = scene.add.rectangle(10, 80, this.barW, 12, 0x4caf50).setOrigin(0);
     this.ownManaBar = scene.add.rectangle(10, 93, this.barW, 3, 0x5fd4e0).setOrigin(0);
     this.ownKingText = txt(scene, 10 + this.barW / 2, 81, '', 10).setOrigin(0.5, 0);
 
-    txt(scene, 530, 64, 'ENEMY ♛', 11, COLORS.textDim).setOrigin(1, 0);
+    txt(scene, 530, 64, t('topbar.enemy'), 11, COLORS.textDim).setOrigin(1, 0);
     scene.add.rectangle(286, 80, this.barW, 12, 0x11141f).setOrigin(0);
     this.enemyKingBar = scene.add.rectangle(286, 80, this.barW, 12, 0xd9534f).setOrigin(0);
     this.enemyKingText = txt(scene, 286 + this.barW / 2, 81, '', 10).setOrigin(0.5, 0);
@@ -59,15 +60,16 @@ export class TopBar {
     const ss = Math.floor(remaining % 60)
       .toString()
       .padStart(2, '0');
-    const phaseName = state.phase === 'build' ? 'BUILD' : state.phase === 'battle' ? 'BATTLE' : 'END';
+    const phaseName =
+      state.phase === 'build' ? t('phase.build') : state.phase === 'battle' ? t('phase.battle') : t('phase.end');
     this.waveText.setText(
-      `Wave ${state.waveNumber}/${state.maxWaves}  •  ${phaseName}  ${state.phase === 'build' ? `${mm}:${ss}` : ''}`
+      `${t('topbar.wave', { n: state.waveNumber, max: state.maxWaves })}  •  ${phaseName}  ${state.phase === 'build' ? `${mm}:${ss}` : ''}`
     );
 
     this.goldText.setText(`g ${Math.floor(human.gold)}`);
     this.mythText.setText(`◆ ${Math.floor(human.mythium)}`);
     this.incomeText.setText(`↑ ${human.income}`);
-    this.workerBtn.setText(`⚒ Arbeiter kaufen · ${CFG.workerCost}g  (${human.workers})`);
+    this.workerBtn.setText(t('topbar.buyWorker', { cost: CFG.workerCost, n: human.workers }));
     this.workerBtn.setEnabled(state.phase === 'build' && human.gold >= CFG.workerCost);
     this.readyBtn.setEnabled(state.phase === 'build');
     this.readyBtn.container.setVisible(state.phase === 'build');

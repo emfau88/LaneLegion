@@ -3,6 +3,8 @@ import { KING_UPGRADES, kingUpgradeCost } from '../data/kingUpgrades';
 import type { GameState } from '../model/GameState';
 import type { KingUpgradeType } from '../model/Types';
 import { kingRegenPerSec, kingSpellDamage, kingOf } from '../systems/KingSystem';
+import { t } from '../i18n/i18n';
+import { kingUpgradeDesc, kingUpgradeName } from '../i18n/names';
 import { COLORS, txt, UIButton } from './theme';
 
 /** King upgrade tab: three mythium upgrades shared by the whole team. */
@@ -17,8 +19,8 @@ export class KingPanel {
     types.forEach((type, i) => {
       const spec = KING_UPGRADES[type];
       const rowY = i * 50;
-      const name = txt(scene, 8, rowY, spec.name, 13).setFontStyle('bold');
-      const desc = txt(scene, 8, rowY + 18, spec.desc, 10, COLORS.textDim);
+      const name = txt(scene, 8, rowY, kingUpgradeName(spec), 13).setFontStyle('bold');
+      const desc = txt(scene, 8, rowY + 18, kingUpgradeDesc(spec), 10, COLORS.textDim);
       const lvl = txt(scene, 350, rowY + 8, '', 12, COLORS.textMain).setOrigin(1, 0);
       const btn = new UIButton(scene, 455, rowY + 16, 150, 34, '', 12, () => onUpgrade(type), 0x33305a);
       this.container.add([name, desc, lvl, btn.container]);
@@ -34,20 +36,24 @@ export class KingPanel {
     for (const row of this.rows) {
       const spec = KING_UPGRADES[row.type];
       const level = team.kingUpgrades[row.type];
-      row.lvl.setText(`Lv ${level}/${spec.maxLevel}`);
+      row.lvl.setText(t('king.level', { n: level, max: spec.maxLevel }));
       if (level >= spec.maxLevel) {
-        row.btn.setText('MAX');
+        row.btn.setText(t('king.max'));
         row.btn.setEnabled(false);
       } else {
         const cost = kingUpgradeCost(spec, level);
-        row.btn.setText(`Upgrade ${cost} ◆`);
+        row.btn.setText(t('king.upgradeBtn', { cost }));
         row.btn.setEnabled(human.mythium >= cost && state.phase !== 'ended');
       }
     }
     const king = kingOf(state, human.teamId);
     if (king) {
       this.statsText.setText(
-        `King: ${king.damage} dmg  •  ${kingRegenPerSec(state, human.teamId).toFixed(0)} HP/s regen  •  spell ${kingSpellDamage(state, human.teamId)} dmg`
+        t('king.stats', {
+          dmg: king.damage,
+          regen: kingRegenPerSec(state, human.teamId).toFixed(0),
+          spell: kingSpellDamage(state, human.teamId)
+        })
       );
     }
   }

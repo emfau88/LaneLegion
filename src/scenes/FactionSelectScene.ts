@@ -3,6 +3,7 @@ import { FACTIONS } from '../data/factions';
 import type { GameSetup } from '../model/GameState';
 import type { Difficulty, GameMode } from '../model/Types';
 import { FactionCard } from '../ui/FactionCard';
+import { t, type StringKey } from '../i18n/i18n';
 import { COLORS, txt, UIButton } from '../ui/theme';
 import { L } from '../ui/layout';
 
@@ -30,8 +31,15 @@ export class FactionSelectScene extends Phaser.Scene {
   }
 
   create(): void {
-    txt(this, L.width / 2, 28, 'Choose Your Faction', 22).setOrigin(0.5).setFontStyle('bold');
-    txt(this, L.width / 2, 56, `${this.mode} • ${this.difficulty} AI`, 12, COLORS.textDim).setOrigin(0.5);
+    txt(this, L.width / 2, 28, t('select.title'), 22).setOrigin(0.5).setFontStyle('bold');
+    txt(
+      this,
+      L.width / 2,
+      56,
+      t('select.subtitle', { mode: this.mode, diff: t(`diff.${this.difficulty}` as StringKey) }),
+      12,
+      COLORS.textDim
+    ).setOrigin(0.5);
 
     const positions = [
       { x: 10, y: 80 },
@@ -48,10 +56,10 @@ export class FactionSelectScene extends Phaser.Scene {
       this.cards.push(card);
     });
 
-    new UIButton(this, 80, 900, 130, 44, '◀ Back', 14, () => {
+    new UIButton(this, 80, 900, 130, 44, t('common.back'), 14, () => {
       this.scene.start('MainMenu');
     });
-    this.startBtn = new UIButton(this, 360, 900, 260, 52, 'START MATCH', 18, () => {
+    this.startBtn = new UIButton(this, 360, 900, 260, 52, t('select.start'), 18, () => {
       if (!this.selected) return;
       const setup: GameSetup = {
         mode: this.mode,

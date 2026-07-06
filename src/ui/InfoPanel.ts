@@ -2,6 +2,8 @@ import Phaser from 'phaser';
 import { waveByNumber } from '../data/waves';
 import type { GameState } from '../model/GameState';
 import { playerFighterValue } from '../core/util';
+import { t } from '../i18n/i18n';
+import { creepDefId, creepName, waveHint, waveName, waveWarning } from '../i18n/names';
 import { ARM_LABEL, ATK_LABEL, COLORS, txt } from './theme';
 
 /** Info tab: what the next wave brings and whether your defense value keeps up. */
@@ -27,30 +29,33 @@ export class InfoPanel {
     const upcoming =
       state.phase === 'build' ? state.waveNumber : Math.min(state.waveNumber + 1, state.maxWaves);
     if (state.phase === 'battle' && state.waveNumber >= state.maxWaves) {
-      this.title.setText('Final wave in progress!');
+      this.title.setText(t('info.finalWave'));
       this.warning.setText('');
       this.comp.setText('');
       this.value.setText('');
-      this.hint.setText('Kill the enemy king or keep yours healthier.');
+      this.hint.setText(t('info.finalHint'));
       return;
     }
     const wave = waveByNumber(upcoming);
     this.title.setText(
-      `${state.phase === 'build' ? 'Incoming' : 'Next'}: Wave ${wave.waveNumber} — ${wave.name}`
+      t(state.phase === 'build' ? 'info.incoming' : 'info.next', {
+        n: wave.waveNumber,
+        name: waveName(wave)
+      })
     );
-    this.warning.setText(`⚠ ${wave.warning}`);
+    this.warning.setText(`⚠ ${waveWarning(wave)}`);
     this.comp.setText(
       wave.groups
         .map(
           (g) =>
-            `${g.count}× ${g.stats.name}  (${ATK_LABEL[g.stats.attackType]} atk / ${ARM_LABEL[g.stats.armorType]} armor, ${g.stats.hp} HP)`
+            `${g.count}× ${creepName(creepDefId(g.stats.name), g.stats.name)}  (${ATK_LABEL[g.stats.attackType]} / ${ARM_LABEL[g.stats.armorType]}, ${g.stats.hp} HP)`
         )
         .join('\n')
     );
     const own = playerFighterValue(state, state.humanPlayerId);
     const ok = own >= wave.recommendedFighterValue;
-    this.value.setText(`Recommended defense value: ${wave.recommendedFighterValue}   (yours: ${Math.floor(own)})`);
+    this.value.setText(t('info.recValue', { rec: wave.recommendedFighterValue, own: Math.floor(own) }));
     this.value.setColor(ok ? COLORS.ok : COLORS.danger);
-    this.hint.setText(wave.shortHint);
+    this.hint.setText(waveHint(wave));
   }
 }

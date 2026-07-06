@@ -2,6 +2,8 @@ import Phaser from 'phaser';
 import { fighterSpriteKey } from '../assets/unitSprites';
 import type { FactionDefinition } from '../model/FactionDefinition';
 import { fighterById } from '../data/fighters';
+import { t } from '../i18n/i18n';
+import { factionName, factionPassive, factionStrengths, factionStyle, factionWeaknesses } from '../i18n/names';
 import { COLORS, ROLE_LETTER, txt } from './theme';
 
 export const FCARD_W = 254;
@@ -32,15 +34,15 @@ export class FactionCard {
 
     const items: Phaser.GameObjects.GameObject[] = [this.bg];
     items.push(scene.add.rectangle(0, 0, FCARD_W, 34, faction.colorDark).setOrigin(0));
-    items.push(txt(scene, 8, 8, faction.name, 14).setFontStyle('bold'));
+    items.push(txt(scene, 8, 8, factionName(faction), 14).setFontStyle('bold'));
     items.push(
       txt(scene, FCARD_W - 8, 40, '★'.repeat(faction.difficultyStars) + '☆'.repeat(3 - faction.difficultyStars), 12, '#f0d080').setOrigin(1, 0)
     );
-    items.push(txt(scene, 8, 40, 'Difficulty', 11, COLORS.textDim));
-    items.push(txt(scene, 8, 62, faction.style, 11, '#c8d2e8', { wordWrap: { width: FCARD_W - 16 } }));
-    items.push(txt(scene, 8, 100, `✓ ${faction.strengths}`, 11, COLORS.ok, { wordWrap: { width: FCARD_W - 16 } }));
-    items.push(txt(scene, 8, 136, `✗ ${faction.weaknesses}`, 11, COLORS.danger, { wordWrap: { width: FCARD_W - 16 } }));
-    items.push(txt(scene, 8, 172, `Passive: ${faction.passiveDesc}`, 11, '#b8c4de', { wordWrap: { width: FCARD_W - 16 } }));
+    items.push(txt(scene, 8, 40, t('select.difficultyLabel'), 11, COLORS.textDim));
+    items.push(txt(scene, 8, 62, factionStyle(faction), 11, '#c8d2e8', { wordWrap: { width: FCARD_W - 16 } }));
+    items.push(txt(scene, 8, 100, `✓ ${factionStrengths(faction)}`, 11, COLORS.ok, { wordWrap: { width: FCARD_W - 16 } }));
+    items.push(txt(scene, 8, 136, `✗ ${factionWeaknesses(faction)}`, 11, COLORS.danger, { wordWrap: { width: FCARD_W - 16 } }));
+    items.push(txt(scene, 8, 172, t('select.passive', { desc: factionPassive(faction) }), 11, '#b8c4de', { wordWrap: { width: FCARD_W - 16 } }));
 
     faction.fighterIds.forEach((fid, i) => {
       const def = fighterById(fid);

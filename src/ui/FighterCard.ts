@@ -2,7 +2,9 @@ import Phaser from 'phaser';
 import { fighterSpriteKey } from '../assets/unitSprites';
 import type { FighterDefinition } from '../model/UnitDefinition';
 import type { GameState } from '../model/GameState';
-import { ARM_LABEL, ATK_LABEL, COLORS, ROLE_LABEL, txt } from './theme';
+import { t } from '../i18n/i18n';
+import { fighterTierName } from '../i18n/names';
+import { ARM_LABEL, ATK_LABEL, COLORS, roleLabel, txt } from './theme';
 
 export const CARD_W = 172;
 export const CARD_H = 88;
@@ -23,7 +25,7 @@ export class FighterCard {
     onInfo: (defId: string) => void
   ) {
     this.def = def;
-    const t = def.tiers[0];
+    const tier = def.tiers[0];
     this.bg = scene.add
       .rectangle(0, 0, CARD_W, CARD_H, COLORS.panelLight)
       .setOrigin(0)
@@ -31,9 +33,9 @@ export class FighterCard {
       .setInteractive({ useHandCursor: true });
     this.bg.on('pointerdown', () => onSelect(def.id));
 
-    const name = txt(scene, 8, 6, t.name, 12).setFontStyle('bold');
-    const cost = txt(scene, CARD_W - 8, 6, `${t.cost}g`, 12, COLORS.gold).setOrigin(1, 0);
-    const role = txt(scene, 8, 26, ROLE_LABEL[def.role], 11, COLORS.textDim);
+    const name = txt(scene, 8, 6, fighterTierName(def, 0), 12).setFontStyle('bold');
+    const cost = txt(scene, CARD_W - 8, 6, `${tier.cost}g`, 12, COLORS.gold).setOrigin(1, 0);
+    const role = txt(scene, 8, 26, roleLabel(def.role), 11, COLORS.textDim);
     const types = txt(
       scene,
       8,
@@ -42,7 +44,7 @@ export class FighterCard {
       11,
       '#b8c4de'
     );
-    const stats = txt(scene, 8, 62, `${t.hp} HP  ${t.damage} DMG`, 11, COLORS.textDim);
+    const stats = txt(scene, 8, 62, t('card.stats', { hp: tier.hp, dmg: tier.damage }), 11, COLORS.textDim);
     const spriteKey = fighterSpriteKey(def.id);
     const icon = spriteKey
       ? scene.add

@@ -1,6 +1,8 @@
 import Phaser from 'phaser';
 import type { MercenaryDefinition } from '../model/MercenaryDefinition';
 import type { GameState } from '../model/GameState';
+import { t } from '../i18n/i18n';
+import { mercName, mercRole } from '../i18n/names';
 import { COLORS, txt } from './theme';
 
 export const MERC_W = 102;
@@ -29,11 +31,11 @@ export class MercenaryCard {
 
     this.container = scene.add.container(x, y, [
       this.bg,
-      txt(scene, MERC_W / 2, 8, merc.name, 12).setOrigin(0.5, 0).setFontStyle('bold'),
+      txt(scene, MERC_W / 2, 8, mercName(merc), 12).setOrigin(0.5, 0).setFontStyle('bold'),
       txt(scene, MERC_W / 2, 28, `${merc.cost} ◆`, 12, COLORS.mythium).setOrigin(0.5, 0),
-      txt(scene, MERC_W / 2, 48, `+${merc.incomeGain} income`, 11, COLORS.income).setOrigin(0.5, 0),
-      txt(scene, MERC_W / 2, 68, merc.roleDesc, 11, COLORS.textDim).setOrigin(0.5, 0),
-      txt(scene, MERC_W / 2, 92, 'SEND', 12, '#f0d080').setOrigin(0.5, 0)
+      txt(scene, MERC_W / 2, 48, t('merc.income', { n: merc.incomeGain }), 11, COLORS.income).setOrigin(0.5, 0),
+      txt(scene, MERC_W / 2, 68, mercRole(merc), 11, COLORS.textDim).setOrigin(0.5, 0),
+      txt(scene, MERC_W / 2, 92, t('merc.send'), 12, '#f0d080').setOrigin(0.5, 0)
     ]);
   }
 

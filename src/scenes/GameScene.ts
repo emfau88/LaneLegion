@@ -10,11 +10,13 @@ import { arenaZoneId, type GameSetup } from '../model/GameState';
 import type { CombatUnit } from '../model/CombatUnit';
 import type { AttackType, GameEvent } from '../model/Types';
 import { isCellFree } from '../systems/PlacementSystem';
+import { t } from '../i18n/i18n';
+import { factionName, fighterDesc, fighterTierName, playerName, unitDisplayName } from '../i18n/names';
 import { TopBar } from '../ui/TopBar';
 import { LaneStatusCards } from '../ui/LaneStatusCards';
 import { BottomShop } from '../ui/BottomShop';
 import { L, arenaToScreen, laneToScreen, screenToCell } from '../ui/layout';
-import { ARM_LABEL, ATK_LABEL, COLORS, ROLE_LABEL, ROLE_LETTER, txt, UIButton } from '../ui/theme';
+import { ARM_LABEL, ATK_LABEL, COLORS, ROLE_LETTER, roleLabel, txt, UIButton } from '../ui/theme';
 
 interface UnitView {
   root: Phaser.GameObjects.Container;
@@ -130,18 +132,18 @@ export class GameScene extends Phaser.Scene {
     }
     g.lineStyle(2, COLORS.panelStroke, 1).strokeRect(left, top, w, L.lane.h);
 
-    txt(this, left + w / 2, top + cellH / 2, 'ENEMY SPAWN', 10, '#c98a96').setOrigin(0.5).setAlpha(0.9);
-    txt(this, left + w / 2, top + (CFG.grid.buildRowStart + 0.1) * cellH, 'BUILD ZONE', 10, '#6f9a78')
+    txt(this, left + w / 2, top + cellH / 2, t('zone.spawn'), 10, '#c98a96').setOrigin(0.5).setAlpha(0.9);
+    txt(this, left + w / 2, top + (CFG.grid.buildRowStart + 0.1) * cellH, t('zone.build'), 10, '#6f9a78')
       .setOrigin(0.5, 0)
       .setAlpha(0.7);
-    txt(this, left + w / 2, top + (CFG.grid.rows - 0.5) * cellH, 'LEAK GATE ▼', 10, '#c98a96')
+    txt(this, left + w / 2, top + (CFG.grid.rows - 0.5) * cellH, t('zone.leak'), 10, '#c98a96')
       .setOrigin(0.5)
       .setAlpha(0.9);
 
     // King arena strip.
     const a = L.arena;
     this.add.rectangle(a.left, a.top, a.w, a.h, 0x1c1f30, 0.12).setOrigin(0).setStrokeStyle(2, 0x5a5330);
-    txt(this, a.left + 6, a.top + 4, '♛ KING ARENA — leaks land here', 10, '#c9b76a').setAlpha(0.9);
+    txt(this, a.left + 6, a.top + 4, t('zone.arena'), 10, '#c9b76a').setAlpha(0.9);
   }
 
   private createLaneInput(): void {
@@ -337,16 +339,16 @@ export class GameScene extends Phaser.Scene {
       return;
     }
     const human = state.players[state.humanPlayerId];
-    this.actionTitle.setText(u.name);
+    this.actionTitle.setText(unitDisplayName(u));
     if (u.tier === 0) {
       const upCost = fighterById(u.defId).tiers[1].cost;
-      this.upgradeBtn.setText(`Upgrade  ${upCost}g`);
+      this.upgradeBtn.setText(t('action.upgrade', { cost: upCost }));
       this.upgradeBtn.setEnabled(human.gold >= upCost && state.phase === 'build');
     } else {
-      this.upgradeBtn.setText('Fully upgraded');
+      this.upgradeBtn.setText(t('action.maxed'));
       this.upgradeBtn.setEnabled(false);
     }
-    this.sellBtn.setText(`Sell  +${Math.floor(u.investedGold * CFG.sellRefundRate)}g`);
+    this.sellBtn.setText(t('action.sell', { n: Math.floor(u.investedGold * CFG.sellRefundRate) }));
     this.sellBtn.setEnabled(state.phase === 'build');
   }
 
@@ -379,21 +381,21 @@ export class GameScene extends Phaser.Scene {
   private showFighterInfo(defId: string): void {
     const def = fighterById(defId);
     const [b, up] = def.tiers;
-    this.infoTitle.setText(`${b.name}  (${ROLE_LABEL[def.role]})`);
+    this.infoTitle.setText(`${fighterTierName(def, 0)}  (${roleLabel(def.role)})`);
     this.infoBody.setText(
       [
-        `Attack: ${ATK_LABEL[def.attackType]}   Armor: ${ARM_LABEL[def.armorType]}`,
-        `${def.desc}`,
+        t('popup.attackArmor', { atk: ATK_LABEL[def.attackType], arm: ARM_LABEL[def.armorType] }),
+        `${fighterDesc(def)}`,
         '',
-        `Base — ${b.cost}g`,
-        `  ${b.hp} HP, ${b.damage} dmg, ${b.attackSpeed}/s, range ${b.range}`,
+        t('popup.base', { cost: b.cost }),
+        `  ${t('popup.statLine', { hp: b.hp, dmg: b.damage, as: b.attackSpeed, range: b.range })}`,
         '',
-        `Upgrade: ${up.name} — +${up.cost}g`,
-        `  ${up.hp} HP, ${up.damage} dmg, ${up.attackSpeed}/s, range ${up.range}`,
+        t('popup.upgrade', { name: fighterTierName(def, 1), cost: up.cost }),
+        `  ${t('popup.statLine', { hp: up.hp, dmg: up.damage, as: up.attackSpeed, range: up.range })}`,
         '',
-        'PRC>LGT  IMP>ARM  MAG>MAS  (weak: PRC<ARM, IMP<ARC, MAG<ARM)',
+        'PRC>LGT  IMP>ARM  MAG>MAS',
         '',
-        '(tap anywhere to close)'
+        t('common.tapToClose')
       ].join('\n')
     );
     this.infoPopup.setVisible(true);
@@ -412,7 +414,7 @@ export class GameScene extends Phaser.Scene {
     const panel = this.add.rectangle(L.width / 2, 470, 300, 520, 0x141824, 0.98).setStrokeStyle(2, COLORS.panelStroke);
     this.peekTitle = txt(this, L.width / 2, 195, '', 15).setOrigin(0.5).setFontStyle('bold');
     this.peekGfx = this.add.graphics();
-    const hint = txt(this, L.width / 2, 745, '(tap anywhere to close)', 11, COLORS.textDim).setOrigin(0.5);
+    const hint = txt(this, L.width / 2, 745, t('common.tapToClose'), 11, COLORS.textDim).setOrigin(0.5);
     this.peekOverlay = this.add
       .container(0, 0, [shade, panel, this.peekTitle, this.peekGfx, hint])
       .setDepth(DEPTH_POPUP + 1)
@@ -422,7 +424,7 @@ export class GameScene extends Phaser.Scene {
   private showPeek(pid: string): void {
     this.peekPid = pid;
     const p = this.sim.state.players[pid];
-    this.peekTitle.setText(`${p.name} — ${factionById(p.factionId).name}`);
+    this.peekTitle.setText(`${playerName(p)} — ${factionName(factionById(p.factionId))}`);
     this.peekOverlay.setVisible(true);
   }
 
@@ -558,7 +560,7 @@ export class GameScene extends Phaser.Scene {
               .setOrigin(0)
               .setDepth(DEPTH_FX);
             this.tweens.add({ targets: flash, alpha: 0, duration: 420, onComplete: () => flash.destroy() });
-            this.floatText(L.lane.left + L.lane.w / 2, L.lane.top + L.lane.h - 30, 'LEAK!', COLORS.danger);
+            this.floatText(L.lane.left + L.lane.w / 2, L.lane.top + L.lane.h - 30, t('game.leak'), COLORS.danger);
           }
           break;
         }
