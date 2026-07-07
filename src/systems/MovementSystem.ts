@@ -57,9 +57,28 @@ const fighterMove = (state: GameState, u: CombatUnit, dt: number): void => {
     return;
   }
 
-  // No target: tanks push forward to bind enemies early; in the arena everyone converges.
+  // No target: gather near a defensive contact line instead of trickling in alone.
   const hostiles = livingHostilesInZone(state, u.zoneId, u.teamId);
-  if (hostiles.length > 0 && (u.role === 'tank' || isArena(u.zoneId)) && u.role !== 'support') {
+  if (hostiles.length > 0 && !isArena(u.zoneId) && u.role !== 'support') {
+    const frontY = hostiles.reduce((y, h) => Math.max(y, h.pos.y), 0);
+    const lead = u.role === 'tank' || u.role === 'melee' ? CFG.fighter.rallyLead.melee : CFG.fighter.rallyLead.ranged;
+    const homeX = u.homeCell ? u.homeCell.col + 0.5 : u.pos.x;
+    const homeY = u.homeCell ? u.homeCell.row + 0.5 : u.pos.y;
+    const holdY = Math.min(homeY, Math.max(CFG.fighter.rallyMinY, frontY + lead));
+    const speed =
+      u.role === 'ranged' || u.role === 'aoe'
+        ? u.moveSpeed * CFG.fighter.rangedAdvanceFactor
+        : u.moveSpeed;
+    if (Math.abs(u.pos.y - holdY) > 0.06 || Math.abs(u.pos.x - homeX) > 0.08) {
+      moveToward(u, homeX, holdY, speed, dt);
+      return;
+    }
+    u.state = 'idle';
+    return;
+  }
+
+  // In the arena everyone converges because protecting the king is the objective.
+  if (hostiles.length > 0 && isArena(u.zoneId) && u.role !== 'support') {
     let nx = u.pos.x;
     let ny = u.pos.y;
     let bd = Infinity;
@@ -71,7 +90,6 @@ const fighterMove = (state: GameState, u: CombatUnit, dt: number): void => {
         ny = h.pos.y;
       }
     }
-    if (!isArena(u.zoneId) && u.role === 'tank') ny = Math.max(ny, CFG.fighter.tankMaxAdvanceY);
     moveToward(u, nx, ny, u.moveSpeed, dt);
     return;
   }

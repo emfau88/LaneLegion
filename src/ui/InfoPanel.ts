@@ -27,7 +27,8 @@ export class InfoPanel {
     this.compRows = scene.add.container(8, 35);
     this.value = txt(scene, 8, 82, '', 10);
     this.hint = txt(scene, 8, 99, '', 9, COLORS.textDim, { wordWrap: { width: 510 } });
-    this.container.add([this.title, this.warning, this.compRows, this.value, this.hint]);
+    const legend = txt(scene, 8, 152, this.legendText(), 9, COLORS.textDim, { wordWrap: { width: 510 } }).setAlpha(0.8);
+    this.container.add([this.title, this.warning, this.compRows, this.value, this.hint, legend]);
   }
 
   /** "Stark: ➤ Stich → ○ Leicht · ..." — generated from the damage matrix. */

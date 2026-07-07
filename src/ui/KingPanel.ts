@@ -16,20 +16,21 @@ export class KingPanel {
 
   constructor(scene: Phaser.Scene, x: number, y: number, onUpgrade: (t: KingUpgradeType) => void) {
     this.container = scene.add.container(x, y);
-    this.hintText = txt(scene, 8, 0, '', 9, COLORS.mythium, { wordWrap: { width: 510 } });
+    this.hintText = txt(scene, 8, 0, '', 10, COLORS.mythium, { wordWrap: { width: 510 } });
     this.container.add(this.hintText);
     const types: KingUpgradeType[] = ['attack', 'regen', 'spell'];
     types.forEach((type, i) => {
       const spec = KING_UPGRADES[type];
-      const rowY = 18 + i * 26;
-      const name = txt(scene, 8, rowY, kingUpgradeName(spec), 11).setFontStyle('bold');
-      const desc = txt(scene, 8, rowY + 13, kingUpgradeDesc(spec), 8, COLORS.textDim);
-      const lvl = txt(scene, 360, rowY + 5, '', 10, COLORS.textMain).setOrigin(1, 0);
-      const btn = new UIButton(scene, 455, rowY + 11, 150, 22, '', 10, () => onUpgrade(type), 0x33305a);
+      const rowY = 24 + i * 38;
+      const name = txt(scene, 8, rowY, kingUpgradeName(spec), 12).setFontStyle('bold');
+      const desc = txt(scene, 8, rowY + 17, kingUpgradeDesc(spec), 9, COLORS.textDim);
+      const lvl = txt(scene, 360, rowY + 8, '', 11, COLORS.textMain).setOrigin(1, 0);
+      const btn = new UIButton(scene, 455, rowY + 16, 150, 28, '', 11, () => onUpgrade(type), 0x33305a);
       this.container.add([name, desc, lvl, btn.container]);
       this.rows.push({ type, btn, lvl });
     });
-    this.statsText = txt(scene, 8, 0, '', 1, COLORS.textDim).setVisible(false);
+    this.statsText = txt(scene, 8, 150, '', 10, COLORS.textDim, { wordWrap: { width: 510 } });
+    this.container.add(this.statsText);
   }
 
   update(state: GameState): void {

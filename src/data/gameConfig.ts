@@ -82,7 +82,10 @@ export const CFG = {
     /** Ranged units advance at this fraction of move speed when out of range. */
     rangedAdvanceFactor: 0.6,
     /** Tanks never advance above this y while seeking (stay near the build zone edge). */
-    tankMaxAdvanceY: 3.2
+    tankMaxAdvanceY: 3.2,
+    /** Fighters without a target gather near this defensive line instead of trickling in alone. */
+    rallyMinY: 4.15,
+    rallyLead: { melee: 1.15, ranged: 2.0 }
   },
   creep: {
     collisionRadius: 0.28,

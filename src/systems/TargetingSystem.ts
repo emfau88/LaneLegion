@@ -83,13 +83,14 @@ const fighterRetarget = (u: CombatUnit, hostiles: CombatUnit[]): void => {
         const cur = hostiles.find((h) => h.id === current);
         if (cur && dist(u.pos, cur.pos) <= u.range) return; // keep target while it stays in range
       }
-      u.targetId = (inRange.length > 0 ? pickByProgress(inRange) : nearest(u, hostiles))?.id ?? null;
+      const pool = inRange.length > 0 ? inRange : inAggro;
+      u.targetId = (pool.length > 0 ? pickByProgress(pool) : null)?.id ?? null;
       return;
     }
     case 'aoe': {
       const radius = u.splash?.radius ?? 1.0;
       const inRange = hostiles.filter((h) => dist(u.pos, h.pos) <= u.range);
-      const pool = inRange.length > 0 ? inRange : hostiles;
+      const pool = inRange.length > 0 ? inRange : inAggro;
       u.targetId = pickCluster(u, pool, radius)?.id ?? null;
       return;
     }

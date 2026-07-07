@@ -27,6 +27,8 @@ export const L = {
   sheet: {
     buildTop: 816,
     buildH: 144,
+    buildExpandedTop: 724,
+    buildExpandedH: 236,
     battleTop: 866,
     battleH: 94,
     tabH: 32

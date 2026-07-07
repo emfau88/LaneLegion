@@ -35,6 +35,7 @@ export class BottomShop {
   private selectedFighter: string | null = null;
 
   private buildRoot: Phaser.GameObjects.Container;
+  private buildBg: Phaser.GameObjects.Rectangle;
   private battleRoot: Phaser.GameObjects.Container;
   private tabButtons: Record<TabId, UIButton>;
   private tabContents: Record<TabId, Phaser.GameObjects.Container>;
@@ -57,13 +58,14 @@ export class BottomShop {
     this.cb = cb;
 
     // ---------- Build-phase sheet ----------
-    this.buildRoot = scene.add.container(0, L.sheet.buildTop);
-    const bg = scene.add
+    this.buildRoot = scene.add.container(0, L.sheet.buildTop).setDepth(30);
+    this.buildBg = scene.add
       .rectangle(0, 0, L.width, L.sheet.buildH, COLORS.panel)
       .setOrigin(0)
       .setStrokeStyle(1, COLORS.panelStroke)
       .setInteractive(); // swallow taps so they don't reach the lane
-    this.buildRoot.add(bg);
+    this.buildRoot.add(this.buildBg);
+    this.buildRoot.add(scene.add.rectangle(L.width / 2, 4, 70, 4, COLORS.panelStroke, 0.85).setOrigin(0.5));
 
     const tabs: { id: TabId; label: string }[] = [
       { id: 'fighters', label: t('tab.fighters') },
@@ -119,13 +121,14 @@ export class BottomShop {
 
     // Mercs tab
     const mercsTab = scene.add.container(0, L.sheet.tabH + 6);
+    mercsTab.add(txt(scene, 8, 4, t('shop.queueTitle'), 10, COLORS.textDim));
     MERCENARIES.forEach((merc, i) => {
-      const card = new MercenaryCard(scene, 6 + i * (MERC_W + 5), 28, merc, cb.onSendMerc);
+      const card = new MercenaryCard(scene, 6 + i * (MERC_W + 5), 50, merc, cb.onSendMerc);
       this.mercCards.push(card);
       mercsTab.add(card.container);
     });
-    this.autoBtn = new UIButton(scene, 100, 12, 185, 22, '', 10, cb.onToggleAutoSend, 0x33305a);
-    this.queuedText = txt(scene, 200, 4, '', 10, COLORS.textDim);
+    this.autoBtn = new UIButton(scene, 100, 28, 185, 24, '', 10, cb.onToggleAutoSend, 0x33305a);
+    this.queuedText = txt(scene, 200, 20, '', 10, COLORS.textDim);
     mercsTab.add([this.autoBtn.container, this.queuedText]);
 
     // King tab
@@ -142,7 +145,7 @@ export class BottomShop {
     for (const c of Object.values(this.tabContents)) this.buildRoot.add(c);
 
     // ---------- Battle-phase compact bar ----------
-    this.battleRoot = scene.add.container(0, L.sheet.battleTop);
+    this.battleRoot = scene.add.container(0, L.sheet.battleTop).setDepth(30);
     const bbg = scene.add
       .rectangle(0, 0, L.width, L.sheet.battleH, COLORS.panel)
       .setOrigin(0)
@@ -175,6 +178,7 @@ export class BottomShop {
 
   setTab(tab: TabId): void {
     this.activeTab = tab;
+    this.applyBuildSheetSize();
     for (const [id, content] of Object.entries(this.tabContents)) {
       content.setVisible(id === tab);
     }
@@ -190,6 +194,7 @@ export class BottomShop {
 
   setMode(mode: 'build' | 'battle'): void {
     this.mode = mode;
+    this.applyBuildSheetSize();
     this.buildRoot.setVisible(mode === 'build');
     this.battleRoot.setVisible(mode === 'battle');
     if (mode === 'battle') {
@@ -202,6 +207,12 @@ export class BottomShop {
   clearSelection(): void {
     this.selectedFighter = null;
     this.updateFighterDetail(null);
+  }
+
+  private applyBuildSheetSize(): void {
+    const expanded = this.mode === 'build' && this.activeTab !== 'fighters';
+    this.buildRoot.y = expanded ? L.sheet.buildExpandedTop : L.sheet.buildTop;
+    this.buildBg.height = expanded ? L.sheet.buildExpandedH : L.sheet.buildH;
   }
 
   private updateFighterDetail(defId: string | null): void {
