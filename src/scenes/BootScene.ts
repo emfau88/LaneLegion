@@ -34,6 +34,8 @@ export class BootScene extends Phaser.Scene {
 
   create(): void {
     this.input.topOnly = true;
+    // Crisp nearest-neighbor sampling for the pixel-art board.
+    this.textures.get('lane-arena-board').setFilter(Phaser.Textures.FilterMode.NEAREST);
     this.scene.start('MainMenu');
   }
 }

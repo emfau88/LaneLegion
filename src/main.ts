@@ -14,6 +14,8 @@ new Phaser.Game({
   backgroundColor: '#0c0f1a',
   width: GAME_WIDTH,
   height: GAME_HEIGHT,
+  // Avoid sub-pixel positions blurring the pixel-art assets.
+  roundPixels: true,
   scale: {
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH

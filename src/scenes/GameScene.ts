@@ -125,6 +125,8 @@ export class GameScene extends Phaser.Scene {
   // ---------- static rendering ----------
 
   private drawStaticLane(): void {
+    // The board asset already contains zone colors, grid, frames and the arena —
+    // draw it 1:1 and only add the functional text labels on top.
     const laneArenaTop = L.lane.top;
     const laneArenaH = L.arena.top + L.arena.h - laneArenaTop;
     this.add
@@ -132,26 +134,8 @@ export class GameScene extends Phaser.Scene {
       .setOrigin(0)
       .setDisplaySize(L.lane.w, laneArenaH);
 
-    const g = this.add.graphics();
-    const { left, top, cellW, cellH } = L.lane;
+    const { left, top, cellH } = L.lane;
     const w = L.lane.w;
-    const rowRect = (row: number, count: number, color: number, alpha: number) =>
-      g.fillStyle(color, alpha).fillRect(left, top + row * cellH, w, cellH * count);
-
-    rowRect(0, 1, COLORS.spawnZone, 0.1);
-    rowRect(1, 3, COLORS.approachZone, 0.04);
-    rowRect(CFG.grid.buildRowStart, CFG.grid.buildRowEnd - CFG.grid.buildRowStart + 1, COLORS.buildZone, 0.06);
-    rowRect(CFG.grid.rows - 1, 1, COLORS.leakZone, 0.09);
-
-    g.lineStyle(1, COLORS.gridLine, 0.28);
-    for (let c = 0; c <= CFG.grid.cols; c++) {
-      g.lineBetween(left + c * cellW, top, left + c * cellW, top + L.lane.h);
-    }
-    for (let r = 0; r <= CFG.grid.rows; r++) {
-      g.lineBetween(left, top + r * cellH, left + w, top + r * cellH);
-    }
-    g.lineStyle(2, COLORS.panelStroke, 1).strokeRect(left, top, w, L.lane.h);
-
     txt(this, left + w / 2, top + cellH / 2, t('zone.spawn'), 10, '#c98a96').setOrigin(0.5).setAlpha(0.9);
     txt(this, left + w / 2, top + (CFG.grid.buildRowStart + 0.1) * cellH, t('zone.build'), 10, '#6f9a78')
       .setOrigin(0.5, 0)
@@ -159,11 +143,7 @@ export class GameScene extends Phaser.Scene {
     txt(this, left + w / 2, top + (CFG.grid.rows - 0.5) * cellH, t('zone.leak'), 10, '#c98a96')
       .setOrigin(0.5)
       .setAlpha(0.9);
-
-    // King arena strip.
-    const a = L.arena;
-    this.add.rectangle(a.left, a.top, a.w, a.h, 0x1c1f30, 0.12).setOrigin(0).setStrokeStyle(2, 0x5a5330);
-    txt(this, a.left + 6, a.top + 4, t('zone.arena'), 10, '#c9b76a').setAlpha(0.9);
+    txt(this, L.arena.left + 6, L.arena.top + 4, t('zone.arena'), 10, '#c9b76a').setAlpha(0.9);
   }
 
   private createLaneInput(): void {
