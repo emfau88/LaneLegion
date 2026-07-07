@@ -183,20 +183,20 @@ export class GameScene extends Phaser.Scene {
       const faction = factionById(u.factionId ?? 'ironclad');
       const sheet = fighterSheet(u.defId);
       const spriteKey = fighterSpriteKey(u.defId);
-      radius = u.tier === 1 ? 16 : 14;
+      radius = u.tier === 1 ? 18 : 16;
       root.add(this.add.ellipse(0, radius - 2, radius * 1.55, 7, 0x05070b, 0.32));
       if (sheet) {
         if (u.tier === 1) {
           root.add(this.add.circle(0, 0, radius + 3, 0xf5c542, 0.18).setStrokeStyle(2, 0xf5c542, 0.75));
         }
-        const sprite = this.add.sprite(0, 0, sheet.key, FIGHTER_SHEET_FRAME.idle).setDisplaySize(radius * 2.8, radius * 2.8);
+        const sprite = this.add.sprite(0, 0, sheet.key, FIGHTER_SHEET_FRAME.idle).setDisplaySize(radius * 3, radius * 3);
         body = sprite;
         root.add(body);
       } else if (spriteKey) {
         if (u.tier === 1) {
           root.add(this.add.circle(0, 0, radius + 3, 0xf5c542, 0.18).setStrokeStyle(2, 0xf5c542, 0.75));
         }
-        body = this.add.image(0, 0, spriteKey).setDisplaySize(radius * 2.55, radius * 2.55);
+        body = this.add.image(0, 0, spriteKey).setDisplaySize(radius * 2.85, radius * 2.85);
         root.add(body);
       } else {
         body = this.add.circle(0, 0, radius, faction.color);
@@ -214,11 +214,11 @@ export class GameScene extends Phaser.Scene {
       });
     } else {
       const spriteKey = waveSpriteKey(u.defId);
-      radius = Math.min(17, Math.max(8, u.collisionRadius * 33));
+      radius = Math.min(20, Math.max(10, u.collisionRadius * 38));
       hpBarW = Math.max(20, radius * 2.1);
       root.add(this.add.ellipse(0, radius - 2, radius * 1.6, 7, 0x05070b, 0.28));
       if (spriteKey) {
-        const spriteSize = Math.max(30, radius * 3.15);
+        const spriteSize = Math.max(36, radius * 3.35);
         if (u.maxHp >= 1000) {
           root.add(this.add.circle(0, 0, radius + 5, COLORS.hostile, 0.18).setStrokeStyle(2, COLORS.hostile, 0.65));
         }

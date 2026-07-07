@@ -6,14 +6,14 @@ export const L = {
   width: 540,
   height: 960,
 
-  topBar: { x: 0, y: 0, w: 540, h: 100 },
-  statusRow: { x: 0, y: 100, w: 540, h: 32 },
+  topBar: { x: 0, y: 0, w: 540, h: 92 },
+  statusRow: { x: 0, y: 92, w: 540, h: 30 },
 
   lane: {
-    left: 72,
-    top: 136,
-    cellW: 66,
-    cellH: 51,
+    left: 30,
+    top: 126,
+    cellW: 80,
+    cellH: 59,
     get w() {
       return this.cellW * CFG.grid.cols;
     },
@@ -22,14 +22,14 @@ export const L = {
     }
   },
 
-  arena: { left: 72, top: 652, w: 396, h: 74 },
+  arena: { left: 30, top: 724, w: 480, h: 84 },
 
   sheet: {
-    buildTop: 732,
-    buildH: 228,
+    buildTop: 816,
+    buildH: 144,
     battleTop: 866,
     battleH: 94,
-    tabH: 34
+    tabH: 32
   }
 };
 

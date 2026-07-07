@@ -91,12 +91,10 @@ export class BottomShop {
     const fightersTab = scene.add.container(0, L.sheet.tabH + 6);
     faction.fighterIds.forEach((fid, i) => {
       const def = fighterById(fid);
-      const col = i % 3;
-      const row = Math.floor(i / 3);
       const card = new FighterCard(
         scene,
-        6 + col * (CARD_W + 4),
-        row * (CARD_H + 4),
+        4 + i * (CARD_W + 1),
+        0,
         def,
         faction.color,
         (defId) => {
