@@ -5,13 +5,13 @@ import { MERCENARIES } from '../data/mercenaries';
 import type { GameState } from '../model/GameState';
 import type { KingUpgradeType } from '../model/Types';
 import { t } from '../i18n/i18n';
-import { mercName } from '../i18n/names';
+import { fighterTierName, mercName } from '../i18n/names';
 import { CARD_W, CARD_H, FighterCard } from './FighterCard';
 import { MERC_W, MercenaryCard } from './MercenaryCard';
 import { KingPanel } from './KingPanel';
 import { InfoPanel } from './InfoPanel';
 import { L } from './layout';
-import { COLORS, txt, UIButton } from './theme';
+import { COLORS, armLabel, atkLabel, roleLabel, txt, UIButton } from './theme';
 
 export interface ShopCallbacks {
   onSelectFighter: (defId: string | null) => void;
@@ -40,6 +40,8 @@ export class BottomShop {
   private tabContents: Record<TabId, Phaser.GameObjects.Container>;
 
   private fighterCards: FighterCard[] = [];
+  private fighterDetailBg: Phaser.GameObjects.Rectangle;
+  private fighterDetailText: Phaser.GameObjects.Text;
   private mercCards: MercenaryCard[] = [];
   private kingPanel: KingPanel;
   private infoPanel: InfoPanel;
@@ -106,6 +108,14 @@ export class BottomShop {
       this.fighterCards.push(card);
       fightersTab.add(card.container);
     });
+    this.fighterDetailBg = scene.add
+      .rectangle(4, CARD_H + 8, L.width - 8, 22, 0x111827, 0.72)
+      .setOrigin(0)
+      .setStrokeStyle(1, COLORS.panelStroke);
+    this.fighterDetailText = txt(scene, 12, CARD_H + 13, '', 10, COLORS.textDim, {
+      wordWrap: { width: L.width - 24 }
+    });
+    fightersTab.add([this.fighterDetailBg, this.fighterDetailText]);
 
     // Mercs tab
     const mercsTab = scene.add.container(0, L.sheet.tabH + 6);
@@ -174,6 +184,7 @@ export class BottomShop {
     if (tab !== 'fighters') {
       this.selectedFighter = null;
       this.cb.onSelectFighter(null);
+      this.updateFighterDetail(null);
     }
   }
 
@@ -184,11 +195,28 @@ export class BottomShop {
     if (mode === 'battle') {
       this.selectedFighter = null;
       this.cb.onSelectFighter(null);
+      this.updateFighterDetail(null);
     }
   }
 
   clearSelection(): void {
     this.selectedFighter = null;
+    this.updateFighterDetail(null);
+  }
+
+  private updateFighterDetail(defId: string | null): void {
+    if (!defId) {
+      this.fighterDetailBg.setVisible(false);
+      this.fighterDetailText.setVisible(false);
+      return;
+    }
+    const def = fighterById(defId);
+    const tier = def.tiers[0];
+    this.fighterDetailText.setText(
+      `${fighterTierName(def, 0)} - ${roleLabel(def.role)} - ${tier.hp} HP / ${tier.damage} Dmg - ${atkLabel(def.attackType)} / ${armLabel(def.armorType)}`
+    );
+    this.fighterDetailBg.setVisible(true);
+    this.fighterDetailText.setVisible(true);
   }
 
   update(state: GameState): void {
@@ -201,6 +229,7 @@ export class BottomShop {
 
     if (this.mode === 'build') {
       for (const card of this.fighterCards) card.update(state, this.selectedFighter);
+      this.updateFighterDetail(this.activeTab === 'fighters' ? this.selectedFighter : null);
       for (const card of this.mercCards) card.update(state);
       this.kingPanel.update(state);
       this.infoPanel.update(state);
