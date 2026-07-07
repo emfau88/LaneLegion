@@ -14,7 +14,7 @@ export interface TopBarCallbacks {
   onBuyWorker: () => void;
 }
 
-/** Compact top bar: wave/phase/timer, resources, both king HP bars. */
+/** Mobile-first top bar: match state, resources, actions, and king HP. */
 export class TopBar {
   private waveText: Phaser.GameObjects.Text;
   private valueText: Phaser.GameObjects.Text;
@@ -28,37 +28,34 @@ export class TopBar {
   private ownManaBar: Phaser.GameObjects.Rectangle;
   private enemyKingBar: Phaser.GameObjects.Rectangle;
   private enemyKingText: Phaser.GameObjects.Text;
-  private readonly barW = 244;
+  private readonly barW = 238;
 
   constructor(scene: Phaser.Scene, cb: TopBarCallbacks) {
     panel(scene, 0, 0, L.topBar.w, L.topBar.h, COLORS.panel);
 
-    this.waveText = txt(scene, 10, 8, '', 14);
-    this.valueText = txt(scene, 262, 10, '', 12);
-    this.readyBtn = new UIButton(scene, 480, 17, 100, 26, t('topbar.ready'), 14, cb.onReady, 0x2f6b3a);
-    const muteBtn = new UIButton(scene, 404, 17, 40, 26, sfx.isMuted() ? '✕' : '♪', 13, () => {
+    this.waveText = txt(scene, 10, 7, '', 14).setFontStyle('bold');
+    this.valueText = txt(scene, 258, 9, '', 11);
+    this.readyBtn = new UIButton(scene, 490, 17, 86, 26, t('topbar.ready'), 13, cb.onReady, 0x2f6b3a);
+    const muteBtn = new UIButton(scene, 420, 17, 34, 26, sfx.isMuted() ? 'x' : '♪', 13, () => {
       sfx.toggleMuted();
-      muteBtn.setText(sfx.isMuted() ? '✕' : '♪');
+      muteBtn.setText(sfx.isMuted() ? 'x' : '♪');
     });
 
-    this.goldText = txt(scene, 10, 38, '', 14, COLORS.gold);
-    this.mythText = txt(scene, 108, 38, '', 14, COLORS.mythium);
-    this.incomeText = txt(scene, 240, 38, '', 14, COLORS.income);
-    // Hint on what mythium/workers are for — the mechanic is otherwise unexplained.
-    txt(scene, 108, 54, t('topbar.mythHint'), 9, COLORS.textDim).setAlpha(0.8);
-    this.workerBtn = new UIButton(scene, 442, 47, 176, 26, '', 12, cb.onBuyWorker, 0x33305a);
+    this.goldText = txt(scene, 10, 35, '', 14, COLORS.gold).setFontStyle('bold');
+    this.mythText = txt(scene, 96, 35, '', 14, COLORS.mythium).setFontStyle('bold');
+    this.incomeText = txt(scene, 172, 35, '', 14, COLORS.income).setFontStyle('bold');
+    this.workerBtn = new UIButton(scene, 434, 49, 190, 24, '', 11, cb.onBuyWorker, 0x33305a);
 
-    // King HP bars.
-    txt(scene, 10, 64, t('topbar.you'), 11, COLORS.textDim);
-    scene.add.rectangle(10, 80, this.barW, 12, 0x11141f).setOrigin(0);
-    this.ownKingBar = scene.add.rectangle(10, 80, this.barW, 12, 0x4caf50).setOrigin(0);
-    this.ownManaBar = scene.add.rectangle(10, 93, this.barW, 3, 0x5fd4e0).setOrigin(0);
-    this.ownKingText = txt(scene, 10 + this.barW / 2, 81, '', 10).setOrigin(0.5, 0);
+    txt(scene, 10, 62, t('topbar.you'), 10, COLORS.textDim);
+    scene.add.rectangle(10, 76, this.barW, 10, 0x11141f).setOrigin(0);
+    this.ownKingBar = scene.add.rectangle(10, 76, this.barW, 10, 0x4caf50).setOrigin(0);
+    this.ownManaBar = scene.add.rectangle(10, 87, this.barW, 2, 0x5fd4e0).setOrigin(0);
+    this.ownKingText = txt(scene, 10 + this.barW / 2, 76, '', 9).setOrigin(0.5, 0);
 
-    txt(scene, 530, 64, t('topbar.enemy'), 11, COLORS.textDim).setOrigin(1, 0);
-    scene.add.rectangle(286, 80, this.barW, 12, 0x11141f).setOrigin(0);
-    this.enemyKingBar = scene.add.rectangle(286, 80, this.barW, 12, 0xd9534f).setOrigin(0);
-    this.enemyKingText = txt(scene, 286 + this.barW / 2, 81, '', 10).setOrigin(0.5, 0);
+    txt(scene, 530, 62, t('topbar.enemy'), 10, COLORS.textDim).setOrigin(1, 0);
+    scene.add.rectangle(292, 76, this.barW, 10, 0x11141f).setOrigin(0);
+    this.enemyKingBar = scene.add.rectangle(292, 76, this.barW, 10, 0xd9534f).setOrigin(0);
+    this.enemyKingText = txt(scene, 292 + this.barW / 2, 76, '', 9).setOrigin(0.5, 0);
   }
 
   update(state: GameState): void {
@@ -71,16 +68,15 @@ export class TopBar {
     const phaseName =
       state.phase === 'build' ? t('phase.build') : state.phase === 'battle' ? t('phase.battle') : t('phase.end');
     this.waveText.setText(
-      `${t('topbar.wave', { n: state.waveNumber, max: state.maxWaves })}  •  ${phaseName}  ${state.phase === 'build' ? `${mm}:${ss}` : ''}`
+      `${t('topbar.wave', { n: state.waveNumber, max: state.maxWaves })} | ${phaseName}${state.phase === 'build' ? ` ${mm}:${ss}` : ''}`
     );
 
-    // Build phase: fighter value vs the wave's recommendation. Battle: own leak count.
     if (state.phase === 'build') {
       const wave = waveByNumber(Math.min(state.waveNumber, state.maxWaves));
       const own = Math.floor(playerFighterValue(state, state.humanPlayerId));
       const ok = own >= wave.recommendedFighterValue;
       this.valueText
-        .setText(`${t('topbar.value', { own, rec: wave.recommendedFighterValue })}${ok ? '' : ' ⚠'}`)
+        .setText(`${t('topbar.value', { own, rec: wave.recommendedFighterValue })}${ok ? '' : ' !'}`)
         .setColor(ok ? COLORS.ok : COLORS.danger);
     } else if (state.phase === 'battle' && human.leaksThisWave > 0) {
       this.valueText.setText(t('topbar.leaks', { n: human.leaksThisWave })).setColor(COLORS.danger);
@@ -89,8 +85,8 @@ export class TopBar {
     }
 
     this.goldText.setText(`g ${Math.floor(human.gold)}`);
-    this.mythText.setText(`◆ ${Math.floor(human.mythium)}`);
-    this.incomeText.setText(`↑ ${human.income}`);
+    this.mythText.setText(`m ${Math.floor(human.mythium)}`);
+    this.incomeText.setText(`+ ${human.income}`);
     this.workerBtn.setText(t('topbar.buyWorker', { cost: CFG.workerCost, n: human.workers }));
     this.workerBtn.setEnabled(state.phase === 'build' && human.gold >= CFG.workerCost);
     this.readyBtn.setEnabled(state.phase === 'build');
