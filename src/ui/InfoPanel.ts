@@ -22,13 +22,12 @@ export class InfoPanel {
   constructor(scene: Phaser.Scene, x: number, y: number) {
     this.scene = scene;
     this.container = scene.add.container(x, y);
-    this.title = txt(scene, 8, 0, '', 14).setFontStyle('bold');
-    this.warning = txt(scene, 8, 22, '', 12, COLORS.danger);
-    this.compRows = scene.add.container(8, 42);
-    this.value = txt(scene, 8, 96, '', 12);
-    this.hint = txt(scene, 8, 118, '', 11, COLORS.textDim, { wordWrap: { width: 510 } });
-    const legend = txt(scene, 8, 152, this.legendText(), 9, COLORS.textDim).setAlpha(0.8);
-    this.container.add([this.title, this.warning, this.compRows, this.value, this.hint, legend]);
+    this.title = txt(scene, 8, 0, '', 12).setFontStyle('bold');
+    this.warning = txt(scene, 8, 18, '', 10, COLORS.danger);
+    this.compRows = scene.add.container(8, 35);
+    this.value = txt(scene, 8, 82, '', 10);
+    this.hint = txt(scene, 8, 99, '', 9, COLORS.textDim, { wordWrap: { width: 510 } });
+    this.container.add([this.title, this.warning, this.compRows, this.value, this.hint]);
   }
 
   /** "Stark: ➤ Stich → ○ Leicht · ..." — generated from the damage matrix. */
@@ -51,13 +50,13 @@ export class InfoPanel {
     this.compRows.removeAll(true);
     const wave = waveByNumber(waveNumber);
     wave.groups.forEach((g, i) => {
-      const y = i * 17;
+      const y = i * 14;
       const main = txt(
         this.scene,
         0,
         y,
         `${g.count}× ${creepName(creepDefId(g.stats.name), g.stats.name)}  (${g.stats.hp} HP)`,
-        10,
+        9,
         '#b8c4de'
       );
       const atkSeg = txt(
@@ -65,7 +64,7 @@ export class InfoPanel {
         main.width + 10,
         y,
         atkLabel(g.stats.attackType),
-        10,
+        9,
         ATK_STYLE[g.stats.attackType].color
       );
       const armSeg = txt(
@@ -73,7 +72,7 @@ export class InfoPanel {
         main.width + 10 + atkSeg.width + 8,
         y,
         armLabel(g.stats.armorType),
-        10,
+        9,
         ARM_STYLE[g.stats.armorType].color
       );
       this.compRows.add([main, atkSeg, armSeg]);

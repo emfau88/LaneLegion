@@ -174,16 +174,16 @@ export class GameScene extends Phaser.Scene {
     let hpBarW = 26;
 
     if (u.kind === 'king') {
-      radius = 17;
-      hpBarW = 54;
-      body = this.add.rectangle(0, 0, 34, 30, COLORS.king).setStrokeStyle(2, 0xffffff, 0.7);
+      radius = 20;
+      hpBarW = 65;
+      body = this.add.rectangle(0, 0, 41, 36, COLORS.king).setStrokeStyle(2, 0xffffff, 0.7);
       root.add(body);
       root.add(txt(this, 0, 0, '♛', 18, '#3a2f10').setOrigin(0.5));
     } else if (u.kind === 'fighter') {
       const faction = factionById(u.factionId ?? 'ironclad');
       const sheet = fighterSheet(u.defId);
       const spriteKey = fighterSpriteKey(u.defId);
-      radius = u.tier === 1 ? 18 : 16;
+      radius = u.tier === 1 ? 22 : 19;
       root.add(this.add.ellipse(0, radius - 2, radius * 1.55, 7, 0x05070b, 0.32));
       if (sheet) {
         if (u.tier === 1) {
@@ -214,7 +214,7 @@ export class GameScene extends Phaser.Scene {
       });
     } else {
       const spriteKey = waveSpriteKey(u.defId);
-      radius = Math.min(20, Math.max(10, u.collisionRadius * 38));
+      radius = Math.min(24, Math.max(12, u.collisionRadius * 46));
       hpBarW = Math.max(20, radius * 2.1);
       root.add(this.add.ellipse(0, radius - 2, radius * 1.6, 7, 0x05070b, 0.28));
       if (spriteKey) {

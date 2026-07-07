@@ -122,6 +122,11 @@ const STRINGS = {
   'king.level': { de: 'St. {n}/{max}', en: 'Lv {n}/{max}' },
   'king.max': { de: 'MAX', en: 'MAX' },
   'king.upgradeBtn': { de: 'Ausbauen {cost} ◆', en: 'Upgrade {cost} ◆' },
+  'king.needMythium': { de: 'Braucht {cost} ◆', en: 'Need {cost} ◆' },
+  'king.hint': {
+    de: 'Upgrades kosten Mythium ◆, nicht Gold. Du hast {n} ◆',
+    en: 'Upgrades cost mythium ◆, not gold. You have {n} ◆'
+  },
   'king.stats': {
     de: 'König: {dmg} Schaden  •  {regen} HP/s Regeneration  •  Zauber {spell} Schaden',
     en: 'King: {dmg} dmg  •  {regen} HP/s regen  •  spell {spell} dmg'

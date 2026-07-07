@@ -11,28 +11,31 @@ import { COLORS, txt, UIButton } from './theme';
 export class KingPanel {
   readonly container: Phaser.GameObjects.Container;
   private rows: { type: KingUpgradeType; btn: UIButton; lvl: Phaser.GameObjects.Text }[] = [];
+  private hintText: Phaser.GameObjects.Text;
   private statsText: Phaser.GameObjects.Text;
 
   constructor(scene: Phaser.Scene, x: number, y: number, onUpgrade: (t: KingUpgradeType) => void) {
     this.container = scene.add.container(x, y);
+    this.hintText = txt(scene, 8, 0, '', 9, COLORS.mythium, { wordWrap: { width: 510 } });
+    this.container.add(this.hintText);
     const types: KingUpgradeType[] = ['attack', 'regen', 'spell'];
     types.forEach((type, i) => {
       const spec = KING_UPGRADES[type];
-      const rowY = i * 50;
-      const name = txt(scene, 8, rowY, kingUpgradeName(spec), 13).setFontStyle('bold');
-      const desc = txt(scene, 8, rowY + 18, kingUpgradeDesc(spec), 10, COLORS.textDim);
-      const lvl = txt(scene, 350, rowY + 8, '', 12, COLORS.textMain).setOrigin(1, 0);
-      const btn = new UIButton(scene, 455, rowY + 16, 150, 34, '', 12, () => onUpgrade(type), 0x33305a);
+      const rowY = 18 + i * 26;
+      const name = txt(scene, 8, rowY, kingUpgradeName(spec), 11).setFontStyle('bold');
+      const desc = txt(scene, 8, rowY + 13, kingUpgradeDesc(spec), 8, COLORS.textDim);
+      const lvl = txt(scene, 360, rowY + 5, '', 10, COLORS.textMain).setOrigin(1, 0);
+      const btn = new UIButton(scene, 455, rowY + 11, 150, 22, '', 10, () => onUpgrade(type), 0x33305a);
       this.container.add([name, desc, lvl, btn.container]);
       this.rows.push({ type, btn, lvl });
     });
-    this.statsText = txt(scene, 8, 152, '', 11, COLORS.textDim);
-    this.container.add(this.statsText);
+    this.statsText = txt(scene, 8, 0, '', 1, COLORS.textDim).setVisible(false);
   }
 
   update(state: GameState): void {
     const human = state.players[state.humanPlayerId];
     const team = state.teams[human.teamId];
+    this.hintText.setText(t('king.hint', { n: Math.floor(human.mythium) }));
     for (const row of this.rows) {
       const spec = KING_UPGRADES[row.type];
       const level = team.kingUpgrades[row.type];
@@ -42,8 +45,9 @@ export class KingPanel {
         row.btn.setEnabled(false);
       } else {
         const cost = kingUpgradeCost(spec, level);
-        row.btn.setText(t('king.upgradeBtn', { cost }));
-        row.btn.setEnabled(human.mythium >= cost && state.phase !== 'ended');
+        const canAfford = human.mythium >= cost;
+        row.btn.setText(t(canAfford ? 'king.upgradeBtn' : 'king.needMythium', { cost }));
+        row.btn.setEnabled(canAfford && state.phase !== 'ended');
       }
     }
     const king = kingOf(state, human.teamId);

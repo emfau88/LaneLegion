@@ -109,10 +109,10 @@ export class BottomShop {
       fightersTab.add(card.container);
     });
     this.fighterDetailBg = scene.add
-      .rectangle(4, CARD_H + 8, L.width - 8, 22, 0x111827, 0.72)
+      .rectangle(4, CARD_H + 3, L.width - 8, 19, 0x111827, 0.72)
       .setOrigin(0)
       .setStrokeStyle(1, COLORS.panelStroke);
-    this.fighterDetailText = txt(scene, 12, CARD_H + 13, '', 10, COLORS.textDim, {
+    this.fighterDetailText = txt(scene, 12, CARD_H + 7, '', 9, COLORS.textDim, {
       wordWrap: { width: L.width - 24 }
     });
     fightersTab.add([this.fighterDetailBg, this.fighterDetailText]);
@@ -120,12 +120,12 @@ export class BottomShop {
     // Mercs tab
     const mercsTab = scene.add.container(0, L.sheet.tabH + 6);
     MERCENARIES.forEach((merc, i) => {
-      const card = new MercenaryCard(scene, 6 + i * (MERC_W + 5), 0, merc, cb.onSendMerc);
+      const card = new MercenaryCard(scene, 6 + i * (MERC_W + 5), 28, merc, cb.onSendMerc);
       this.mercCards.push(card);
       mercsTab.add(card.container);
     });
-    this.autoBtn = new UIButton(scene, 100, 150, 185, 28, '', 12, cb.onToggleAutoSend, 0x33305a);
-    this.queuedText = txt(scene, 200, 138, '', 11, COLORS.textDim);
+    this.autoBtn = new UIButton(scene, 100, 12, 185, 22, '', 10, cb.onToggleAutoSend, 0x33305a);
+    this.queuedText = txt(scene, 200, 4, '', 10, COLORS.textDim);
     mercsTab.add([this.autoBtn.container, this.queuedText]);
 
     // King tab

@@ -6,7 +6,7 @@ import { mercName, mercRole } from '../i18n/names';
 import { COLORS, txt } from './theme';
 
 export const MERC_W = 102;
-export const MERC_H = 118;
+export const MERC_H = 78;
 
 /** Tappable mercenary send card. */
 export class MercenaryCard {
@@ -31,11 +31,11 @@ export class MercenaryCard {
 
     this.container = scene.add.container(x, y, [
       this.bg,
-      txt(scene, MERC_W / 2, 8, mercName(merc), 12).setOrigin(0.5, 0).setFontStyle('bold'),
-      txt(scene, MERC_W / 2, 28, `${merc.cost} ◆`, 12, COLORS.mythium).setOrigin(0.5, 0),
-      txt(scene, MERC_W / 2, 48, t('merc.income', { n: merc.incomeGain }), 11, COLORS.income).setOrigin(0.5, 0),
-      txt(scene, MERC_W / 2, 68, mercRole(merc), 11, COLORS.textDim).setOrigin(0.5, 0),
-      txt(scene, MERC_W / 2, 92, t('merc.send'), 12, '#f0d080').setOrigin(0.5, 0)
+      txt(scene, MERC_W / 2, 6, mercName(merc), 10).setOrigin(0.5, 0).setFontStyle('bold'),
+      txt(scene, MERC_W / 2, 23, `${merc.cost} ◆`, 11, COLORS.mythium).setOrigin(0.5, 0),
+      txt(scene, MERC_W / 2, 39, t('merc.income', { n: merc.incomeGain }), 9, COLORS.income).setOrigin(0.5, 0),
+      txt(scene, MERC_W / 2, 53, mercRole(merc), 9, COLORS.textDim).setOrigin(0.5, 0),
+      txt(scene, MERC_W / 2, 65, t('merc.send'), 9, '#f0d080').setOrigin(0.5, 0)
     ]);
   }
 
