@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { factionPreviewKey } from '../assets/factionPreviews';
 import { fighterSpriteKey } from '../assets/unitSprites';
 import type { FactionDefinition } from '../model/FactionDefinition';
 import { fighterById } from '../data/fighters';
@@ -44,21 +45,27 @@ export class FactionCard {
     items.push(txt(scene, 8, 136, `✗ ${factionWeaknesses(faction)}`, 11, COLORS.danger, { wordWrap: { width: FCARD_W - 16 } }));
     items.push(txt(scene, 8, 172, t('select.passive', { desc: factionPassive(faction) }), 11, '#b8c4de', { wordWrap: { width: FCARD_W - 16 } }));
 
-    faction.fighterIds.forEach((fid, i) => {
-      const def = fighterById(fid);
-      const col = i % 3;
-      const row = Math.floor(i / 3);
-      const cx = 42 + col * 86;
-      const cy = 236 + row * 42;
-      const spriteKey = fighterSpriteKey(fid);
-      if (spriteKey) {
-        items.push(scene.add.image(cx, cy, spriteKey).setDisplaySize(31, 31));
-      } else {
-        items.push(scene.add.circle(cx, cy, 13, faction.color).setStrokeStyle(1, 0xffffff, 0.5));
-        items.push(txt(scene, cx, cy, ROLE_LETTER[def.role], 12, '#101319').setOrigin(0.5).setFontStyle('bold'));
-      }
-      items.push(txt(scene, cx, cy + 16, `${def.tiers[0].cost}g`, 9, COLORS.textDim).setOrigin(0.5, 0));
-    });
+    const previewKey = factionPreviewKey(faction.id);
+    if (previewKey) {
+      items.push(scene.add.rectangle(8, 222, FCARD_W - 16, 84, 0x101826, 0.42).setOrigin(0).setStrokeStyle(1, faction.colorDark, 0.65));
+      items.push(scene.add.image(FCARD_W / 2, 264, previewKey).setDisplaySize(210, 88));
+    } else {
+      faction.fighterIds.forEach((fid, i) => {
+        const def = fighterById(fid);
+        const col = i % 3;
+        const row = Math.floor(i / 3);
+        const cx = 42 + col * 86;
+        const cy = 236 + row * 42;
+        const spriteKey = fighterSpriteKey(fid);
+        if (spriteKey) {
+          items.push(scene.add.image(cx, cy, spriteKey).setDisplaySize(31, 31));
+        } else {
+          items.push(scene.add.circle(cx, cy, 13, faction.color).setStrokeStyle(1, 0xffffff, 0.5));
+          items.push(txt(scene, cx, cy, ROLE_LETTER[def.role], 12, '#101319').setOrigin(0.5).setFontStyle('bold'));
+        }
+        items.push(txt(scene, cx, cy + 16, `${def.tiers[0].cost}g`, 9, COLORS.textDim).setOrigin(0.5, 0));
+      });
+    }
 
     this.container = scene.add.container(x, y, items);
   }

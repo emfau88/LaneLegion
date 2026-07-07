@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { HIT_EFFECT_SPRITES, SUPPORT_EFFECT_SPRITES } from '../assets/effectSprites';
+import { FACTION_PREVIEWS } from '../assets/factionPreviews';
 import { FIGHTER_SHEETS } from '../assets/fighterSheets';
 import laneArenaBoardUrl from '../assets/lane-arena-board.png';
 import { FIGHTER_SPRITES } from '../assets/unitSprites';
@@ -13,6 +14,9 @@ export class BootScene extends Phaser.Scene {
   preload(): void {
     this.load.image('lane-arena-board', laneArenaBoardUrl);
     for (const sprite of Object.values(FIGHTER_SPRITES)) {
+      this.load.image(sprite.key, sprite.url);
+    }
+    for (const sprite of Object.values(FACTION_PREVIEWS)) {
       this.load.image(sprite.key, sprite.url);
     }
     for (const sprite of Object.values(FIGHTER_SHEETS)) {

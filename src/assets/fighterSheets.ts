@@ -4,6 +4,12 @@ import fireImpUrl from './fighter-sheets/ember/fire-imp.png';
 import phoenixVesselUrl from './fighter-sheets/ember/phoenix-vessel.png';
 import sparkAdeptUrl from './fighter-sheets/ember/spark-adept.png';
 import sunArcherUrl from './fighter-sheets/ember/sun-archer.png';
+import ballistaScoutUrl from './fighter-sheets/ironclad/ballista-scout.png';
+import bannerBearerUrl from './fighter-sheets/ironclad/banner-bearer.png';
+import fortressGolemUrl from './fighter-sheets/ironclad/fortress-golem.png';
+import hammerRecruitUrl from './fighter-sheets/ironclad/hammer-recruit.png';
+import shieldGuardUrl from './fighter-sheets/ironclad/shield-guard.png';
+import steelHoundUrl from './fighter-sheets/ironclad/steel-hound.png';
 import duskbladeUrl from './fighter-sheets/shadow/duskblade.png';
 import hexAcolyteUrl from './fighter-sheets/shadow/hex-acolyte.png';
 import hollowGuardUrl from './fighter-sheets/shadow/hollow-guard.png';
@@ -20,6 +26,12 @@ export interface FighterSheetAsset extends UnitSpriteAsset {
 }
 
 export const FIGHTER_SHEETS: Record<string, FighterSheetAsset> = {
+  shield_guard: { key: 'fighter-sheet-shield-guard', url: shieldGuardUrl, frameWidth: 256, frameHeight: 256 },
+  hammer_recruit: { key: 'fighter-sheet-hammer-recruit', url: hammerRecruitUrl, frameWidth: 256, frameHeight: 256 },
+  ballista_scout: { key: 'fighter-sheet-ballista-scout', url: ballistaScoutUrl, frameWidth: 256, frameHeight: 256 },
+  banner_bearer: { key: 'fighter-sheet-banner-bearer', url: bannerBearerUrl, frameWidth: 256, frameHeight: 256 },
+  steel_hound: { key: 'fighter-sheet-steel-hound', url: steelHoundUrl, frameWidth: 256, frameHeight: 256 },
+  fortress_golem: { key: 'fighter-sheet-fortress-golem', url: fortressGolemUrl, frameWidth: 256, frameHeight: 256 },
   spark_adept: { key: 'fighter-sheet-spark-adept', url: sparkAdeptUrl, frameWidth: 256, frameHeight: 256 },
   ember_mage: { key: 'fighter-sheet-ember-mage', url: emberMageUrl, frameWidth: 256, frameHeight: 256 },
   ash_guard: { key: 'fighter-sheet-ash-guard', url: ashGuardUrl, frameWidth: 256, frameHeight: 256 },
