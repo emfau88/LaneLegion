@@ -18,6 +18,7 @@ export class InfoPanel {
   private compKey = '';
   private value: Phaser.GameObjects.Text;
   private hint: Phaser.GameObjects.Text;
+  private economy: Phaser.GameObjects.Text;
 
   constructor(scene: Phaser.Scene, x: number, y: number) {
     this.scene = scene;
@@ -27,8 +28,9 @@ export class InfoPanel {
     this.compRows = scene.add.container(8, 35);
     this.value = txt(scene, 8, 82, '', 10);
     this.hint = txt(scene, 8, 99, '', 9, COLORS.textDim, { wordWrap: { width: 510 } });
+    this.economy = txt(scene, 8, 123, t('info.economyGuide'), 9, COLORS.mythium, { wordWrap: { width: 510 } });
     const legend = txt(scene, 8, 152, this.legendText(), 9, COLORS.textDim, { wordWrap: { width: 510 } }).setAlpha(0.8);
-    this.container.add([this.title, this.warning, this.compRows, this.value, this.hint, legend]);
+    this.container.add([this.title, this.warning, this.compRows, this.value, this.hint, this.economy, legend]);
   }
 
   /** "Stark: ➤ Stich → ○ Leicht · ..." — generated from the damage matrix. */
@@ -89,9 +91,11 @@ export class InfoPanel {
       this.compRows.setVisible(false);
       this.value.setText('');
       this.hint.setText(t('info.finalHint'));
+      this.economy.setVisible(false);
       return;
     }
     this.compRows.setVisible(true);
+    this.economy.setVisible(true);
     const wave = waveByNumber(upcoming);
     this.title.setText(
       t(state.phase === 'build' ? 'info.incoming' : 'info.next', {

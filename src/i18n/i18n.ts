@@ -113,6 +113,10 @@ const STRINGS = {
   'shop.noSends': { de: 'Keine Sends geplant', en: 'No sends queued' },
   'shop.queued': { de: 'Geplant: {n} Send(s)', en: 'Queued: {n} send(s)' },
   'shop.queueTitle': { de: 'Sends für die nächste Welle planen:', en: 'Queue sends for next wave:' },
+  'shop.mercHint': {
+    de: 'Mythium ◆ nutzt du für Sends oder König-Upgrades. Sends greifen den Gegner nächste Welle an und geben Einkommen.',
+    en: 'Use mythium ◆ for sends or king upgrades. Sends attack the enemy next wave and grant income.'
+  },
 
   // ---------- mercenary card ----------
   'merc.income': { de: '+{n} Einkommen', en: '+{n} income' },
@@ -145,6 +149,10 @@ const STRINGS = {
     en: 'Recommended defense value: {rec}   (yours: {own})'
   },
   'info.compLine': { de: '{count}× {name}  ({hp} HP)', en: '{count}× {name}  ({hp} HP)' },
+  'info.economyGuide': {
+    de: 'Kurz: Gold baut Kämpfer/Worker. Worker erzeugen Mythium ◆. Mythium kaufst du als Sends oder König-Upgrades. Einkommen zahlt jede Runde mehr Gold.',
+    en: 'Short version: gold buys fighters/workers. Workers generate mythium ◆. Spend mythium on sends or king upgrades. Income pays more gold each round.'
+  },
 
   // ---------- fighter card / info popup ----------
   'card.stats': { de: '{hp} HP  {dmg} Schaden', en: '{hp} HP  {dmg} DMG' },

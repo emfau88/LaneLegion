@@ -16,6 +16,12 @@ import hollowGuardUrl from './fighter-sheets/shadow/hollow-guard.png';
 import leechPriestUrl from './fighter-sheets/shadow/leech-priest.png';
 import shadeArcherUrl from './fighter-sheets/shadow/shade-archer.png';
 import voidHorrorUrl from './fighter-sheets/shadow/void-horror.png';
+import barkbackBeastUrl from './fighter-sheets/wildroot/barkback-beast.png';
+import briarWarriorUrl from './fighter-sheets/wildroot/briar-warrior.png';
+import groveTitanUrl from './fighter-sheets/wildroot/grove-titan.png';
+import mossShamanUrl from './fighter-sheets/wildroot/moss-shaman.png';
+import rootlingUrl from './fighter-sheets/wildroot/rootling.png';
+import vineSpitterUrl from './fighter-sheets/wildroot/vine-spitter.png';
 import type { UnitSpriteAsset } from './unitSprites';
 
 export type FighterSheetFrame = 'idle' | 'attack' | 'hit' | 'death';
@@ -43,7 +49,13 @@ export const FIGHTER_SHEETS: Record<string, FighterSheetAsset> = {
   hollow_guard: { key: 'fighter-sheet-hollow-guard', url: hollowGuardUrl, frameWidth: 256, frameHeight: 256 },
   shade_archer: { key: 'fighter-sheet-shade-archer', url: shadeArcherUrl, frameWidth: 256, frameHeight: 256 },
   leech_priest: { key: 'fighter-sheet-leech-priest', url: leechPriestUrl, frameWidth: 256, frameHeight: 256 },
-  void_horror: { key: 'fighter-sheet-void-horror', url: voidHorrorUrl, frameWidth: 256, frameHeight: 256 }
+  void_horror: { key: 'fighter-sheet-void-horror', url: voidHorrorUrl, frameWidth: 256, frameHeight: 256 },
+  rootling: { key: 'fighter-sheet-rootling', url: rootlingUrl, frameWidth: 256, frameHeight: 256 },
+  briar_warrior: { key: 'fighter-sheet-briar-warrior', url: briarWarriorUrl, frameWidth: 256, frameHeight: 256 },
+  moss_shaman: { key: 'fighter-sheet-moss-shaman', url: mossShamanUrl, frameWidth: 256, frameHeight: 256 },
+  barkback_beast: { key: 'fighter-sheet-barkback-beast', url: barkbackBeastUrl, frameWidth: 256, frameHeight: 256 },
+  vine_spitter: { key: 'fighter-sheet-vine-spitter', url: vineSpitterUrl, frameWidth: 256, frameHeight: 256 },
+  grove_titan: { key: 'fighter-sheet-grove-titan', url: groveTitanUrl, frameWidth: 256, frameHeight: 256 }
 };
 
 export const FIGHTER_SHEET_FRAME: Record<FighterSheetFrame, number> = {

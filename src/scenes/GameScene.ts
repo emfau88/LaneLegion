@@ -594,6 +594,51 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
+  private playHitImpact(attackType: AttackType, x: number, y: number): void {
+    this.playEffectSprite(hitEffectKey(attackType), x, y, 34);
+    const ring = this.add
+      .circle(x, y, attackType === 'impact' ? 8 : 6, this.projectileColor(attackType), 0.28)
+      .setDepth(DEPTH_FX);
+    this.tweens.add({
+      targets: ring,
+      scale: attackType === 'impact' ? 2.2 : 1.8,
+      alpha: 0,
+      duration: 180,
+      onComplete: () => ring.destroy()
+    });
+  }
+
+  private playMeleeSlash(from: { x: number; y: number }, to: { x: number; y: number }, attackType: AttackType): void {
+    const g = this.add.graphics().setDepth(DEPTH_FX);
+    const mx = (from.x + to.x) / 2;
+    const my = (from.y + to.y) / 2;
+    const dx = to.x - from.x;
+    const dy = to.y - from.y;
+    const len = Math.max(1, Math.sqrt(dx * dx + dy * dy));
+    const px = (-dy / len) * 11;
+    const py = (dx / len) * 11;
+    g.lineStyle(3, this.projectileColor(attackType), 0.82);
+    g.beginPath();
+    g.moveTo(mx - px, my - py);
+    g.lineTo(mx + px, my + py);
+    g.strokePath();
+    this.tweens.add({ targets: g, alpha: 0, duration: 130, onComplete: () => g.destroy() });
+  }
+
+  private createProjectile(from: { x: number; y: number }, attackType: AttackType): Phaser.GameObjects.GameObject {
+    const color = this.projectileColor(attackType);
+    if (attackType === 'pierce') {
+      return this.add.rectangle(from.x, from.y, 12, 3, color, 0.95).setDepth(DEPTH_FX);
+    }
+    if (attackType === 'magic') {
+      return this.add.star(from.x, from.y, 5, 2.5, 6, color, 0.95).setDepth(DEPTH_FX);
+    }
+    if (attackType === 'pure') {
+      return this.add.circle(from.x, from.y, 4.5, color, 0.95).setStrokeStyle(1, 0xffffff, 0.8).setDepth(DEPTH_FX);
+    }
+    return this.add.rectangle(from.x, from.y, 7, 7, color, 0.9).setDepth(DEPTH_FX);
+  }
+
   private playEffectSprite(key: string, x: number, y: number, size: number, duration = 230): void {
     const fx = this.add.image(x, y, key).setDisplaySize(size, size).setDepth(DEPTH_FX).setAlpha(0.95);
     const targetScaleX = fx.scaleX;
@@ -632,17 +677,18 @@ export class GameScene extends Phaser.Scene {
           if (!this.zoneVisible(ev.zoneId)) break;
           sfx.play('hit');
           const to = this.screenOf(ev.zoneId, ev.toPos);
-          const playHit = () => this.playEffectSprite(hitEffectKey(ev.attackType), to.x, to.y, 34);
+          const playHit = () => this.playHitImpact(ev.attackType, to.x, to.y);
           this.setFighterFrame(ev.fromId, 'attack', 180);
           this.setFighterFrame(ev.toId, 'hit', 150);
           if (ev.ranged) {
             const from = this.screenOf(ev.zoneId, ev.fromPos);
-            const proj = this.add.circle(from.x, from.y, 3.5, this.projectileColor(ev.attackType)).setDepth(DEPTH_FX);
+            const proj = this.createProjectile(from, ev.attackType);
             this.tweens.add({
               targets: proj,
               x: to.x,
               y: to.y,
-              duration: 130,
+              rotation: ev.attackType === 'pierce' ? Phaser.Math.Angle.Between(from.x, from.y, to.x, to.y) : Math.PI,
+              duration: ev.attackType === 'magic' ? 170 : 130,
               onComplete: () => {
                 proj.destroy();
                 playHit();
@@ -653,6 +699,7 @@ export class GameScene extends Phaser.Scene {
             if (view) {
               this.tweens.add({ targets: view.root, scale: 1.22, duration: 70, yoyo: true });
             }
+            this.playMeleeSlash(this.screenOf(ev.zoneId, ev.fromPos), to, ev.attackType);
             playHit();
           }
           break;

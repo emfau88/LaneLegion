@@ -122,13 +122,14 @@ export class BottomShop {
     // Mercs tab
     const mercsTab = scene.add.container(0, L.sheet.tabH + 6);
     mercsTab.add(txt(scene, 8, 4, t('shop.queueTitle'), 10, COLORS.textDim));
+    mercsTab.add(txt(scene, 8, 20, t('shop.mercHint'), 9, COLORS.mythium, { wordWrap: { width: 520 } }));
     MERCENARIES.forEach((merc, i) => {
-      const card = new MercenaryCard(scene, 6 + i * (MERC_W + 5), 50, merc, cb.onSendMerc);
+      const card = new MercenaryCard(scene, 6 + i * (MERC_W + 5), 64, merc, cb.onSendMerc);
       this.mercCards.push(card);
       mercsTab.add(card.container);
     });
-    this.autoBtn = new UIButton(scene, 100, 28, 185, 24, '', 10, cb.onToggleAutoSend, 0x33305a);
-    this.queuedText = txt(scene, 200, 20, '', 10, COLORS.textDim);
+    this.autoBtn = new UIButton(scene, 100, 42, 185, 24, '', 10, cb.onToggleAutoSend, 0x33305a);
+    this.queuedText = txt(scene, 200, 34, '', 10, COLORS.textDim);
     mercsTab.add([this.autoBtn.container, this.queuedText]);
 
     // King tab
