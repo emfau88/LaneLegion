@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { SUPPORT_EFFECT_SPRITES, hitEffectKey } from '../assets/effectSprites';
 import { FIGHTER_SHEET_FRAME, fighterSheet } from '../assets/fighterSheets';
+import { KING_SHEET, KING_SHEET_FRAME, type KingSheetFrame } from '../assets/kingSprites';
 import { fighterSpriteKey } from '../assets/unitSprites';
 import { waveSpriteKey } from '../assets/waveSprites';
 import { CFG } from '../data/gameConfig';
@@ -176,9 +177,9 @@ export class GameScene extends Phaser.Scene {
     if (u.kind === 'king') {
       radius = 20;
       hpBarW = 65;
-      body = this.add.rectangle(0, 0, 41, 36, COLORS.king).setStrokeStyle(2, 0xffffff, 0.7);
+      root.add(this.add.ellipse(0, radius - 1, radius * 1.95, 8, 0x05070b, 0.34));
+      body = this.add.sprite(0, 0, KING_SHEET.key, KING_SHEET_FRAME.idle).setDisplaySize(58, 58);
       root.add(body);
-      root.add(txt(this, 0, 0, '♛', 18, '#3a2f10').setOrigin(0.5));
     } else if (u.kind === 'fighter') {
       const faction = factionById(u.factionId ?? 'ironclad');
       const sheet = fighterSheet(u.defId);
@@ -283,6 +284,7 @@ export class GameScene extends Phaser.Scene {
       view.root.x += (sp.x - view.root.x) * 0.45;
       view.root.y += (sp.y - view.root.y) * 0.45;
       view.hpBar.width = view.hpBarW * Math.max(0, u.hp / u.maxHp);
+      if (u.kind === 'king') this.refreshKingFrame(u, view);
     }
 
     for (const [id, view] of this.views) {
@@ -670,6 +672,29 @@ export class GameScene extends Phaser.Scene {
     });
   }
 
+  private refreshKingFrame(u: CombatUnit, view: UnitView): void {
+    if (!view.spriteBody || view.resetFrameTimer) return;
+    view.spriteBody.setFrame(u.hp / u.maxHp <= 0.35 ? KING_SHEET_FRAME.damaged : KING_SHEET_FRAME.idle);
+  }
+
+  private setKingFrame(unitId: number, frame: KingSheetFrame, resetDelay = 220): void {
+    const view = this.views.get(unitId);
+    const unit = this.sim.state.units.get(unitId);
+    if (!view?.spriteBody || unit?.kind !== 'king') return;
+    view.resetFrameTimer?.remove();
+    view.spriteBody.setFrame(KING_SHEET_FRAME[frame]);
+    if (frame === 'idle' || frame === 'damaged') {
+      view.resetFrameTimer = undefined;
+      return;
+    }
+    view.resetFrameTimer = this.time.delayedCall(resetDelay, () => {
+      if (view.spriteBody?.active && unit.state !== 'dead') {
+        view.spriteBody.setFrame(unit.hp / unit.maxHp <= 0.35 ? KING_SHEET_FRAME.damaged : KING_SHEET_FRAME.idle);
+      }
+      view.resetFrameTimer = undefined;
+    });
+  }
+
   private handleEvents(events: GameEvent[]): void {
     for (const ev of events) {
       switch (ev.type) {
@@ -680,6 +705,8 @@ export class GameScene extends Phaser.Scene {
           const playHit = () => this.playHitImpact(ev.attackType, to.x, to.y);
           this.setFighterFrame(ev.fromId, 'attack', 180);
           this.setFighterFrame(ev.toId, 'hit', 150);
+          this.setKingFrame(ev.fromId, 'brace', 180);
+          this.setKingFrame(ev.toId, 'damaged', 170);
           if (ev.ranged) {
             const from = this.screenOf(ev.zoneId, ev.fromPos);
             const proj = this.createProjectile(from, ev.attackType);
@@ -745,6 +772,7 @@ export class GameScene extends Phaser.Scene {
         case 'kingSpell': {
           if (!this.zoneVisible(ev.zoneId)) break;
           sfx.play('kingSpell');
+          this.setKingFrame(this.sim.state.teams[ev.teamId].kingUnitId, 'cast', 360);
           const sp = this.screenOf(ev.zoneId, ev.pos);
           const ring = this.add.circle(sp.x, sp.y, 12, 0xf5c542, 0.35).setDepth(DEPTH_FX);
           this.tweens.add({

@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { HIT_EFFECT_SPRITES, SUPPORT_EFFECT_SPRITES } from '../assets/effectSprites';
 import { FACTION_PREVIEWS } from '../assets/factionPreviews';
 import { FIGHTER_SHEETS } from '../assets/fighterSheets';
+import { KING_SHEET } from '../assets/kingSprites';
 import laneArenaBoardUrl from '../assets/lane-arena-board.png';
 import { FIGHTER_SPRITES } from '../assets/unitSprites';
 import { WAVE_SPRITES } from '../assets/waveSprites';
@@ -25,6 +26,10 @@ export class BootScene extends Phaser.Scene {
         frameHeight: sprite.frameHeight
       });
     }
+    this.load.spritesheet(KING_SHEET.key, KING_SHEET.url, {
+      frameWidth: KING_SHEET.frameWidth,
+      frameHeight: KING_SHEET.frameHeight
+    });
     for (const sprite of Object.values(WAVE_SPRITES)) {
       this.load.image(sprite.key, sprite.url);
     }
