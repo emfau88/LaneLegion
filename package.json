@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "balance:sim": "npx -y tsx balance-sim.ts",
+    "balance:experiments": "npx -y tsx balance-experiments.ts",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview"
   },

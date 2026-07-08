@@ -20,12 +20,12 @@ export const CFG = {
   maxBattleDuration: 90,
   maxWaves: 15,
 
-  startGold: 120,
+  startGold: 130,
   startWorkers: 1,
   startIncome: 0,
   startMythium: 0,
-  workerCost: 50,
-  mythiumPerWorkerPerSec: 0.1,
+  workerCost: 40,
+  mythiumPerWorkerPerSec: 0.13,
   sellRefundRate: 0.7,
 
   /** Leaked creeps keep this fraction of their remaining HP. */

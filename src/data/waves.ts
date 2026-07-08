@@ -45,7 +45,7 @@ export const WAVES: WaveDefinition[] = [
   {
     waveNumber: 3,
     name: 'Swift Stalkers',
-    groups: [{ stats: c('Swift Stalker', 85, 9, 1.8, 'pierce', 'light'), count: 10 }],
+    groups: [{ stats: c('Swift Stalker', 85, 9, 1.8, 'pierce', 'light'), count: 9 }],
     goldRewardTotal: 60,
     recommendedFighterValue: 210,
     shortHint: 'Fast runners punish bad positioning.',
