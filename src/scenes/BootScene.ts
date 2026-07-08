@@ -4,6 +4,7 @@ import { FACTION_PREVIEWS } from '../assets/factionPreviews';
 import { FIGHTER_SHEETS } from '../assets/fighterSheets';
 import { KING_SHEET } from '../assets/kingSprites';
 import laneArenaBoardUrl from '../assets/lane-arena-board.png';
+import buttonFrameUrl from '../assets/menu/button-frame.png';
 import mainMenuBgUrl from '../assets/menu/main-menu-bg.png';
 import titlePlateUrl from '../assets/menu/title-plate.png';
 import { FIGHTER_SPRITES } from '../assets/unitSprites';
@@ -16,6 +17,7 @@ export class BootScene extends Phaser.Scene {
 
   preload(): void {
     this.load.image('lane-arena-board', laneArenaBoardUrl);
+    this.load.image('button-frame', buttonFrameUrl);
     this.load.image('main-menu-bg', mainMenuBgUrl);
     this.load.image('title-plate', titlePlateUrl);
     for (const sprite of Object.values(FIGHTER_SPRITES)) {

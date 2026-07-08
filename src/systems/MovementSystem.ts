@@ -31,7 +31,7 @@ const leakCreep = (state: GameState, u: CombatUnit): void => {
   u.hp = Math.max(1, u.hp * CFG.leakHpFactor);
   u.leaked = true;
   u.zoneId = arenaZoneId(defender.teamId);
-  u.pos = { x: Math.min(Math.max(u.pos.x, 0.5), CFG.arena.width - 0.5), y: 0.25 };
+  u.pos = { x: CFG.arena.kingPos.x, y: 0.25 };
   u.targetId = null;
   u.retargetAt = state.time;
   state.events.push({ type: 'leak', unitId: u.id, laneId: defender.laneId, teamId: defender.teamId });
