@@ -5,7 +5,7 @@ import { MERCENARIES } from '../data/mercenaries';
 import type { GameState } from '../model/GameState';
 import type { KingUpgradeType } from '../model/Types';
 import { t } from '../i18n/i18n';
-import { fighterTierName, mercName } from '../i18n/names';
+import { fighterTierName } from '../i18n/names';
 import { CARD_W, CARD_H, FighterCard } from './FighterCard';
 import { MERC_W, MercenaryCard } from './MercenaryCard';
 import { KingPanel } from './KingPanel';
@@ -23,15 +23,13 @@ export interface ShopCallbacks {
 
 type TabId = 'fighters' | 'mercs' | 'king' | 'info';
 
-/**
- * Collapsible bottom sheet with 4 tabs. Large during build phase,
- * collapses to a compact merc quick-bar during battle.
- */
+/** Collapsible bottom sheet. Battle starts compact, but every tab can be reopened. */
 export class BottomShop {
   private scene: Phaser.Scene;
   private cb: ShopCallbacks;
   private activeTab: TabId = 'fighters';
   private mode: 'build' | 'battle' = 'build';
+  private expandedInBattle = false;
   private selectedFighter: string | null = null;
 
   private buildRoot: Phaser.GameObjects.Container;
@@ -39,6 +37,7 @@ export class BottomShop {
   private battleRoot: Phaser.GameObjects.Container;
   private tabButtons: Record<TabId, UIButton>;
   private tabContents: Record<TabId, Phaser.GameObjects.Container>;
+  private minimizeBtn: UIButton;
 
   private fighterCards: FighterCard[] = [];
   private fighterDetailBg: Phaser.GameObjects.Rectangle;
@@ -49,7 +48,7 @@ export class BottomShop {
   private autoBtn: UIButton;
   private queuedText: Phaser.GameObjects.Text;
 
-  private battleMercBtns: { id: string; btn: UIButton }[] = [];
+  private battleTabBtns: { id: TabId; btn: UIButton }[] = [];
   private battleAutoBtn: UIButton;
   private battleQueuedText: Phaser.GameObjects.Text;
 
@@ -57,15 +56,16 @@ export class BottomShop {
     this.scene = scene;
     this.cb = cb;
 
-    // ---------- Build-phase sheet ----------
     this.buildRoot = scene.add.container(0, L.sheet.buildTop).setDepth(30);
     this.buildBg = scene.add
       .rectangle(0, 0, L.width, L.sheet.buildH, COLORS.panel)
       .setOrigin(0)
       .setStrokeStyle(1, COLORS.panelStroke)
-      .setInteractive(); // swallow taps so they don't reach the lane
+      .setInteractive();
     this.buildRoot.add(this.buildBg);
     this.buildRoot.add(scene.add.rectangle(L.width / 2, 4, 70, 4, COLORS.panelStroke, 0.85).setOrigin(0.5));
+    this.minimizeBtn = new UIButton(scene, L.width - 34, L.sheet.tabH + 18, 58, 22, 'min', 10, () => this.minimizeBattleSheet());
+    this.buildRoot.add(this.minimizeBtn.container);
 
     const tabs: { id: TabId; label: string }[] = [
       { id: 'fighters', label: t('tab.fighters') },
@@ -89,7 +89,6 @@ export class BottomShop {
       this.buildRoot.add(btn.container);
     });
 
-    // Fighters tab
     const human = state.players[state.humanPlayerId];
     const faction = factionById(human.factionId);
     const fightersTab = scene.add.container(0, L.sheet.tabH + 6);
@@ -119,7 +118,6 @@ export class BottomShop {
     });
     fightersTab.add([this.fighterDetailBg, this.fighterDetailText]);
 
-    // Mercs tab
     const mercsTab = scene.add.container(0, L.sheet.tabH + 6);
     mercsTab.add(txt(scene, 8, 4, t('shop.queueTitle'), 10, COLORS.textDim));
     mercsTab.add(txt(scene, 8, 20, t('shop.mercHint'), 9, COLORS.mythium, { wordWrap: { width: 520 } }));
@@ -132,9 +130,7 @@ export class BottomShop {
     this.queuedText = txt(scene, 200, 34, '', 10, COLORS.textDim);
     mercsTab.add([this.autoBtn.container, this.queuedText]);
 
-    // King tab
     this.kingPanel = new KingPanel(scene, 0, L.sheet.tabH + 12, cb.onKingUpgrade);
-    // Info tab
     this.infoPanel = new InfoPanel(scene, 0, L.sheet.tabH + 12);
 
     this.tabContents = {
@@ -144,8 +140,8 @@ export class BottomShop {
       info: this.infoPanel.container
     };
     for (const c of Object.values(this.tabContents)) this.buildRoot.add(c);
+    this.buildRoot.bringToTop(this.minimizeBtn.container);
 
-    // ---------- Battle-phase compact bar ----------
     this.battleRoot = scene.add.container(0, L.sheet.battleTop).setDepth(30);
     const bbg = scene.add
       .rectangle(0, 0, L.width, L.sheet.battleH, COLORS.panel)
@@ -153,24 +149,14 @@ export class BottomShop {
       .setStrokeStyle(1, COLORS.panelStroke)
       .setInteractive();
     this.battleRoot.add(bbg);
-    this.battleRoot.add(txt(scene, 8, 5, t('shop.queueTitle'), 11, COLORS.textDim));
-    MERCENARIES.forEach((merc, i) => {
-      const btn = new UIButton(
-        scene,
-        8 + 102 / 2 + i * 106,
-        40,
-        100,
-        32,
-        `${mercName(merc)} ${merc.cost}◆`,
-        10,
-        () => cb.onSendMerc(merc.id),
-        0x33305a
-      );
-      this.battleMercBtns.push({ id: merc.id, btn });
+    this.battleRoot.add(txt(scene, 8, 8, 'Menüs', 10, COLORS.textDim));
+    tabs.forEach((tab, i) => {
+      const btn = new UIButton(scene, 68 + i * 84, 25, 78, 28, tab.label, 10, () => this.expandBattleTab(tab.id), 0x33305a);
+      this.battleTabBtns.push({ id: tab.id, btn });
       this.battleRoot.add(btn.container);
     });
-    this.battleAutoBtn = new UIButton(scene, 100, 76, 185, 22, '', 11, cb.onToggleAutoSend, 0x33305a);
-    this.battleQueuedText = txt(scene, 200, 70, '', 11, COLORS.textDim);
+    this.battleAutoBtn = new UIButton(scene, 488, 25, 84, 28, '', 10, cb.onToggleAutoSend, 0x33305a);
+    this.battleQueuedText = txt(scene, L.width - 8, 4, '', 9, COLORS.textDim).setOrigin(1, 0);
     this.battleRoot.add([this.battleAutoBtn.container, this.battleQueuedText]);
 
     this.setTab('fighters');
@@ -179,13 +165,10 @@ export class BottomShop {
 
   setTab(tab: TabId): void {
     this.activeTab = tab;
+    if (this.mode === 'battle') this.expandedInBattle = true;
     this.applyBuildSheetSize();
-    for (const [id, content] of Object.entries(this.tabContents)) {
-      content.setVisible(id === tab);
-    }
-    for (const [id, btn] of Object.entries(this.tabButtons)) {
-      btn.setBaseColor(id === tab ? 0x3c4a6b : COLORS.panelLight);
-    }
+    this.applyModeVisibility();
+    this.updateVisibleTab();
     if (tab !== 'fighters') {
       this.selectedFighter = null;
       this.cb.onSelectFighter(null);
@@ -195,9 +178,9 @@ export class BottomShop {
 
   setMode(mode: 'build' | 'battle'): void {
     this.mode = mode;
+    if (mode === 'battle') this.expandedInBattle = false;
     this.applyBuildSheetSize();
-    this.buildRoot.setVisible(mode === 'build');
-    this.battleRoot.setVisible(mode === 'battle');
+    this.applyModeVisibility();
     if (mode === 'battle') {
       this.selectedFighter = null;
       this.cb.onSelectFighter(null);
@@ -211,9 +194,38 @@ export class BottomShop {
   }
 
   private applyBuildSheetSize(): void {
-    const expanded = this.mode === 'build' && this.activeTab !== 'fighters';
+    const expanded = this.mode === 'battle' || (this.mode === 'build' && this.activeTab !== 'fighters');
     this.buildRoot.y = expanded ? L.sheet.buildExpandedTop : L.sheet.buildTop;
     this.buildBg.height = expanded ? L.sheet.buildExpandedH : L.sheet.buildH;
+    this.minimizeBtn.container.setVisible(this.mode === 'battle');
+  }
+
+  private applyModeVisibility(): void {
+    this.buildRoot.setVisible(this.mode === 'build' || this.expandedInBattle);
+    this.battleRoot.setVisible(this.mode === 'battle' && !this.expandedInBattle);
+  }
+
+  private updateVisibleTab(): void {
+    for (const [id, content] of Object.entries(this.tabContents)) {
+      content.setVisible(id === this.activeTab);
+    }
+    for (const [id, btn] of Object.entries(this.tabButtons)) {
+      btn.setBaseColor(id === this.activeTab ? 0x3c4a6b : COLORS.panelLight);
+    }
+  }
+
+  private expandBattleTab(tab: TabId): void {
+    this.activeTab = tab;
+    this.expandedInBattle = true;
+    this.applyBuildSheetSize();
+    this.applyModeVisibility();
+    this.updateVisibleTab();
+  }
+
+  private minimizeBattleSheet(): void {
+    if (this.mode !== 'battle') return;
+    this.expandedInBattle = false;
+    this.applyModeVisibility();
   }
 
   private updateFighterDetail(defId: string | null): void {
@@ -239,7 +251,7 @@ export class BottomShop {
         : t('shop.queued', { n: human.pendingSends.length });
     const autoLabel = t('shop.autoSend', { state: t(human.autoSend ? 'common.on' : 'common.off') });
 
-    if (this.mode === 'build') {
+    if (this.mode === 'build' || this.expandedInBattle) {
       for (const card of this.fighterCards) card.update(state, this.selectedFighter);
       this.updateFighterDetail(this.activeTab === 'fighters' ? this.selectedFighter : null);
       for (const card of this.mercCards) card.update(state);
@@ -248,14 +260,15 @@ export class BottomShop {
       this.autoBtn.setText(autoLabel);
       this.autoBtn.setTextColor(human.autoSend ? COLORS.income : COLORS.textDim);
       this.queuedText.setText(queued);
-    } else {
-      for (const { id, btn } of this.battleMercBtns) {
-        const merc = MERCENARIES.find((m) => m.id === id)!;
-        btn.setEnabled(human.mythium >= merc.cost);
-      }
+    }
+
+    if (this.mode === 'battle' && !this.expandedInBattle) {
       this.battleAutoBtn.setText(autoLabel);
       this.battleAutoBtn.setTextColor(human.autoSend ? COLORS.income : COLORS.textDim);
       this.battleQueuedText.setText(queued);
+      for (const { id, btn } of this.battleTabBtns) {
+        btn.setBaseColor(id === this.activeTab ? 0x3c4a6b : 0x33305a);
+      }
     }
   }
 }

@@ -6,7 +6,7 @@ import { GameScene } from './scenes/GameScene';
 import { ResultScene } from './scenes/ResultScene';
 
 export const GAME_WIDTH = 540;
-export const GAME_HEIGHT = 960;
+export const GAME_HEIGHT = 1168;
 
 new Phaser.Game({
   type: Phaser.AUTO,

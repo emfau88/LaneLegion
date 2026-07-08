@@ -1,19 +1,21 @@
 import { CFG } from '../data/gameConfig';
 import type { Vec2 } from '../model/Types';
 
-/** Portrait-first screen layout (design resolution 540x960). */
+/** Portrait-first screen layout (design resolution 540x1168). */
 export const L = {
   width: 540,
-  height: 960,
+  height: 1168,
 
   topBar: { x: 0, y: 0, w: 540, h: 92 },
   statusRow: { x: 0, y: 92, w: 540, h: 30 },
 
+  board: { left: 0, top: 92, w: 540, h: 966 },
+
   lane: {
-    left: 30,
-    top: 126,
-    cellW: 80,
-    cellH: 59,
+    left: 54,
+    top: 112,
+    cellW: 72,
+    cellH: 76,
     get w() {
       return this.cellW * CFG.grid.cols;
     },
@@ -22,15 +24,15 @@ export const L = {
     }
   },
 
-  arena: { left: 30, top: 724, w: 480, h: 84 },
+  arena: { left: 105, top: 824, w: 330, h: 126 },
 
   sheet: {
-    buildTop: 816,
-    buildH: 144,
-    buildExpandedTop: 724,
-    buildExpandedH: 236,
-    battleTop: 866,
-    battleH: 94,
+    buildTop: 1006,
+    buildH: 162,
+    buildExpandedTop: 884,
+    buildExpandedH: 284,
+    battleTop: 1036,
+    battleH: 132,
     tabH: 32
   }
 };

@@ -4,6 +4,8 @@ import { FACTION_PREVIEWS } from '../assets/factionPreviews';
 import { FIGHTER_SHEETS } from '../assets/fighterSheets';
 import { KING_SHEET } from '../assets/kingSprites';
 import laneArenaBoardUrl from '../assets/lane-arena-board.png';
+import mainMenuBgUrl from '../assets/menu/main-menu-bg.png';
+import titlePlateUrl from '../assets/menu/title-plate.png';
 import { FIGHTER_SPRITES } from '../assets/unitSprites';
 import { WAVE_SPRITES } from '../assets/waveSprites';
 
@@ -14,6 +16,8 @@ export class BootScene extends Phaser.Scene {
 
   preload(): void {
     this.load.image('lane-arena-board', laneArenaBoardUrl);
+    this.load.image('main-menu-bg', mainMenuBgUrl);
+    this.load.image('title-plate', titlePlateUrl);
     for (const sprite of Object.values(FIGHTER_SPRITES)) {
       this.load.image(sprite.key, sprite.url);
     }
@@ -43,8 +47,6 @@ export class BootScene extends Phaser.Scene {
 
   create(): void {
     this.input.topOnly = true;
-    // Crisp nearest-neighbor sampling for the pixel-art board.
-    this.textures.get('lane-arena-board').setFilter(Phaser.Textures.FilterMode.NEAREST);
     this.scene.start('MainMenu');
   }
 }

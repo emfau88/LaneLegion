@@ -37,6 +37,7 @@ interface UnitView {
 
 const DEPTH_LANE_INPUT = 1;
 const DEPTH_HIGHLIGHT = 2;
+const DEPTH_MAP_OVERLAY = 3;
 const DEPTH_UNITS = 5;
 const DEPTH_FX = 8;
 const DEPTH_POPUP = 20;
@@ -53,6 +54,8 @@ export class GameScene extends Phaser.Scene {
   private statusCards!: LaneStatusCards;
   private shop!: BottomShop;
   private highlightGfx!: Phaser.GameObjects.Graphics;
+  private mapOverlayGfx!: Phaser.GameObjects.Graphics;
+  private workerCountText!: Phaser.GameObjects.Text;
 
   private actionMenu!: Phaser.GameObjects.Container;
   private actionTitle!: Phaser.GameObjects.Text;
@@ -94,6 +97,10 @@ export class GameScene extends Phaser.Scene {
     this.drawStaticLane();
     this.createLaneInput();
     this.highlightGfx = this.add.graphics().setDepth(DEPTH_HIGHLIGHT);
+    this.mapOverlayGfx = this.add.graphics().setDepth(DEPTH_MAP_OVERLAY);
+    this.workerCountText = txt(this, L.board.left + 95, L.board.top + 895, '', 9, COLORS.mythium)
+      .setOrigin(0.5)
+      .setDepth(DEPTH_MAP_OVERLAY);
 
     this.topBar = new TopBar(this, {
       onReady: () => this.sim.ready(),
@@ -128,15 +135,29 @@ export class GameScene extends Phaser.Scene {
   private drawStaticLane(): void {
     // The board asset already contains zone colors, grid, frames and the arena —
     // draw it 1:1 and only add the functional text labels on top.
-    const laneArenaTop = L.lane.top;
-    const laneArenaH = L.arena.top + L.arena.h - laneArenaTop;
     this.add
-      .image(L.lane.left, laneArenaTop, 'lane-arena-board')
+      .image(L.board.left, L.board.top, 'lane-arena-board')
       .setOrigin(0)
-      .setDisplaySize(L.lane.w, laneArenaH);
+      .setDisplaySize(L.board.w, L.board.h);
 
-    const { left, top, cellH } = L.lane;
+    const { left, top, cellW, cellH } = L.lane;
     const w = L.lane.w;
+    const grid = this.add.graphics().setDepth(DEPTH_HIGHLIGHT - 1);
+    grid.lineStyle(1, 0xb7c2cc, 0.16);
+    for (let col = 0; col <= CFG.grid.cols; col++) {
+      const x = left + col * cellW;
+      grid.lineBetween(x, top, x, top + L.lane.h);
+    }
+    for (let row = 0; row <= CFG.grid.rows; row++) {
+      const y = top + row * cellH;
+      grid.lineBetween(left, y, left + w, y);
+    }
+    grid.lineStyle(3, 0x89d37f, 0.62).strokeRect(
+      left,
+      top + CFG.grid.buildRowStart * cellH,
+      w,
+      (CFG.grid.buildRowEnd - CFG.grid.buildRowStart + 1) * cellH
+    );
     txt(this, left + w / 2, top + cellH / 2, t('zone.spawn'), 10, '#c98a96').setOrigin(0.5).setAlpha(0.9);
     txt(this, left + w / 2, top + (CFG.grid.buildRowStart + 0.1) * cellH, t('zone.build'), 10, '#6f9a78')
       .setOrigin(0.5, 0)
@@ -175,16 +196,16 @@ export class GameScene extends Phaser.Scene {
     let hpBarW = 26;
 
     if (u.kind === 'king') {
-      radius = 20;
-      hpBarW = 65;
-      root.add(this.add.ellipse(0, radius - 1, radius * 1.95, 8, 0x05070b, 0.34));
-      body = this.add.sprite(0, 0, KING_SHEET.key, KING_SHEET_FRAME.idle).setDisplaySize(58, 58);
+      radius = 28;
+      hpBarW = 82;
+      root.add(this.add.ellipse(0, radius - 1, radius * 2.05, 10, 0x05070b, 0.34));
+      body = this.add.sprite(0, 0, KING_SHEET.key, KING_SHEET_FRAME.idle).setDisplaySize(82, 82);
       root.add(body);
     } else if (u.kind === 'fighter') {
       const faction = factionById(u.factionId ?? 'ironclad');
       const sheet = fighterSheet(u.defId);
       const spriteKey = fighterSpriteKey(u.defId);
-      radius = u.tier === 1 ? 22 : 19;
+      radius = u.tier === 1 ? 25 : 22;
       root.add(this.add.ellipse(0, radius - 2, radius * 1.55, 7, 0x05070b, 0.32));
       if (sheet) {
         if (u.tier === 1) {
@@ -310,6 +331,45 @@ export class GameScene extends Phaser.Scene {
           .fillRect(left + col * cellW + 2, top + row * cellH + 2, cellW - 4, cellH - 4);
       }
     }
+  }
+
+  private drawMapOverlays(): void {
+    const state = this.sim.state;
+    const g = this.mapOverlayGfx;
+    const human = state.players[state.humanPlayerId];
+    const arenaId = arenaZoneId(this.humanTeamId());
+    const gateOpen =
+      human.leaksThisWave > 0 ||
+      [...state.units.values()].some((u) => u.kind === 'creep' && u.zoneId === arenaId && u.state !== 'dead');
+    const gateX = L.lane.left + L.lane.w / 2;
+    const gateY = L.lane.top + L.lane.h - 50;
+
+    g.clear();
+    g.fillStyle(0x080a10, gateOpen ? 0.78 : 0.38).fillRoundedRect(gateX - 42, gateY - 13, 84, 40, 5);
+    if (gateOpen) {
+      g.fillStyle(0x7a3b45, 0.92).fillRoundedRect(gateX - 54, gateY - 12, 24, 35, 4);
+      g.fillStyle(0x7a3b45, 0.92).fillRoundedRect(gateX + 30, gateY - 12, 24, 35, 4);
+      g.lineStyle(2, 0xef5f6a, 0.7).strokeRoundedRect(gateX - 46, gateY - 16, 92, 46, 6);
+    } else {
+      g.fillStyle(0x362832, 0.96).fillRoundedRect(gateX - 41, gateY - 12, 39, 36, 4);
+      g.fillStyle(0x362832, 0.96).fillRoundedRect(gateX + 2, gateY - 12, 39, 36, 4);
+      g.lineStyle(2, 0xb89b5b, 0.5).lineBetween(gateX, gateY - 10, gateX, gateY + 22);
+    }
+
+    const mineX = L.board.left + 42;
+    const mineY = L.board.top + 806;
+    const shownWorkers = Math.min(human.workers, 10);
+    for (let i = 0; i < shownWorkers; i++) {
+      const col = i % 5;
+      const row = Math.floor(i / 5);
+      const pulse = Math.sin(state.time * 5 + i) * 1.5;
+      const x = mineX + 12 + col * 20;
+      const y = mineY + row * 18 + pulse;
+      g.fillStyle(0xc9a0f0, 0.95).fillCircle(x, y, 4);
+      g.lineStyle(1, 0x5fd4e0, 0.85).lineBetween(x + 4, y - 3, x + 10, y - 8);
+    }
+    this.workerCountText.setPosition(L.board.left + 95, L.board.top + 895);
+    this.workerCountText.setText(human.workers > 10 ? `+${human.workers - 10}` : `${human.workers}`);
   }
 
   // ---------- action menu (upgrade / sell) ----------
@@ -826,6 +886,7 @@ export class GameScene extends Phaser.Scene {
     }
 
     this.syncUnits();
+    this.drawMapOverlays();
     this.drawHighlights();
     this.handleEvents(this.sim.drainEvents());
     this.topBar.update(state);

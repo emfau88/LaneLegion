@@ -31,7 +31,7 @@ export class TopBar {
   private readonly barW = 238;
 
   constructor(scene: Phaser.Scene, cb: TopBarCallbacks) {
-    panel(scene, 0, 0, L.topBar.w, L.topBar.h, COLORS.panel);
+    panel(scene, 0, 0, L.topBar.w, L.topBar.h, COLORS.panel, 0.9);
 
     this.waveText = txt(scene, 10, 7, '', 14).setFontStyle('bold');
     this.valueText = txt(scene, 258, 9, '', 11);

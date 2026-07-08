@@ -16,8 +16,17 @@ export class MainMenuScene extends Phaser.Scene {
   }
 
   create(): void {
-    txt(this, L.width / 2, 150, 'LANE LEGION', 44, '#f0d080').setOrigin(0.5).setFontStyle('bold');
-    txt(this, L.width / 2, 205, t('menu.subtitle'), 14, COLORS.textDim).setOrigin(0.5);
+    this.add.image(0, 0, 'main-menu-bg').setOrigin(0).setDisplaySize(L.width, L.height);
+    this.add.rectangle(0, 0, L.width, L.height, 0x050814, 0.28).setOrigin(0);
+    this.add.rectangle(0, 0, L.width, 260, 0x050814, 0.3).setOrigin(0);
+    this.add.rectangle(0, 840, L.width, 328, 0x050814, 0.38).setOrigin(0);
+
+    this.add.image(L.width / 2, 170, 'title-plate').setDisplaySize(430, 146);
+    txt(this, L.width / 2, 160, 'LANE LEGION', 40, '#f0d080')
+      .setOrigin(0.5)
+      .setFontStyle('bold')
+      .setShadow(0, 3, '#000000', 5);
+    txt(this, L.width / 2, 214, t('menu.subtitle'), 14, '#c8d2e8').setOrigin(0.5).setShadow(0, 2, '#000000', 4);
 
     new UIButton(this, L.width - 78, 30, 128, 32, t('menu.language'), 12, () => {
       setLang(getLang() === 'de' ? 'en' : 'de');
@@ -29,12 +38,12 @@ export class MainMenuScene extends Phaser.Scene {
       soundBtn.setText(t('menu.sound', { state: soundState() }));
     });
 
-    txt(this, L.width / 2, 300, t('menu.gameMode'), 16).setOrigin(0.5);
+    txt(this, L.width / 2, 330, t('menu.gameMode'), 16).setOrigin(0.5).setShadow(0, 2, '#000000', 4);
     (['1v1', '2v2'] as GameMode[]).forEach((mode, i) => {
       const btn = new UIButton(
         this,
         L.width / 2 - 95 + i * 190,
-        355,
+        385,
         170,
         56,
         mode === '1v1' ? '1 vs 1' : '2 vs 2',
@@ -43,14 +52,14 @@ export class MainMenuScene extends Phaser.Scene {
       );
       this.modeBtns[mode] = btn;
     });
-    txt(this, L.width / 2, 415, t('menu.hint2v2'), 11, COLORS.textDim).setOrigin(0.5);
+    txt(this, L.width / 2, 445, t('menu.hint2v2'), 11, '#b7c1d8').setOrigin(0.5).setShadow(0, 2, '#000000', 4);
 
-    txt(this, L.width / 2, 490, t('menu.difficulty'), 16).setOrigin(0.5);
+    txt(this, L.width / 2, 545, t('menu.difficulty'), 16).setOrigin(0.5).setShadow(0, 2, '#000000', 4);
     (['easy', 'normal', 'hard'] as Difficulty[]).forEach((d, i) => {
       const btn = new UIButton(
         this,
         L.width / 2 - 130 + i * 130,
-        545,
+        600,
         118,
         46,
         t(`diff.${d}` as StringKey),
@@ -60,11 +69,11 @@ export class MainMenuScene extends Phaser.Scene {
       this.diffBtns[d] = btn;
     });
 
-    new UIButton(this, L.width / 2, 700, 260, 66, t('menu.chooseFaction'), 18, () => {
+    new UIButton(this, L.width / 2, 790, 260, 66, t('menu.chooseFaction'), 18, () => {
       this.scene.start('FactionSelect', { mode: this.mode, difficulty: this.difficulty });
     }, 0x2f6b3a);
 
-    txt(this, L.width / 2, 900, t('menu.offline'), 11, COLORS.textDim).setOrigin(0.5);
+    txt(this, L.width / 2, 1100, t('menu.offline'), 11, '#b7c1d8').setOrigin(0.5).setShadow(0, 2, '#000000', 4);
 
     this.setMode(this.mode);
     this.setDifficulty(this.difficulty);
