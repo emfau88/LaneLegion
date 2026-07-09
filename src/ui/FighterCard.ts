@@ -37,24 +37,24 @@ export class FighterCard {
       .setInteractive({ useHandCursor: true });
     this.bg.on('pointerdown', () => onSelect(def.id));
 
-    const cost = txt(scene, CARD_W - 6, 5, `${tier.cost}g`, 11, COLORS.gold).setOrigin(1, 0);
-    const role = txt(scene, 8, 7, ROLE_LETTER[def.role], 11, COLORS.textDim).setFontStyle('bold');
+    const cost = txt(scene, CARD_W - 6, 5, `${tier.cost}g`, 12, COLORS.gold).setOrigin(1, 0).setFontStyle('bold');
+    const role = txt(scene, 8, 7, ROLE_LETTER[def.role], 12, COLORS.textDim).setFontStyle('bold');
     const sheet = fighterSheet(def.id);
     const spriteKey = fighterSpriteKey(def.id);
     const fallback = scene.add
-      .circle(CARD_W / 2, 30, 18, factionColor, 0.35)
+      .circle(CARD_W / 2, 31, 19, factionColor, 0.35)
       .setStrokeStyle(1, factionColor, 0.85)
       .setVisible(!sheet && !spriteKey);
-    const fallbackLetter = txt(scene, CARD_W / 2, 30, ROLE_LETTER[def.role], 14, '#dfe8f5')
+    const fallbackLetter = txt(scene, CARD_W / 2, 31, ROLE_LETTER[def.role], 14, '#dfe8f5')
       .setOrigin(0.5)
       .setFontStyle('bold')
       .setVisible(!sheet && !spriteKey);
     const icon = sheet
-      ? scene.add.sprite(CARD_W / 2, 30, sheet.key, FIGHTER_SHEET_FRAME.idle).setDisplaySize(38, 38).setAlpha(0.96)
+      ? scene.add.sprite(CARD_W / 2, 31, sheet.key, FIGHTER_SHEET_FRAME.idle).setDisplaySize(40, 40).setAlpha(0.96)
       : spriteKey
-        ? scene.add.image(CARD_W / 2, 30, spriteKey).setDisplaySize(36, 36).setAlpha(0.94)
+        ? scene.add.image(CARD_W / 2, 31, spriteKey).setDisplaySize(38, 38).setAlpha(0.94)
         : null;
-    const name = txt(scene, CARD_W / 2, 50, fighterTierName(def, 0), 8, COLORS.textMain, {
+    const name = txt(scene, CARD_W / 2, 51, fighterTierName(def, 0), 9, COLORS.textMain, {
       align: 'center',
       wordWrap: { width: CARD_W - 10 }
     })

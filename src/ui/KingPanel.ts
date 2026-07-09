@@ -47,7 +47,12 @@ export class KingPanel {
       } else {
         const cost = kingUpgradeCost(spec, level);
         const canAfford = human.mythium >= cost;
-        row.btn.setText(t(canAfford ? 'king.upgradeBtn' : 'king.needMythium', { cost }));
+        row.btn.setText(
+          t(canAfford ? 'king.upgradeBtn' : 'king.needMythium', {
+            cost,
+            missing: Math.ceil(Math.max(0, cost - human.mythium))
+          })
+        );
         row.btn.setEnabled(canAfford && state.phase !== 'ended');
       }
     }

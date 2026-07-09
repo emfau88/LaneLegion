@@ -64,7 +64,7 @@ export class BottomShop {
       .setInteractive();
     this.buildRoot.add(this.buildBg);
     this.buildRoot.add(scene.add.rectangle(L.width / 2, 4, 70, 4, COLORS.panelStroke, 0.85).setOrigin(0.5));
-    this.minimizeBtn = new UIButton(scene, L.width - 34, L.sheet.tabH + 18, 58, 22, 'min', 10, () => this.minimizeBattleSheet());
+    this.minimizeBtn = new UIButton(scene, L.width - 34, L.sheet.tabH + 18, 58, 22, t('shop.minimize'), 10, () => this.minimizeBattleSheet());
     this.buildRoot.add(this.minimizeBtn.container);
 
     const tabs: { id: TabId; label: string }[] = [
@@ -149,7 +149,7 @@ export class BottomShop {
       .setStrokeStyle(1, COLORS.panelStroke)
       .setInteractive();
     this.battleRoot.add(bbg);
-    this.battleRoot.add(txt(scene, 8, 8, 'Menüs', 10, COLORS.textDim));
+    this.battleRoot.add(txt(scene, 8, 8, t('shop.menus'), 10, COLORS.textDim));
     tabs.forEach((tab, i) => {
       const btn = new UIButton(scene, 68 + i * 84, 25, 78, 28, tab.label, 10, () => this.expandBattleTab(tab.id), 0x33305a);
       this.battleTabBtns.push({ id: tab.id, btn });

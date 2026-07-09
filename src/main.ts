@@ -15,14 +15,27 @@ const installMobileFullscreen = (): void => {
     (navigator as Navigator & { standalone?: boolean }).standalone === true;
   if (isStandalone) return;
 
+  let attempts = 0;
   const requestFullscreen = (): void => {
-    window.removeEventListener('pointerup', requestFullscreen);
-    window.removeEventListener('touchend', requestFullscreen);
+    attempts++;
     try {
       const root = document.documentElement as HTMLElement & {
         requestFullscreen?: (options?: { navigationUI?: 'hide' }) => Promise<void>;
       };
-      void root.requestFullscreen?.({ navigationUI: 'hide' }).catch(() => undefined);
+      void root
+        .requestFullscreen?.({ navigationUI: 'hide' })
+        .then(() => {
+          window.removeEventListener('pointerup', requestFullscreen);
+          window.removeEventListener('touchend', requestFullscreen);
+          window.removeEventListener('click', requestFullscreen);
+        })
+        .catch(() => {
+          if (attempts >= 5) {
+            window.removeEventListener('pointerup', requestFullscreen);
+            window.removeEventListener('touchend', requestFullscreen);
+            window.removeEventListener('click', requestFullscreen);
+          }
+        });
     } catch {
       /* Mobile browsers that do not support element fullscreen still use the PWA manifest path. */
     }
@@ -30,6 +43,7 @@ const installMobileFullscreen = (): void => {
 
   window.addEventListener('pointerup', requestFullscreen, { once: true, passive: true });
   window.addEventListener('touchend', requestFullscreen, { once: true, passive: true });
+  window.addEventListener('click', requestFullscreen, { passive: true });
 };
 
 const registerServiceWorker = (): void => {

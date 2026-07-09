@@ -41,9 +41,9 @@ export class TopBar {
       muteBtn.setText(sfx.isMuted() ? 'x' : '♪');
     });
 
-    this.goldText = txt(scene, 10, 35, '', 14, COLORS.gold).setFontStyle('bold');
-    this.mythText = txt(scene, 96, 35, '', 14, COLORS.mythium).setFontStyle('bold');
-    this.incomeText = txt(scene, 172, 35, '', 14, COLORS.income).setFontStyle('bold');
+    this.goldText = txt(scene, 10, 35, '', 12, COLORS.gold).setFontStyle('bold');
+    this.mythText = txt(scene, 105, 35, '', 12, COLORS.mythium).setFontStyle('bold');
+    this.incomeText = txt(scene, 222, 35, '', 12, COLORS.income).setFontStyle('bold');
     this.workerBtn = new UIButton(scene, 434, 49, 190, 24, '', 11, cb.onBuyWorker, 0x33305a);
 
     txt(scene, 10, 62, t('topbar.you'), 10, COLORS.textDim);
@@ -84,9 +84,9 @@ export class TopBar {
       this.valueText.setText('');
     }
 
-    this.goldText.setText(`g ${Math.floor(human.gold)}`);
-    this.mythText.setText(`m ${Math.floor(human.mythium)}`);
-    this.incomeText.setText(`+ ${human.income}`);
+    this.goldText.setText(t('topbar.gold', { n: Math.floor(human.gold) }));
+    this.mythText.setText(t('topbar.mythium', { n: Math.floor(human.mythium) }));
+    this.incomeText.setText(t('topbar.income', { n: human.income }));
     this.workerBtn.setText(t('topbar.buyWorker', { cost: CFG.workerCost, n: human.workers }));
     this.workerBtn.setEnabled(state.phase === 'build' && human.gold >= CFG.workerCost);
     this.readyBtn.setEnabled(state.phase === 'build');

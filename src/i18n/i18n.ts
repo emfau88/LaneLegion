@@ -87,12 +87,23 @@ const STRINGS = {
   'phase.battle': { de: 'KAMPF', en: 'BATTLE' },
   'phase.end': { de: 'ENDE', en: 'END' },
   'topbar.ready': { de: 'BEREIT', en: 'READY' },
+  'topbar.gold': { de: 'Gold {n}', en: 'Gold {n}' },
+  'topbar.mythium': { de: 'Mythium {n}', en: 'Mythium {n}' },
+  'topbar.income': { de: 'Eink. +{n}', en: 'Income +{n}' },
   'topbar.mythHint': { de: '◆ = Söldner senden', en: '◆ = send mercenaries' },
-  'topbar.buyWorker': { de: '⚒ Arbeiter kaufen · {cost}g  ({n})', en: '⚒ Buy worker · {cost}g  ({n})' },
+  'topbar.buyWorker': { de: 'Worker {cost}g  ({n})', en: 'Worker {cost}g  ({n})' },
   'topbar.you': { de: '♛ DU', en: '♛ YOU' },
   'topbar.enemy': { de: 'GEGNER ♛', en: 'ENEMY ♛' },
   'topbar.value': { de: 'Wert {own}/{rec}', en: 'Value {own}/{rec}' },
   'topbar.leaks': { de: 'Leaks: {n}', en: 'Leaks: {n}' },
+
+  // ---------- action hints ----------
+  'hint.needValue': { de: 'Bauen: Wert {own}/{rec}. Mehr Fighter setzen.', en: 'Build: value {own}/{rec}. Add fighters.' },
+  'hint.workerReady': { de: 'Option: Worker kaufen oder BEREIT.', en: 'Option: buy worker or READY.' },
+  'hint.nextSend': { de: 'Noch {n} Mythium bis zum ersten Send.', en: '{n} more mythium for first send.' },
+  'hint.spendMythium': { de: 'Mythium ausgeben: Söldner oder König.', en: 'Spend mythium: mercs or king.' },
+  'hint.battle': { de: 'Kampf laeuft. Leaks treffen den König.', en: 'Battle running. Leaks hit the king.' },
+  'hint.leaking': { de: 'Leak! Dein König verteidigt jetzt mit.', en: 'Leak! Your king is defending now.' },
 
   // ---------- wave report ----------
   'report.title': { de: 'Welle {n} abgeschlossen', en: 'Wave {n} complete' },
@@ -112,6 +123,8 @@ const STRINGS = {
   'shop.autoSend': { de: 'Auto-Senden: {state}', en: 'Auto-Send: {state}' },
   'shop.noSends': { de: 'Keine Sends geplant', en: 'No sends queued' },
   'shop.queued': { de: 'Geplant: {n} Send(s)', en: 'Queued: {n} send(s)' },
+  'shop.menus': { de: 'Menues', en: 'Menus' },
+  'shop.minimize': { de: 'zu', en: 'min' },
   'shop.queueTitle': { de: 'Sends für die nächste Welle planen:', en: 'Queue sends for next wave:' },
   'shop.mercHint': {
     de: 'Mythium ◆ nutzt du für Sends oder König-Upgrades. Sends greifen den Gegner nächste Welle an und geben Einkommen.',
@@ -126,7 +139,7 @@ const STRINGS = {
   'king.level': { de: 'St. {n}/{max}', en: 'Lv {n}/{max}' },
   'king.max': { de: 'MAX', en: 'MAX' },
   'king.upgradeBtn': { de: 'Ausbauen {cost} ◆', en: 'Upgrade {cost} ◆' },
-  'king.needMythium': { de: 'Braucht {cost} ◆', en: 'Need {cost} ◆' },
+  'king.needMythium': { de: 'Fehlt {missing} ◆', en: 'Need {missing} ◆' },
   'king.hint': {
     de: 'Upgrades kosten Mythium ◆, nicht Gold. Du hast {n} ◆',
     en: 'Upgrades cost mythium ◆, not gold. You have {n} ◆'
