@@ -8,6 +8,7 @@ import buttonFrameUrl from '../assets/menu/button-frame.png';
 import mainMenuBgUrl from '../assets/menu/main-menu-bg.png';
 import titlePlateUrl from '../assets/menu/title-plate.png';
 import { FIGHTER_SPRITES } from '../assets/unitSprites';
+import { WAVE_SHEETS, waveSheetAnimKey } from '../assets/waveSheets';
 import { WAVE_SPRITES } from '../assets/waveSprites';
 
 export class BootScene extends Phaser.Scene {
@@ -39,6 +40,12 @@ export class BootScene extends Phaser.Scene {
     for (const sprite of Object.values(WAVE_SPRITES)) {
       this.load.image(sprite.key, sprite.url);
     }
+    for (const sprite of Object.values(WAVE_SHEETS)) {
+      this.load.spritesheet(sprite.key, sprite.url, {
+        frameWidth: sprite.frameWidth,
+        frameHeight: sprite.frameHeight
+      });
+    }
     for (const sprite of Object.values(HIT_EFFECT_SPRITES)) {
       this.load.image(sprite.key, sprite.url);
     }
@@ -49,6 +56,18 @@ export class BootScene extends Phaser.Scene {
 
   create(): void {
     this.input.topOnly = true;
+    for (const sheet of Object.values(WAVE_SHEETS)) {
+      for (const [anim, config] of Object.entries(sheet.anims)) {
+        const key = waveSheetAnimKey(sheet, anim as keyof typeof sheet.anims);
+        if (this.anims.exists(key)) continue;
+        this.anims.create({
+          key,
+          frames: this.anims.generateFrameNumbers(sheet.key, { start: config.start, end: config.end }),
+          frameRate: config.frameRate,
+          repeat: config.repeat
+        });
+      }
+    }
     this.scene.start('MainMenu');
   }
 }

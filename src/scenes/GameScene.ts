@@ -3,6 +3,7 @@ import { SUPPORT_EFFECT_SPRITES, hitEffectKey } from '../assets/effectSprites';
 import { FIGHTER_SHEET_FRAME, fighterSheet } from '../assets/fighterSheets';
 import { KING_SHEET, KING_SHEET_FRAME, type KingSheetFrame } from '../assets/kingSprites';
 import { fighterSpriteKey } from '../assets/unitSprites';
+import { type WaveSheetAnim, waveSheet, waveSheetAnimKey } from '../assets/waveSheets';
 import { waveSpriteKey } from '../assets/waveSprites';
 import { CFG } from '../data/gameConfig';
 import { factionById } from '../data/factions';
@@ -33,6 +34,8 @@ interface UnitView {
   tier: number;
   radius: number;
   resetFrameTimer?: Phaser.Time.TimerEvent;
+  waveAnim?: WaveSheetAnim;
+  deathUntil?: number;
 }
 
 const DEPTH_LANE_INPUT = 1;
@@ -235,11 +238,16 @@ export class GameScene extends Phaser.Scene {
         this.onFighterTap(u.id);
       });
     } else {
+      const sheet = waveSheet(u.defId);
       const spriteKey = waveSpriteKey(u.defId);
       radius = Math.min(24, Math.max(12, u.collisionRadius * 46));
       hpBarW = Math.max(20, radius * 2.1);
       root.add(this.add.ellipse(0, radius - 2, radius * 1.6, 7, 0x05070b, 0.28));
-      if (spriteKey) {
+      if (sheet) {
+        const spriteSize = Math.max(36, radius * 3.35);
+        body = this.add.sprite(0, 0, sheet.key, 0).setDisplaySize(spriteSize, spriteSize);
+        root.add(body);
+      } else if (spriteKey) {
         const spriteSize = Math.max(36, radius * 3.35);
         if (u.maxHp >= 1000) {
           root.add(this.add.circle(0, 0, radius + 5, COLORS.hostile, 0.18).setStrokeStyle(2, COLORS.hostile, 0.65));
@@ -306,9 +314,11 @@ export class GameScene extends Phaser.Scene {
       view.root.y += (sp.y - view.root.y) * 0.45;
       view.hpBar.width = view.hpBarW * Math.max(0, u.hp / u.maxHp);
       if (u.kind === 'king') this.refreshKingFrame(u, view);
+      if (u.kind === 'creep') this.refreshWaveAnim(u, view);
     }
 
     for (const [id, view] of this.views) {
+      if (view.deathUntil && this.time.now < view.deathUntil) continue;
       if (!seen.has(id)) {
         view.root.destroy();
         this.views.delete(id);
@@ -755,6 +765,22 @@ export class GameScene extends Phaser.Scene {
     });
   }
 
+  private playWaveAnim(unitId: number, anim: WaveSheetAnim): void {
+    const unit = this.sim.state.units.get(unitId);
+    const view = this.views.get(unitId);
+    if (!unit || unit.kind !== 'creep' || !view?.spriteBody) return;
+    const sheet = waveSheet(unit.defId);
+    if (!sheet) return;
+    view.waveAnim = anim;
+    view.spriteBody.play(waveSheetAnimKey(sheet, anim), anim === 'walk');
+  }
+
+  private refreshWaveAnim(u: CombatUnit, view: UnitView): void {
+    if (!view.spriteBody || view.deathUntil || !waveSheet(u.defId)) return;
+    if (u.state === 'attacking') return;
+    if (view.waveAnim !== 'walk' || !view.spriteBody.anims.isPlaying) this.playWaveAnim(u.id, 'walk');
+  }
+
   private handleEvents(events: GameEvent[]): void {
     for (const ev of events) {
       switch (ev.type) {
@@ -763,6 +789,7 @@ export class GameScene extends Phaser.Scene {
           sfx.play('hit');
           const to = this.screenOf(ev.zoneId, ev.toPos);
           const playHit = () => this.playHitImpact(ev.attackType, to.x, to.y);
+          this.playWaveAnim(ev.fromId, 'attack');
           this.setFighterFrame(ev.fromId, 'attack', 180);
           this.setFighterFrame(ev.toId, 'hit', 150);
           this.setKingFrame(ev.fromId, 'brace', 180);
@@ -795,6 +822,20 @@ export class GameScene extends Phaser.Scene {
           if (!this.zoneVisible(ev.zoneId)) break;
           sfx.play('death');
           const sp = this.screenOf(ev.zoneId, ev.pos);
+          const view = this.views.get(ev.unitId);
+          if (ev.kind === 'creep' && view?.spriteBody) {
+            this.playWaveAnim(ev.unitId, 'death');
+            view.deathUntil = this.time.now + 420;
+            this.tweens.add({
+              targets: view.root,
+              alpha: 0,
+              duration: 420,
+              onComplete: () => {
+                view.root.destroy();
+                this.views.delete(ev.unitId);
+              }
+            });
+          }
           this.setFighterFrame(ev.unitId, 'death', 260);
           const puff = this.add
             .circle(sp.x, sp.y, 9, ev.kind === 'creep' ? COLORS.hostile : 0xbfcbe8, 0.8)
@@ -885,10 +926,10 @@ export class GameScene extends Phaser.Scene {
       this.lastPhase = state.phase;
     }
 
+    this.handleEvents(this.sim.drainEvents());
     this.syncUnits();
     this.drawMapOverlays();
     this.drawHighlights();
-    this.handleEvents(this.sim.drainEvents());
     this.topBar.update(state);
     this.statusCards.update(state);
     this.shop.update(state);
