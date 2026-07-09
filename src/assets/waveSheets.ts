@@ -1,4 +1,5 @@
 import grublingSheetUrl from './wave-sheets/grubling-sheet.png';
+import stoneBeetleSheetUrl from './wave-sheets/stone-beetle-sheet.png';
 import type { UnitSpriteAsset } from './unitSprites';
 
 export type WaveSheetAnim = 'walk' | 'attack' | 'death';
@@ -19,6 +20,17 @@ export const WAVE_SHEETS: Record<string, WaveSheetAsset> = {
       walk: { start: 0, end: 3, frameRate: 7, repeat: -1 },
       attack: { start: 4, end: 7, frameRate: 14, repeat: 0 },
       death: { start: 8, end: 11, frameRate: 9, repeat: 0 }
+    }
+  },
+  stone_beetle: {
+    key: 'wave-sheet-stone-beetle',
+    url: stoneBeetleSheetUrl,
+    frameWidth: 256,
+    frameHeight: 256,
+    anims: {
+      walk: { start: 0, end: 3, frameRate: 6, repeat: -1 },
+      attack: { start: 4, end: 7, frameRate: 12, repeat: 0 },
+      death: { start: 8, end: 11, frameRate: 8, repeat: 0 }
     }
   }
 };
