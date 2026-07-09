@@ -5,6 +5,7 @@ import { Simulation } from './src/core/Simulation';
 import { FACTIONS } from './src/data/factions';
 import { FIGHTERS, fighterById, fightersOfFaction } from './src/data/fighters';
 import { CFG } from './src/data/gameConfig';
+import { MERCENARIES } from './src/data/mercenaries';
 import { WAVES, waveByNumber } from './src/data/waves';
 import { kingOf } from './src/systems/KingSystem';
 import { validCells } from './src/systems/PlacementSystem';
@@ -470,7 +471,7 @@ const writeMarkdown = (
     `- Start workers: ${CFG.startWorkers}`,
     `- Worker cost: ${CFG.workerCost}`,
     `- Mythium per worker per second: ${CFG.mythiumPerWorkerPerSec}`,
-    `- Cheapest send: 20 mythium for +6 income`,
+    `- Cheapest send: ${MERCENARIES[0].cost} mythium for +${MERCENARIES[0].incomeGain} income`,
     ''
   ];
 

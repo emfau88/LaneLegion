@@ -24,8 +24,8 @@ export const CFG = {
   startWorkers: 1,
   startIncome: 0,
   startMythium: 0,
-  workerCost: 40,
-  mythiumPerWorkerPerSec: 0.13,
+  workerCost: 35,
+  mythiumPerWorkerPerSec: 0.15,
   sellRefundRate: 0.7,
 
   /** Leaked creeps keep this fraction of their remaining HP. */

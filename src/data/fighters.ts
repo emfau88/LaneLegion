@@ -28,7 +28,7 @@ export const FIGHTERS: FighterDefinition[] = [
   def(
     'shield_guard', 'ironclad', 'tank', 'impact', 'armored',
     'Cheap frontline tank. Holds the line early.',
-    t('Shield Guard', 50, 320, 8, 0.8, 0.9, 1.2),
+    t('Shield Guard', 45, 320, 8, 0.8, 0.9, 1.2),
     t('Iron Bastion', 90, 700, 14, 0.8, 0.9, 1.2)
   ),
   def(
@@ -142,7 +142,7 @@ export const FIGHTERS: FighterDefinition[] = [
   def(
     'duskblade', 'shadow', 'melee', 'pierce', 'light',
     'Cheap assassin-style melee damage.',
-    t('Duskblade', 50, 130, 19, 1.1, 0.9, 1.6),
+    t('Duskblade', 45, 130, 19, 1.1, 0.9, 1.6),
     t('Nightblade', 90, 240, 40, 1.1, 0.9, 1.6)
   ),
   def(

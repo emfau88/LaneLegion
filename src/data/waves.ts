@@ -36,7 +36,7 @@ export const WAVES: WaveDefinition[] = [
   {
     waveNumber: 2,
     name: 'Stone Beetles',
-    groups: [{ stats: c('Stone Beetle', 74, 8, 0.82, 'impact', 'armored'), count: 6 }],
+    groups: [{ stats: c('Stone Beetle', 66, 8, 0.82, 'impact', 'armored'), count: 5 }],
     goldRewardTotal: 50,
     recommendedFighterValue: 120,
     shortHint: 'Tougher shells. Good moment for a first worker.',
@@ -54,9 +54,9 @@ export const WAVES: WaveDefinition[] = [
   {
     waveNumber: 4,
     name: 'Bulwark Brutes',
-    groups: [{ stats: c('Bulwark Brute', 400, 22, 0.8, 'impact', 'massive', { collisionRadius: 0.36 }), count: 4 }],
+    groups: [{ stats: c('Bulwark Brute', 300, 18, 0.8, 'impact', 'massive', { collisionRadius: 0.36 }), count: 4 }],
     goldRewardTotal: 70,
-    recommendedFighterValue: 280,
+    recommendedFighterValue: 300,
     shortHint: 'Few fat enemies. Pure AOE will fail here.',
     warning: 'Few big enemies'
   },
@@ -66,7 +66,7 @@ export const WAVES: WaveDefinition[] = [
     groups: [
       { stats: c('Gloomspawn', 65, 8, 1.2, 'pierce', 'light'), count: 6 },
       {
-        stats: c('Gloom Ogre', 1600, 45, 0.75, 'impact', 'armored', {
+        stats: c('Gloom Ogre', 1400, 42, 0.75, 'impact', 'armored', {
           collisionRadius: 0.45,
           attackSpeed: 0.8
         }),
@@ -74,7 +74,7 @@ export const WAVES: WaveDefinition[] = [
       }
     ],
     goldRewardTotal: 90,
-    recommendedFighterValue: 360,
+    recommendedFighterValue: 380,
     shortHint: 'Mini-boss. Enemy sends often arrive with it.',
     warning: 'Boss wave'
   },
