@@ -8,6 +8,40 @@ import { ResultScene } from './scenes/ResultScene';
 export const GAME_WIDTH = 540;
 export const GAME_HEIGHT = 1168;
 
+const installMobileFullscreen = (): void => {
+  const isStandalone =
+    window.matchMedia?.('(display-mode: fullscreen)').matches ||
+    window.matchMedia?.('(display-mode: standalone)').matches ||
+    (navigator as Navigator & { standalone?: boolean }).standalone === true;
+  if (isStandalone) return;
+
+  const requestFullscreen = (): void => {
+    window.removeEventListener('pointerup', requestFullscreen);
+    window.removeEventListener('touchend', requestFullscreen);
+    try {
+      const root = document.documentElement as HTMLElement & {
+        requestFullscreen?: (options?: { navigationUI?: 'hide' }) => Promise<void>;
+      };
+      void root.requestFullscreen?.({ navigationUI: 'hide' }).catch(() => undefined);
+    } catch {
+      /* Mobile browsers that do not support element fullscreen still use the PWA manifest path. */
+    }
+  };
+
+  window.addEventListener('pointerup', requestFullscreen, { once: true, passive: true });
+  window.addEventListener('touchend', requestFullscreen, { once: true, passive: true });
+};
+
+const registerServiceWorker = (): void => {
+  if (!('serviceWorker' in navigator) || !import.meta.env.PROD) return;
+  window.addEventListener('load', () => {
+    void navigator.serviceWorker.register('./sw.js').catch(() => undefined);
+  });
+};
+
+installMobileFullscreen();
+registerServiceWorker();
+
 new Phaser.Game({
   type: Phaser.AUTO,
   parent: 'game',

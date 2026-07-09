@@ -196,10 +196,10 @@ export class GameScene extends Phaser.Scene {
     let hpBarW = 26;
 
     if (u.kind === 'king') {
-      radius = 28;
-      hpBarW = 82;
-      root.add(this.add.ellipse(0, radius - 1, radius * 2.05, 10, 0x05070b, 0.34));
-      body = this.add.sprite(0, 0, KING_SHEET.key, KING_SHEET_FRAME.idle).setDisplaySize(82, 82);
+      radius = 42;
+      hpBarW = 116;
+      root.add(this.add.ellipse(0, radius - 2, radius * 2.05, 14, 0x05070b, 0.34));
+      body = this.add.sprite(0, 0, KING_SHEET.key, KING_SHEET_FRAME.idle).setDisplaySize(123, 123);
       root.add(body);
     } else if (u.kind === 'fighter') {
       const faction = factionById(u.factionId ?? 'ironclad');

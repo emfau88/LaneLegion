@@ -12,7 +12,7 @@ export const CFG = {
   arena: {
     width: 6,
     height: 4,
-    kingPos: { x: 3, y: 3.1 }
+    kingPos: { x: 2.75, y: 2.55 }
   },
 
   tickRate: 20,
