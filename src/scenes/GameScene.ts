@@ -108,7 +108,7 @@ export class GameScene extends Phaser.Scene {
       .setOrigin(0.5)
       .setDepth(DEPTH_MAP_OVERLAY);
     for (let i = 0; i < 10; i++) {
-      const wisp = this.add.image(0, 0, WORKER_WISP.key).setDisplaySize(18, 18).setDepth(DEPTH_MAP_OVERLAY).setVisible(false);
+      const wisp = this.add.image(0, 0, WORKER_WISP.key).setDisplaySize(36, 36).setDepth(DEPTH_MAP_OVERLAY).setVisible(false);
       this.tweens.add({ targets: wisp, y: '-=3', alpha: 0.72, duration: 520, yoyo: true, repeat: -1, delay: i * 70 });
       this.workerWisps.push(wisp);
     }
