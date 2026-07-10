@@ -47,7 +47,18 @@ export const FIGHTER_SHEETS: Record<string, FighterSheetAsset> = {
       death: { start: 8, end: 11, frameRate: 8, repeat: 0 }
     }
   },
-  hammer_recruit: { key: 'fighter-sheet-hammer-recruit', url: hammerRecruitUrl, frameWidth: 256, frameHeight: 256 },
+  hammer_recruit: {
+    key: 'fighter-sheet-hammer-recruit',
+    url: hammerRecruitUrl,
+    frameWidth: 256,
+    frameHeight: 256,
+    frames: { idle: 0, attack: 4, hit: 6, death: 8 },
+    anims: {
+      walk: { start: 0, end: 3, frameRate: 6, repeat: -1 },
+      attack: { start: 4, end: 7, frameRate: 12, repeat: 0 },
+      death: { start: 8, end: 11, frameRate: 8, repeat: 0 }
+    }
+  },
   ballista_scout: { key: 'fighter-sheet-ballista-scout', url: ballistaScoutUrl, frameWidth: 256, frameHeight: 256 },
   banner_bearer: { key: 'fighter-sheet-banner-bearer', url: bannerBearerUrl, frameWidth: 256, frameHeight: 256 },
   steel_hound: { key: 'fighter-sheet-steel-hound', url: steelHoundUrl, frameWidth: 256, frameHeight: 256 },
