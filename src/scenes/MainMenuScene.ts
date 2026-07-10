@@ -36,10 +36,10 @@ export class MainMenuScene extends Phaser.Scene {
       sfx.toggleMuted();
       soundBtn.setText(t('menu.sound', { state: soundState() }));
     });
+    const menuFrame = { normal: 'button-frame' };
 
     txt(this, L.width / 2, 330, t('menu.gameMode'), 16).setOrigin(0.5).setShadow(0, 2, '#000000', 4);
     (['1v1', '2v2'] as GameMode[]).forEach((mode, i) => {
-      this.add.image(L.width / 2 - 95 + i * 190, 385, 'button-frame').setDisplaySize(196, 64).setAlpha(0.95);
       const btn = new UIButton(
         this,
         L.width / 2 - 95 + i * 190,
@@ -48,7 +48,9 @@ export class MainMenuScene extends Phaser.Scene {
         56,
         mode === '1v1' ? '1 vs 1' : '2 vs 2',
         20,
-        () => this.setMode(mode)
+        () => this.setMode(mode),
+        COLORS.panelLight,
+        menuFrame
       );
       this.modeBtns[mode] = btn;
     });
@@ -56,7 +58,6 @@ export class MainMenuScene extends Phaser.Scene {
 
     txt(this, L.width / 2, 545, t('menu.difficulty'), 16).setOrigin(0.5).setShadow(0, 2, '#000000', 4);
     (['easy', 'normal', 'hard'] as Difficulty[]).forEach((d, i) => {
-      this.add.image(L.width / 2 - 130 + i * 130, 600, 'button-frame').setDisplaySize(138, 54).setAlpha(0.95);
       const btn = new UIButton(
         this,
         L.width / 2 - 130 + i * 130,
@@ -65,15 +66,18 @@ export class MainMenuScene extends Phaser.Scene {
         46,
         t(`diff.${d}` as StringKey),
         15,
-        () => this.setDifficulty(d)
+        () => this.setDifficulty(d),
+        COLORS.panelLight,
+        menuFrame
       );
       this.diffBtns[d] = btn;
     });
 
-    this.add.image(L.width / 2, 790, 'button-frame').setDisplaySize(292, 78).setAlpha(0.95);
-    new UIButton(this, L.width / 2, 790, 260, 66, t('menu.chooseFaction'), 18, () => {
+    const factionBtn = new UIButton(this, L.width / 2, 790, 260, 66, t('menu.chooseFaction'), 18, () => {
       this.scene.start('FactionSelect', { mode: this.mode, difficulty: this.difficulty });
-    }, 0x2f6b3a);
+    }, 0x2f6b3a, menuFrame);
+    factionBtn.setFrameTint(0xbff0c0);
+    factionBtn.setTextColor('#e7ffe8');
 
     txt(this, L.width / 2, 1100, t('menu.offline'), 11, '#b7c1d8').setOrigin(0.5).setShadow(0, 2, '#000000', 4);
 
@@ -85,6 +89,8 @@ export class MainMenuScene extends Phaser.Scene {
     this.mode = mode;
     for (const [id, btn] of Object.entries(this.modeBtns)) {
       btn!.setBaseColor(id === mode ? 0x3c5a8a : COLORS.panelLight);
+      btn!.setFrameTint(undefined);
+      btn!.setTextColor(id === mode ? '#ffe6a0' : COLORS.textMain);
     }
   }
 
@@ -92,6 +98,8 @@ export class MainMenuScene extends Phaser.Scene {
     this.difficulty = d;
     for (const [id, btn] of Object.entries(this.diffBtns)) {
       btn!.setBaseColor(id === d ? 0x3c5a8a : COLORS.panelLight);
+      btn!.setFrameTint(undefined);
+      btn!.setTextColor(id === d ? '#ffe6a0' : COLORS.textMain);
     }
   }
 }

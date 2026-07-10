@@ -5,6 +5,23 @@ import { dist, livingHostilesInZone } from '../core/util';
 
 const isArena = (zoneId: string) => zoneId.startsWith('arena_');
 
+/**
+ * Stable front-facing slots keep leaked creeps readable around the king instead of
+ * converging into one opaque stack. Unit ids make the formation deterministic.
+ */
+const kingFormationPoint = (u: CombatUnit): { x: number; y: number } => {
+  const formation = CFG.arena.leakFormation;
+  const rank = u.id % 2;
+  const slot = Math.floor(u.id / 2) % formation.slotsPerRank;
+  const progress = formation.slotsPerRank <= 1 ? 0.5 : slot / (formation.slotsPerRank - 1);
+  const angle = -Math.PI / 2 + (progress - 0.5) * formation.frontArcRadians;
+  const radius = rank === 0 ? formation.innerRadius : formation.outerRadius;
+  return {
+    x: CFG.arena.kingPos.x + Math.cos(angle) * radius,
+    y: CFG.arena.kingPos.y + Math.sin(angle) * radius
+  };
+};
+
 const moveToward = (u: CombatUnit, x: number, y: number, speed: number, dt: number): void => {
   const dx = x - u.pos.x;
   const dy = y - u.pos.y;
@@ -100,6 +117,15 @@ const fighterMove = (state: GameState, u: CombatUnit, dt: number): void => {
 const creepMove = (state: GameState, u: CombatUnit, dt: number): void => {
   const target = u.targetId !== null ? state.units.get(u.targetId) : undefined;
   if (target && target.state !== 'dead' && target.zoneId === u.zoneId) {
+    if (isArena(u.zoneId) && target.kind === 'king') {
+      const destination = kingFormationPoint(u);
+      if (dist(u.pos, destination) <= 0.07) {
+        u.state = 'attacking';
+        return;
+      }
+      moveToward(u, destination.x, destination.y, u.moveSpeed, dt);
+      return;
+    }
     const d = dist(u.pos, target.pos);
     if (d <= u.range) {
       u.state = 'attacking';
@@ -110,7 +136,8 @@ const creepMove = (state: GameState, u: CombatUnit, dt: number): void => {
   }
 
   if (isArena(u.zoneId)) {
-    moveToward(u, CFG.arena.kingPos.x, CFG.arena.kingPos.y, u.moveSpeed, dt);
+    const destination = kingFormationPoint(u);
+    moveToward(u, destination.x, destination.y, u.moveSpeed, dt);
     return;
   }
   // While defenders live, creeps seek them out instead of slipping past;

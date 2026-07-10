@@ -17,7 +17,16 @@ export const CFG = {
   arena: {
     width: 6,
     height: 4,
-    kingPos: { x: 3, y: 2.55 }
+    kingPos: { x: 3, y: 2.55 },
+    /** Leaks hold this visible distance from the king while still counting as melee contact. */
+    kingPresentationRange: 1.78,
+    leakFormation: {
+      innerRadius: 1.22,
+      outerRadius: 1.58,
+      slotsPerRank: 7,
+      /** Upper semicircle: leaks remain in front of the king, not behind the throne. */
+      frontArcRadians: Math.PI * 0.9
+    }
   },
 
   tickRate: 20,
