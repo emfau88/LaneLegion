@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { SUPPORT_EFFECT_SPRITES, hitEffectKey } from '../assets/effectSprites';
-import { FIGHTER_SHEET_FRAME, fighterSheet } from '../assets/fighterSheets';
+import { FIGHTER_SHEET_FRAME, type FighterSheetAnim, fighterSheet, fighterSheetAnimKey, fighterSheetFrame } from '../assets/fighterSheets';
 import { KING_SHEET, KING_SHEET_FRAME, type KingSheetFrame } from '../assets/kingSprites';
 import { fighterSpriteKey } from '../assets/unitSprites';
 import { type WaveSheetAnim, waveSheet, waveSheetAnimKey } from '../assets/waveSheets';
@@ -34,6 +34,7 @@ interface UnitView {
   tier: number;
   radius: number;
   resetFrameTimer?: Phaser.Time.TimerEvent;
+  fighterAnim?: FighterSheetAnim;
   waveAnim?: WaveSheetAnim;
   deathUntil?: number;
 }
@@ -214,7 +215,7 @@ export class GameScene extends Phaser.Scene {
         if (u.tier === 1) {
           root.add(this.add.circle(0, 0, radius + 3, 0xf5c542, 0.18).setStrokeStyle(2, 0xf5c542, 0.75));
         }
-        const sprite = this.add.sprite(0, 0, sheet.key, FIGHTER_SHEET_FRAME.idle).setDisplaySize(radius * 3, radius * 3);
+        const sprite = this.add.sprite(0, 0, sheet.key, fighterSheetFrame(sheet, 'idle')).setDisplaySize(radius * 3, radius * 3);
         body = sprite;
         root.add(body);
       } else if (spriteKey) {
@@ -314,6 +315,7 @@ export class GameScene extends Phaser.Scene {
       view.root.y += (sp.y - view.root.y) * 0.45;
       view.hpBar.width = view.hpBarW * Math.max(0, u.hp / u.maxHp);
       if (u.kind === 'king') this.refreshKingFrame(u, view);
+      if (u.kind === 'fighter') this.refreshFighterAnim(u, view);
       if (u.kind === 'creep') this.refreshWaveAnim(u, view);
     }
 
@@ -729,17 +731,51 @@ export class GameScene extends Phaser.Scene {
 
   private setFighterFrame(unitId: number, frame: keyof typeof FIGHTER_SHEET_FRAME, resetDelay = 180): void {
     const view = this.views.get(unitId);
-    if (!view?.spriteBody) return;
+    const unit = this.sim.state.units.get(unitId);
+    if (!view?.spriteBody || unit?.kind !== 'fighter') return;
+    const sheet = fighterSheet(unit.defId);
+    if (!sheet) return;
     view.resetFrameTimer?.remove();
-    view.spriteBody.setFrame(FIGHTER_SHEET_FRAME[frame]);
+    const anim = frame === 'attack' || frame === 'death' ? frame : undefined;
+    const animConfig = anim ? sheet.anims?.[anim] : undefined;
+    if (anim && animConfig) {
+      view.fighterAnim = anim;
+      view.spriteBody.play(fighterSheetAnimKey(sheet, anim), false);
+      resetDelay = Math.max(resetDelay, ((animConfig.end - animConfig.start + 1) / animConfig.frameRate) * 1000 + 40);
+    } else {
+      view.fighterAnim = undefined;
+      view.spriteBody.stop();
+      view.spriteBody.setFrame(fighterSheetFrame(sheet, frame));
+    }
     if (frame === 'idle') {
       view.resetFrameTimer = undefined;
       return;
     }
     view.resetFrameTimer = this.time.delayedCall(resetDelay, () => {
-      if (view.spriteBody?.active) view.spriteBody.setFrame(FIGHTER_SHEET_FRAME.idle);
+      if (view.spriteBody?.active) {
+        view.spriteBody.stop();
+        view.spriteBody.setFrame(fighterSheetFrame(sheet, 'idle'));
+        view.fighterAnim = undefined;
+      }
       view.resetFrameTimer = undefined;
     });
+  }
+
+  private refreshFighterAnim(u: CombatUnit, view: UnitView): void {
+    const sheet = fighterSheet(u.defId);
+    if (!view.spriteBody || !sheet?.anims?.walk || view.resetFrameTimer) return;
+    if (u.state === 'moving') {
+      if (view.fighterAnim !== 'walk' || !view.spriteBody.anims.isPlaying) {
+        view.fighterAnim = 'walk';
+        view.spriteBody.play(fighterSheetAnimKey(sheet, 'walk'), true);
+      }
+      return;
+    }
+    if (view.fighterAnim === 'walk') {
+      view.spriteBody.stop();
+      view.spriteBody.setFrame(fighterSheetFrame(sheet, 'idle'));
+      view.fighterAnim = undefined;
+    }
   }
 
   private refreshKingFrame(u: CombatUnit, view: UnitView): void {

@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { HIT_EFFECT_SPRITES, SUPPORT_EFFECT_SPRITES } from '../assets/effectSprites';
 import { FACTION_PREVIEWS } from '../assets/factionPreviews';
-import { FIGHTER_SHEETS } from '../assets/fighterSheets';
+import { FIGHTER_SHEETS, fighterSheetAnimKey } from '../assets/fighterSheets';
 import { KING_SHEET } from '../assets/kingSprites';
 import laneArenaBoardUrl from '../assets/lane-arena-board.png';
 import buttonFrameUrl from '../assets/menu/button-frame.png';
@@ -59,6 +59,19 @@ export class BootScene extends Phaser.Scene {
     for (const sheet of Object.values(WAVE_SHEETS)) {
       for (const [anim, config] of Object.entries(sheet.anims)) {
         const key = waveSheetAnimKey(sheet, anim as keyof typeof sheet.anims);
+        if (this.anims.exists(key)) continue;
+        this.anims.create({
+          key,
+          frames: this.anims.generateFrameNumbers(sheet.key, { start: config.start, end: config.end }),
+          frameRate: config.frameRate,
+          repeat: config.repeat
+        });
+      }
+    }
+    for (const sheet of Object.values(FIGHTER_SHEETS)) {
+      if (!sheet.anims) continue;
+      for (const [anim, config] of Object.entries(sheet.anims)) {
+        const key = fighterSheetAnimKey(sheet, anim as keyof typeof sheet.anims);
         if (this.anims.exists(key)) continue;
         this.anims.create({
           key,

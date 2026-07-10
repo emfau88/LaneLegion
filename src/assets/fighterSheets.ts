@@ -25,14 +25,28 @@ import vineSpitterUrl from './fighter-sheets/wildroot/vine-spitter.png';
 import type { UnitSpriteAsset } from './unitSprites';
 
 export type FighterSheetFrame = 'idle' | 'attack' | 'hit' | 'death';
+export type FighterSheetAnim = 'walk' | 'attack' | 'death';
 
 export interface FighterSheetAsset extends UnitSpriteAsset {
   frameWidth: number;
   frameHeight: number;
+  frames?: Partial<Record<FighterSheetFrame, number>>;
+  anims?: Partial<Record<FighterSheetAnim, { start: number; end: number; frameRate: number; repeat: number }>>;
 }
 
 export const FIGHTER_SHEETS: Record<string, FighterSheetAsset> = {
-  shield_guard: { key: 'fighter-sheet-shield-guard', url: shieldGuardUrl, frameWidth: 256, frameHeight: 256 },
+  shield_guard: {
+    key: 'fighter-sheet-shield-guard',
+    url: shieldGuardUrl,
+    frameWidth: 256,
+    frameHeight: 256,
+    frames: { idle: 0, attack: 4, hit: 6, death: 8 },
+    anims: {
+      walk: { start: 0, end: 3, frameRate: 6, repeat: -1 },
+      attack: { start: 4, end: 7, frameRate: 12, repeat: 0 },
+      death: { start: 8, end: 11, frameRate: 8, repeat: 0 }
+    }
+  },
   hammer_recruit: { key: 'fighter-sheet-hammer-recruit', url: hammerRecruitUrl, frameWidth: 256, frameHeight: 256 },
   ballista_scout: { key: 'fighter-sheet-ballista-scout', url: ballistaScoutUrl, frameWidth: 256, frameHeight: 256 },
   banner_bearer: { key: 'fighter-sheet-banner-bearer', url: bannerBearerUrl, frameWidth: 256, frameHeight: 256 },
@@ -66,3 +80,8 @@ export const FIGHTER_SHEET_FRAME: Record<FighterSheetFrame, number> = {
 };
 
 export const fighterSheet = (defId: string): FighterSheetAsset | null => FIGHTER_SHEETS[defId] ?? null;
+
+export const fighterSheetFrame = (sheet: FighterSheetAsset, frame: FighterSheetFrame): number =>
+  sheet.frames?.[frame] ?? FIGHTER_SHEET_FRAME[frame];
+
+export const fighterSheetAnimKey = (sheet: FighterSheetAsset, anim: FighterSheetAnim): string => `${sheet.key}-${anim}`;
