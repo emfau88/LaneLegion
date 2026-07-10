@@ -59,10 +59,54 @@ export const FIGHTER_SHEETS: Record<string, FighterSheetAsset> = {
       death: { start: 8, end: 11, frameRate: 8, repeat: 0 }
     }
   },
-  ballista_scout: { key: 'fighter-sheet-ballista-scout', url: ballistaScoutUrl, frameWidth: 256, frameHeight: 256 },
-  banner_bearer: { key: 'fighter-sheet-banner-bearer', url: bannerBearerUrl, frameWidth: 256, frameHeight: 256 },
-  steel_hound: { key: 'fighter-sheet-steel-hound', url: steelHoundUrl, frameWidth: 256, frameHeight: 256 },
-  fortress_golem: { key: 'fighter-sheet-fortress-golem', url: fortressGolemUrl, frameWidth: 256, frameHeight: 256 },
+  ballista_scout: {
+    key: 'fighter-sheet-ballista-scout',
+    url: ballistaScoutUrl,
+    frameWidth: 256,
+    frameHeight: 256,
+    frames: { idle: 0, attack: 2, hit: 3, death: 4 },
+    anims: {
+      walk: { start: 0, end: 1, frameRate: 4, repeat: -1 },
+      attack: { start: 2, end: 3, frameRate: 10, repeat: 0 },
+      death: { start: 4, end: 5, frameRate: 7, repeat: 0 }
+    }
+  },
+  banner_bearer: {
+    key: 'fighter-sheet-banner-bearer',
+    url: bannerBearerUrl,
+    frameWidth: 256,
+    frameHeight: 256,
+    frames: { idle: 0, attack: 2, hit: 3, death: 4 },
+    anims: {
+      walk: { start: 0, end: 1, frameRate: 4, repeat: -1 },
+      attack: { start: 2, end: 3, frameRate: 8, repeat: 0 },
+      death: { start: 4, end: 5, frameRate: 7, repeat: 0 }
+    }
+  },
+  steel_hound: {
+    key: 'fighter-sheet-steel-hound',
+    url: steelHoundUrl,
+    frameWidth: 256,
+    frameHeight: 256,
+    frames: { idle: 0, attack: 2, hit: 3, death: 4 },
+    anims: {
+      walk: { start: 0, end: 1, frameRate: 8, repeat: -1 },
+      attack: { start: 2, end: 3, frameRate: 12, repeat: 0 },
+      death: { start: 4, end: 5, frameRate: 8, repeat: 0 }
+    }
+  },
+  fortress_golem: {
+    key: 'fighter-sheet-fortress-golem',
+    url: fortressGolemUrl,
+    frameWidth: 256,
+    frameHeight: 256,
+    frames: { idle: 0, attack: 2, hit: 3, death: 4 },
+    anims: {
+      walk: { start: 0, end: 1, frameRate: 4, repeat: -1 },
+      attack: { start: 2, end: 3, frameRate: 9, repeat: 0 },
+      death: { start: 4, end: 5, frameRate: 6, repeat: 0 }
+    }
+  },
   spark_adept: { key: 'fighter-sheet-spark-adept', url: sparkAdeptUrl, frameWidth: 256, frameHeight: 256 },
   ember_mage: { key: 'fighter-sheet-ember-mage', url: emberMageUrl, frameWidth: 256, frameHeight: 256 },
   ash_guard: { key: 'fighter-sheet-ash-guard', url: ashGuardUrl, frameWidth: 256, frameHeight: 256 },
