@@ -154,7 +154,8 @@ export const tickCombat = (state: GameState, dt: number): void => {
     if (u.targetId === null) continue;
     const target = state.units.get(u.targetId);
     if (!target || target.state === 'dead' || target.zoneId !== u.zoneId) continue;
-    if (dist(u.pos, target.pos) > u.range + 0.05) continue;
+    const attackRange = target.kind === 'king' && u.zoneId.startsWith('arena_') ? Math.max(u.range, 1.35) : u.range;
+    if (dist(u.pos, target.pos) > attackRange + 0.05) continue;
 
     u.state = 'attacking';
     if (state.time >= u.attackReadyAt) performAttack(state, u, target);

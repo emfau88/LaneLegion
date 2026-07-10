@@ -41,7 +41,8 @@ const fighterMove = (state: GameState, u: CombatUnit, dt: number): void => {
   const target = u.targetId !== null ? state.units.get(u.targetId) : undefined;
   if (target && target.state !== 'dead' && target.zoneId === u.zoneId) {
     const d = dist(u.pos, target.pos);
-    if (d <= u.range) {
+    const attackRange = isArena(u.zoneId) && target.kind === 'king' ? Math.max(u.range, 1.35) : u.range;
+    if (d <= attackRange) {
       u.state = 'attacking';
       return;
     }
