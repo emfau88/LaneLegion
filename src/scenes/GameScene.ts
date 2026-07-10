@@ -891,6 +891,14 @@ export class GameScene extends Phaser.Scene {
               const trail = this.add.line((from.x + to.x) / 2, (from.y + to.y) / 2, -14, 0, 14, 0, color, 0.85).setDepth(DEPTH_FX).setRotation(Phaser.Math.Angle.Between(from.x, from.y, to.x, to.y));
               this.tweens.add({ targets: trail, alpha: 0, duration: 180, onComplete: () => trail.destroy() });
             }
+          } else if (attacker?.kind === 'creep') {
+            const colors: Record<string, number> = {
+              grubling: 0xb7e36b, stone_beetle: 0x9da6ad, swift_stalker: 0xd6e7ff,
+              bulwark_brute: 0xd28c52, gloomspawn: 0x9d65d6, gloom_ogre: 0x7b4aa5,
+              horde_runt: 0xe0bd75, horde_bruiser: 0xb56e49
+            };
+            const fx = this.add.circle(to.x, to.y, attacker.defId === 'bulwark_brute' || attacker.defId === 'gloom_ogre' ? 18 : 10, colors[attacker.defId] ?? 0xd9534f, 0.3).setDepth(DEPTH_FX);
+            this.tweens.add({ targets: fx, scale: attacker.defId === 'swift_stalker' ? 1.8 : 1.35, alpha: 0, duration: attacker.defId === 'swift_stalker' ? 120 : 210, onComplete: () => fx.destroy() });
           }
           break;
         }
