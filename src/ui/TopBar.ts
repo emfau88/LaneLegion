@@ -34,7 +34,7 @@ export class TopBar {
 
   constructor(scene: Phaser.Scene, cb: TopBarCallbacks) {
     panel(scene, 0, 0, L.topBar.w, L.topBar.h, COLORS.panel, 0.95);
-    scene.add.image(L.topBar.w / 2, L.topBar.h / 2, HUD_ASSETS.topPanel.key).setDisplaySize(552, 96).setAlpha(0.98);
+    scene.add.image(L.topBar.w / 2, L.topBar.h / 2, HUD_ASSETS.topPanel.key).setDisplaySize(L.topBar.w, 96).setAlpha(0.98);
 
     // Keep the wave number clear of the ornamental top-panel frame.
     scene.add.rectangle(47, 20, 78, 26, 0x111827, 0.86).setStrokeStyle(1, COLORS.panelStroke);
@@ -74,7 +74,7 @@ export class TopBar {
       normal: HUD_ASSETS.buttonSecondary.key,
       disabled: HUD_ASSETS.buttonDisabled.key
     });
-    scene.add.image(362, 48, HUD_ASSETS.iconWorker.key).setDisplaySize(18, 18);
+    scene.add.image(340, 48, HUD_ASSETS.iconWorker.key).setDisplaySize(18, 18);
 
     scene.add.rectangle(22, 76, this.barW, 10, 0x11141f).setOrigin(0);
     this.ownKingBar = scene.add.rectangle(22, 76, this.barW, 10, 0x4caf50).setOrigin(0);

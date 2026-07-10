@@ -37,7 +37,7 @@ export class FighterCard {
       .setInteractive({ useHandCursor: true });
     this.bg.on('pointerdown', () => onSelect(def.id));
 
-    const cost = txt(scene, CARD_W - 6, 5, `${tier.cost}g`, 12, COLORS.gold).setOrigin(1, 0).setFontStyle('bold');
+    const cost = txt(scene, CARD_W - 6, 5, `${tier.cost}g`, 11, COLORS.gold).setOrigin(1, 0).setFontStyle('bold');
     const role = txt(scene, 8, 7, ROLE_LETTER[def.role], 12, COLORS.textDim).setFontStyle('bold');
     const sheet = fighterSheet(def.id);
     const spriteKey = fighterSpriteKey(def.id);
@@ -54,7 +54,7 @@ export class FighterCard {
       : spriteKey
         ? scene.add.image(CARD_W / 2, 31, spriteKey).setDisplaySize(38, 38).setAlpha(0.94)
         : null;
-    const name = txt(scene, CARD_W / 2, 51, fighterTierName(def, 0), 9, COLORS.textMain, {
+    const name = txt(scene, CARD_W / 2, 51, fighterTierName(def, 0), 8, COLORS.textMain, {
       align: 'center',
       wordWrap: { width: CARD_W - 10 }
     })
