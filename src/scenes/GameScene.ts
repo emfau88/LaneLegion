@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
-import { KING_VFX_SHEET, SUPPORT_EFFECT_SPRITES, WORKER_WISP, hitEffectKey } from '../assets/effectSprites';
+import { SUPPORT_EFFECT_SPRITES, WORKER_WISP, hitEffectKey } from '../assets/effectSprites';
 import { FIGHTER_SHEET_FRAME, type FighterSheetAnim, fighterSheet, fighterSheetAnimKey, fighterSheetFrame } from '../assets/fighterSheets';
-import { KING_SHEET, KING_SHEET_FRAME, KING_SPRITE, type KingSheetFrame } from '../assets/kingSprites';
+import { KING_SPRITE, type KingSheetFrame } from '../assets/kingSprites';
 import { fighterSpriteKey } from '../assets/unitSprites';
 import { type WaveSheetAnim, waveSheet, waveSheetAnimKey } from '../assets/waveSheets';
 import { waveSpriteKey } from '../assets/waveSprites';
@@ -738,6 +738,113 @@ export class GameScene extends Phaser.Scene {
     });
   }
 
+  /** The visible crystal at the top of the static king's sceptre. */
+  private kingScepterTip(zoneId: string, pos: { x: number; y: number }): { x: number; y: number } {
+    const king = this.screenOf(zoneId, pos);
+    return { x: king.x + 27, y: king.y - 41 };
+  }
+
+  /** Small response on the existing high-detail king asset; it does not replace the asset. */
+  private pulseKing(unitId: number, damaged = false): void {
+    const view = this.views.get(unitId);
+    if (!view) return;
+    const body = view.body as Phaser.GameObjects.Image;
+    if (!(body instanceof Phaser.GameObjects.Image)) return;
+    body.setTint(damaged ? 0xffb2b9 : 0xb9edff);
+    this.tweens.add({
+      targets: view.root,
+      scale: damaged ? 1.035 : 1.025,
+      duration: 80,
+      yoyo: true
+    });
+    this.time.delayedCall(damaged ? 170 : 210, () => {
+      if (body.active) body.clearTint();
+    });
+  }
+
+  private kingCastFlash(from: { x: number; y: number }, strong = false): void {
+    const glow = this.add.circle(from.x, from.y, strong ? 14 : 9, 0x48cfff, 0.42).setDepth(DEPTH_FX);
+    const core = this.add.star(from.x, from.y, 4, strong ? 5 : 3, strong ? 13 : 9, 0xeaffff, 0.98).setDepth(DEPTH_FX);
+    this.tweens.add({ targets: glow, scale: strong ? 2.8 : 2.1, alpha: 0, duration: strong ? 240 : 150, onComplete: () => glow.destroy() });
+    this.tweens.add({ targets: core, scale: 0.35, alpha: 0, duration: strong ? 210 : 120, onComplete: () => core.destroy() });
+  }
+
+  /** Draws a readable, hand-drawn lightning path without relying on raster chroma keying. */
+  private strokeKingArc(g: Phaser.GameObjects.Graphics, from: { x: number; y: number }, to: { x: number; y: number }, width: number, color: number, alpha: number): void {
+    const dx = to.x - from.x;
+    const dy = to.y - from.y;
+    const length = Math.max(1, Math.hypot(dx, dy));
+    const nx = -dy / length;
+    const ny = dx / length;
+    const steps = Math.max(3, Math.min(8, Math.round(length / 22)));
+    g.lineStyle(width, color, alpha);
+    g.beginPath();
+    g.moveTo(from.x, from.y);
+    for (let i = 1; i < steps; i++) {
+      const progress = i / steps;
+      const offset = Phaser.Math.FloatBetween(-7, 7) * Math.sin(progress * Math.PI);
+      g.lineTo(from.x + dx * progress + nx * offset, from.y + dy * progress + ny * offset);
+    }
+    g.lineTo(to.x, to.y);
+    g.strokePath();
+  }
+
+  private kingImpact(at: { x: number; y: number }, strong = false): void {
+    const ring = this.add.circle(at.x, at.y, strong ? 13 : 9, 0x58d9ff, 0.28).setStrokeStyle(1.5, 0xe9ffff, 0.95).setDepth(DEPTH_FX);
+    const spark = this.add.star(at.x, at.y, 5, strong ? 4 : 3, strong ? 17 : 11, 0xf5ffff, 0.96).setDepth(DEPTH_FX);
+    this.tweens.add({ targets: ring, scale: strong ? 2.35 : 1.8, alpha: 0, duration: strong ? 270 : 180, onComplete: () => ring.destroy() });
+    this.tweens.add({ targets: spark, scale: 0.45, alpha: 0, duration: strong ? 230 : 150, onComplete: () => spark.destroy() });
+  }
+
+  /** Single-target Royal Arc: the king's normal, clearly visible attack. */
+  private playKingBolt(from: { x: number; y: number }, to: { x: number; y: number }, strong = false): void {
+    this.kingCastFlash(from, strong);
+    const arc = this.add.graphics().setDepth(DEPTH_FX);
+    this.strokeKingArc(arc, from, to, strong ? 8 : 5, 0x126ee8, 0.5);
+    this.strokeKingArc(arc, from, to, strong ? 3.2 : 2, 0xbffbff, 0.98);
+    this.tweens.add({ targets: arc, alpha: 0, duration: strong ? 260 : 160, onComplete: () => arc.destroy() });
+    this.time.delayedCall(strong ? 70 : 45, () => this.kingImpact(to, strong));
+  }
+
+  /** Mana chain spell: strong primary arc plus short, readable jumps between leaked creeps. */
+  private playKingChain(from: { x: number; y: number }, targets: Array<{ x: number; y: number }>): void {
+    if (targets.length === 0) return;
+    this.kingCastFlash(from, true);
+    const arc = this.add.graphics().setDepth(DEPTH_FX);
+    let previous = from;
+    for (const target of targets) {
+      this.strokeKingArc(arc, previous, target, previous === from ? 7 : 5, 0x146fe7, 0.52);
+      this.strokeKingArc(arc, previous, target, previous === from ? 2.8 : 2.1, 0xd4ffff, 0.98);
+      this.kingImpact(target, previous === from);
+      previous = target;
+    }
+    this.tweens.add({ targets: arc, alpha: 0, duration: 300, onComplete: () => arc.destroy() });
+  }
+
+  /** Mana AOE spell: rune telegraph followed by compact sky-lances at the affected leak group. */
+  private playKingSigil(center: { x: number; y: number }, targets: Array<{ x: number; y: number }>, radius: number): void {
+    const sigil = this.add.graphics().setDepth(DEPTH_FX);
+    const screenRadius = Math.max(30, radius * 27);
+    sigil.lineStyle(3, 0x1577e6, 0.5).strokeCircle(center.x, center.y, screenRadius);
+    sigil.lineStyle(1.5, 0xc5ffff, 0.95).strokeCircle(center.x, center.y, screenRadius * 0.73);
+    for (let i = 0; i < 8; i++) {
+      const a = (i / 8) * Math.PI * 2 + Math.PI / 8;
+      const x = center.x + Math.cos(a) * screenRadius * 0.73;
+      const y = center.y + Math.sin(a) * screenRadius * 0.73;
+      sigil.fillStyle(0xe2ffff, 0.98).fillCircle(x, y, 2.2);
+    }
+    this.tweens.add({ targets: sigil, scale: 1.12, alpha: 0, duration: 440, onComplete: () => sigil.destroy() });
+    const strikes = targets.length > 0 ? targets : [center];
+    for (const [index, target] of strikes.entries()) {
+      this.time.delayedCall(90 + index * 45, () => {
+        const pillar = this.add.rectangle(target.x, target.y - 31, 6, 74, 0x6fe9ff, 0.82).setDepth(DEPTH_FX);
+        pillar.setStrokeStyle(1, 0xf2ffff, 0.98);
+        this.tweens.add({ targets: pillar, scaleX: 2.2, alpha: 0, duration: 190, onComplete: () => pillar.destroy() });
+        this.kingImpact(target, true);
+      });
+    }
+  }
+
   private setFighterFrame(unitId: number, frame: keyof typeof FIGHTER_SHEET_FRAME, resetDelay = 180): void {
     const view = this.views.get(unitId);
     const unit = this.sim.state.units.get(unitId);
@@ -787,27 +894,15 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
-  private refreshKingFrame(u: CombatUnit, view: UnitView): void {
-    if (!view.spriteBody || view.resetFrameTimer) return;
-    view.spriteBody.setFrame(u.hp / u.maxHp <= 0.35 ? KING_SHEET_FRAME.damaged : KING_SHEET_FRAME.idle);
+  private refreshKingFrame(_u: CombatUnit, _view: UnitView): void {
+    // The high-detail king is intentionally a static image. Attack feedback is handled by pulseKing().
   }
 
-  private setKingFrame(unitId: number, frame: KingSheetFrame, resetDelay = 220): void {
+  private setKingFrame(unitId: number, frame: KingSheetFrame, _resetDelay = 220): void {
     const view = this.views.get(unitId);
     const unit = this.sim.state.units.get(unitId);
-    if (!view?.spriteBody || unit?.kind !== 'king') return;
-    view.resetFrameTimer?.remove();
-    view.spriteBody.setFrame(KING_SHEET_FRAME[frame]);
-    if (frame === 'idle' || frame === 'damaged') {
-      view.resetFrameTimer = undefined;
-      return;
-    }
-    view.resetFrameTimer = this.time.delayedCall(resetDelay, () => {
-      if (view.spriteBody?.active && unit.state !== 'dead') {
-        view.spriteBody.setFrame(unit.hp / unit.maxHp <= 0.35 ? KING_SHEET_FRAME.damaged : KING_SHEET_FRAME.idle);
-      }
-      view.resetFrameTimer = undefined;
-    });
+    if (!view || unit?.kind !== 'king') return;
+    this.pulseKing(unitId, frame === 'damaged');
   }
 
   private playWaveAnim(unitId: number, anim: WaveSheetAnim): void {
@@ -833,12 +928,17 @@ export class GameScene extends Phaser.Scene {
           if (!this.zoneVisible(ev.zoneId)) break;
           sfx.play('hit');
           const to = this.screenOf(ev.zoneId, ev.toPos);
+          const attacker = this.sim.state.units.get(ev.fromId);
           const playHit = () => this.playHitImpact(ev.attackType, to.x, to.y);
           this.playWaveAnim(ev.fromId, 'attack');
           this.setFighterFrame(ev.fromId, 'attack', 180);
           this.setFighterFrame(ev.toId, 'hit', 150);
           this.setKingFrame(ev.fromId, 'brace', 180);
           this.setKingFrame(ev.toId, 'damaged', 170);
+          if (attacker?.kind === 'king') {
+            this.playKingBolt(this.kingScepterTip(ev.zoneId, ev.fromPos), to);
+            break;
+          }
           if (ev.ranged) {
             const from = this.screenOf(ev.zoneId, ev.fromPos);
             const proj = this.createProjectile(from, ev.attackType);
@@ -862,7 +962,6 @@ export class GameScene extends Phaser.Scene {
             playHit();
           }
           // Per-unit signatures keep the shared combat rules readable without changing balance.
-          const attacker = this.sim.state.units.get(ev.fromId);
           if (attacker?.defId === 'shield_guard') {
             const ring = this.add.circle(to.x, to.y, 14, 0x78b9ff, 0.18).setDepth(DEPTH_FX);
             this.tweens.add({ targets: ring, scale: 1.6, alpha: 0, duration: 180, onComplete: () => ring.destroy() });
@@ -957,17 +1056,18 @@ export class GameScene extends Phaser.Scene {
         case 'kingSpell': {
           if (!this.zoneVisible(ev.zoneId)) break;
           sfx.play('kingSpell');
-          const sp = this.screenOf(ev.zoneId, ev.pos);
           const target = this.screenOf(ev.zoneId, ev.targetPos ?? ev.pos);
+          const effectTargets = (ev.effectTargets ?? [ev.targetPos ?? ev.pos]).map((p) => this.screenOf(ev.zoneId, p));
+          const kingId = this.sim.state.teams[ev.teamId]?.kingUnitId;
+          if (kingId !== undefined) this.setKingFrame(kingId, 'brace', 260);
+          const sceptre = this.kingScepterTip(ev.zoneId, ev.pos);
           if (ev.style === 'laser') {
-            const fx = this.add.image((sp.x + target.x) / 2, (sp.y + target.y) / 2, KING_VFX_SHEET.key).setCrop(0, 0, 682, 768).setDisplaySize(112, 126).setRotation(Phaser.Math.Angle.Between(sp.x, sp.y - 42, target.x, target.y) + Math.PI / 2).setDepth(DEPTH_FX);
-            this.tweens.add({ targets: fx, alpha: 0, duration: 260, onComplete: () => fx.destroy() });
+            this.playKingBolt(sceptre, target, true);
           } else if (ev.style === 'chain') {
-            const fx = this.add.image(target.x, target.y, KING_VFX_SHEET.key).setCrop(682, 0, 682, 768).setDisplaySize(102, 114).setDepth(DEPTH_FX);
-            this.tweens.add({ targets: fx, alpha: 0, duration: 300, onComplete: () => fx.destroy() });
+            this.playKingChain(sceptre, effectTargets);
           } else {
-            const fx = this.add.image(target.x, target.y, KING_VFX_SHEET.key).setCrop(1364, 0, 684, 768).setDisplaySize(118, 102).setDepth(DEPTH_FX);
-            this.tweens.add({ targets: fx, scale: 1.18, alpha: 0, duration: 360, onComplete: () => fx.destroy() });
+            this.kingCastFlash(sceptre, true);
+            this.playKingSigil(target, effectTargets, ev.radius);
           }
           break;
         }

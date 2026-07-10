@@ -42,5 +42,15 @@ export type GameEvent =
     }
   | { type: 'death'; unitId: number; zoneId: string; pos: Vec2; kind: UnitKind }
   | { type: 'leak'; unitId: number; laneId: string; teamId: string }
-  | { type: 'kingSpell'; teamId: string; zoneId: string; pos: Vec2; radius: number; style?: 'rune' | 'laser' | 'chain'; targetPos?: Vec2 }
+  | {
+      type: 'kingSpell';
+      teamId: string;
+      zoneId: string;
+      pos: Vec2;
+      radius: number;
+      style?: 'rune' | 'laser' | 'chain';
+      targetPos?: Vec2;
+      /** Positions actually struck by a multi-target king spell. */
+      effectTargets?: Vec2[];
+    }
   | { type: 'heal'; unitId: number; zoneId: string; pos: Vec2 };

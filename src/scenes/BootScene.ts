@@ -1,9 +1,9 @@
 import Phaser from 'phaser';
-import { HIT_EFFECT_SPRITES, KING_VFX_SHEET, SUPPORT_EFFECT_SPRITES, WORKER_WISP } from '../assets/effectSprites';
+import { HIT_EFFECT_SPRITES, SUPPORT_EFFECT_SPRITES, WORKER_WISP } from '../assets/effectSprites';
 import { FACTION_PREVIEWS } from '../assets/factionPreviews';
 import { FIGHTER_SHEETS, fighterSheetAnimKey } from '../assets/fighterSheets';
 import { HUD_ASSETS } from '../assets/hudAssets';
-import { KING_SHEET, KING_SPRITE } from '../assets/kingSprites';
+import { KING_SPRITE } from '../assets/kingSprites';
 import laneArenaBoardUrl from '../assets/lane-arena-board.png';
 import buttonFrameUrl from '../assets/menu/button-frame.png';
 import mainMenuBgUrl from '../assets/menu/main-menu-bg.png';
@@ -39,10 +39,6 @@ export class BootScene extends Phaser.Scene {
         frameHeight: sprite.frameHeight
       });
     }
-    this.load.spritesheet(KING_SHEET.key, KING_SHEET.url, {
-      frameWidth: KING_SHEET.frameWidth,
-      frameHeight: KING_SHEET.frameHeight
-    });
     this.load.image(KING_SPRITE.key, KING_SPRITE.url);
     for (const sprite of Object.values(WAVE_SPRITES)) {
       this.load.image(sprite.key, sprite.url);
@@ -59,7 +55,6 @@ export class BootScene extends Phaser.Scene {
     for (const sprite of Object.values(SUPPORT_EFFECT_SPRITES)) {
       this.load.image(sprite.key, sprite.url);
     }
-    this.load.image(KING_VFX_SHEET.key, KING_VFX_SHEET.url);
     this.load.image(WORKER_WISP.key, WORKER_WISP.url);
   }
 

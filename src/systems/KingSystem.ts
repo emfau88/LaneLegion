@@ -104,6 +104,12 @@ export const tickKings = (state: GameState, dt: number): void => {
         team.kingMana = 0;
         const style = (Math.floor(state.time * 10) + state.teams[teamId].kingUpgrades.spell) % 3;
         const target = hostiles.reduce((best, h) => (dist(h.pos, king.pos) < dist(best.pos, king.pos) ? h : best));
+        const affected =
+          style === 2
+            ? hostiles.filter((h) => dist(h.pos, target.pos) <= 1.15).slice(0, 3)
+            : style === 0
+              ? hostiles.slice(0, 4)
+              : [target];
         state.events.push({
           type: 'kingSpell',
           teamId,
@@ -111,12 +117,13 @@ export const tickKings = (state: GameState, dt: number): void => {
           pos: { ...king.pos },
           radius: style === 0 ? CFG.king.spellRadius : style === 1 ? 0 : 1.15,
           style: style === 0 ? 'rune' : style === 1 ? 'laser' : 'chain',
-          targetPos: { ...target.pos }
+          targetPos: { ...target.pos },
+          effectTargets: affected.map((h) => ({ ...h.pos }))
         });
         const dmg = kingSpellDamage(state, teamId);
         if (style === 1) applyDamage(state, king, target, dmg * 1.35, { isSecondary: true });
         else if (style === 2) {
-          for (const h of hostiles.filter((h) => dist(h.pos, target.pos) <= 1.15).slice(0, 3)) applyDamage(state, king, h, dmg * 0.72, { isSecondary: true });
+          for (const h of affected) applyDamage(state, king, h, dmg * 0.72, { isSecondary: true });
         } else for (const h of hostiles) applyDamage(state, king, h, dmg, { isSecondary: true });
       }
     }
