@@ -82,6 +82,9 @@ export class UIButton {
   readonly container: Phaser.GameObjects.Container;
   private readonly bg: Phaser.GameObjects.Rectangle;
   private readonly label: Phaser.GameObjects.Text;
+  private readonly frame?: Phaser.GameObjects.Image;
+  private readonly normalFrame?: string;
+  private readonly disabledFrame?: string;
   private enabled = true;
   private baseColor: number;
 
@@ -94,19 +97,28 @@ export class UIButton {
     text: string,
     size: number,
     onClick: () => void,
-    color: number = COLORS.panelLight
+    color: number = COLORS.panelLight,
+    frame?: { normal: string; disabled?: string }
   ) {
     this.baseColor = color;
+    this.normalFrame = frame?.normal;
+    this.disabledFrame = frame?.disabled;
+    this.frame = frame ? scene.add.image(0, 0, frame.normal).setDisplaySize(w, h) : undefined;
     this.bg = scene.add
-      .rectangle(0, 0, w, h, color)
-      .setStrokeStyle(1, COLORS.panelStroke)
+      .rectangle(0, 0, w, h, color, frame ? 0.01 : 1)
+      .setStrokeStyle(frame ? 0 : 1, COLORS.panelStroke)
       .setInteractive({ useHandCursor: true });
     this.label = txt(scene, 0, 0, text, size).setOrigin(0.5);
-    this.container = scene.add.container(x, y, [this.bg, this.label]);
+    this.container = scene.add.container(x, y, [this.frame, this.bg, this.label].filter(Boolean) as Phaser.GameObjects.GameObject[]);
     this.bg.on('pointerdown', () => {
       if (!this.enabled) return;
-      this.bg.setFillStyle(0x4a5a80);
-      scene.time.delayedCall(90, () => this.bg.setFillStyle(this.enabled ? this.baseColor : 0x171c29));
+      if (this.frame) {
+        this.frame.setTint(0xbfd0ff);
+        scene.time.delayedCall(90, () => this.frame?.clearTint());
+      } else {
+        this.bg.setFillStyle(0x4a5a80);
+        scene.time.delayedCall(90, () => this.bg.setFillStyle(this.enabled ? this.baseColor : 0x171c29));
+      }
       sfx.play('tap');
       onClick();
     });
@@ -122,6 +134,10 @@ export class UIButton {
     if (this.enabled === on) return;
     this.enabled = on;
     this.bg.setFillStyle(on ? this.baseColor : 0x171c29);
+    if (this.frame) {
+      this.frame.setTexture(on ? this.normalFrame ?? this.frame.texture.key : this.disabledFrame ?? this.normalFrame ?? this.frame.texture.key);
+      this.frame.setAlpha(on ? 1 : 0.75);
+    }
     this.label.setAlpha(on ? 1 : 0.45);
   }
   setBaseColor(c: number): void {

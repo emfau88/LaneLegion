@@ -1,5 +1,5 @@
 import emberPreviewUrl from './faction-previews/ember.png';
-import ironcladPreviewUrl from './faction-previews/ironclad.png';
+import ironcladPreviewUrl from './faction-previews/ironclad-hero.png';
 import shadowPreviewUrl from './faction-previews/shadow.png';
 import wildrootPreviewUrl from './faction-previews/wildroot.png';
 import type { UnitSpriteAsset } from './unitSprites';

@@ -1,4 +1,7 @@
 import royalIdolUrl from './king/royal-idol.png';
+import fortressKingUrl from './king/fortress-king.png';
+
+export const KING_SPRITE = { key: 'king-fortress', url: fortressKingUrl };
 
 export type KingSheetFrame = 'idle' | 'brace' | 'cast' | 'damaged';
 

@@ -9,7 +9,7 @@ import { kingOf } from './KingSystem';
 
 const createCreep = (state: GameState, job: SpawnJob): CombatUnit => {
   const s = job.stats;
-  const jitter = (rng(state) - 0.5) * 0.3;
+  const jitter = (rng(state) - 0.5) * 0.12;
   const unit: CombatUnit = {
     id: state.nextUnitId++,
     kind: 'creep',
@@ -29,7 +29,7 @@ const createCreep = (state: GameState, job: SpawnJob): CombatUnit => {
     armorType: s.armorType,
     aggroRadius: s.aggroRadius ?? CFG.creep.aggroRadius,
     collisionRadius: s.collisionRadius ?? CFG.creep.collisionRadius,
-    pos: { x: job.col + 0.5 + jitter, y: 0.25 },
+    pos: { x: job.col + 0.5 + jitter, y: 0.12 },
     targetId: null,
     retargetAt: 0,
     attackReadyAt: 0,

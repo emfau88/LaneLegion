@@ -31,6 +31,8 @@ export class FactionSelectScene extends Phaser.Scene {
   }
 
   create(): void {
+    this.add.image(0, 0, 'main-menu-bg-v2').setOrigin(0).setDisplaySize(L.width, L.height);
+    this.add.rectangle(0, 0, L.width, L.height, 0x050814, 0.72).setOrigin(0);
     txt(this, L.width / 2, 28, t('select.title'), 22).setOrigin(0.5).setFontStyle('bold');
     txt(
       this,

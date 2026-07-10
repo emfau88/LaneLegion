@@ -16,8 +16,8 @@ export class MainMenuScene extends Phaser.Scene {
   }
 
   create(): void {
-    this.add.image(0, 0, 'main-menu-bg').setOrigin(0).setDisplaySize(L.width, L.height);
-    this.add.rectangle(0, 0, L.width, L.height, 0x050814, 0.28).setOrigin(0);
+    this.add.image(0, 0, 'main-menu-bg-v2').setOrigin(0).setDisplaySize(L.width, L.height);
+    this.add.rectangle(0, 0, L.width, L.height, 0x050814, 0.38).setOrigin(0);
     this.add.rectangle(0, 0, L.width, 260, 0x050814, 0.3).setOrigin(0);
     this.add.rectangle(0, 840, L.width, 328, 0x050814, 0.38).setOrigin(0);
 

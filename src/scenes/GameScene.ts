@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { SUPPORT_EFFECT_SPRITES, hitEffectKey } from '../assets/effectSprites';
 import { FIGHTER_SHEET_FRAME, type FighterSheetAnim, fighterSheet, fighterSheetAnimKey, fighterSheetFrame } from '../assets/fighterSheets';
-import { KING_SHEET, KING_SHEET_FRAME, type KingSheetFrame } from '../assets/kingSprites';
+import { KING_SHEET, KING_SHEET_FRAME, KING_SPRITE, type KingSheetFrame } from '../assets/kingSprites';
 import { fighterSpriteKey } from '../assets/unitSprites';
 import { type WaveSheetAnim, waveSheet, waveSheetAnimKey } from '../assets/waveSheets';
 import { waveSpriteKey } from '../assets/waveSprites';
@@ -146,21 +146,23 @@ export class GameScene extends Phaser.Scene {
 
     const { left, top, cellW, cellH } = L.lane;
     const w = L.lane.w;
+    const buildTop = top + CFG.grid.buildRowStart * cellH;
+    const buildH = (CFG.grid.buildRowEnd - CFG.grid.buildRowStart + 1) * cellH;
     const grid = this.add.graphics().setDepth(DEPTH_HIGHLIGHT - 1);
     grid.lineStyle(1, 0xb7c2cc, 0.16);
     for (let col = 0; col <= CFG.grid.cols; col++) {
       const x = left + col * cellW;
-      grid.lineBetween(x, top, x, top + L.lane.h);
+      grid.lineBetween(x, buildTop, x, buildTop + buildH);
     }
-    for (let row = 0; row <= CFG.grid.rows; row++) {
+    for (let row = CFG.grid.buildRowStart; row <= CFG.grid.buildRowEnd + 1; row++) {
       const y = top + row * cellH;
       grid.lineBetween(left, y, left + w, y);
     }
     grid.lineStyle(3, 0x89d37f, 0.62).strokeRect(
       left,
-      top + CFG.grid.buildRowStart * cellH,
+      buildTop,
       w,
-      (CFG.grid.buildRowEnd - CFG.grid.buildRowStart + 1) * cellH
+      buildH
     );
     txt(this, left + w / 2, top + cellH / 2, t('zone.spawn'), 10, '#c98a96').setOrigin(0.5).setAlpha(0.9);
     txt(this, left + w / 2, top + (CFG.grid.buildRowStart + 0.1) * cellH, t('zone.build'), 10, '#6f9a78')
@@ -203,7 +205,7 @@ export class GameScene extends Phaser.Scene {
       radius = 42;
       hpBarW = 116;
       root.add(this.add.ellipse(0, radius - 2, radius * 2.05, 14, 0x05070b, 0.34));
-      body = this.add.sprite(0, 0, KING_SHEET.key, KING_SHEET_FRAME.idle).setDisplaySize(123, 123);
+      body = this.add.image(0, 0, KING_SPRITE.key).setDisplaySize(123, 123);
       root.add(body);
     } else if (u.kind === 'fighter') {
       const faction = factionById(u.factionId ?? 'ironclad');
@@ -909,16 +911,16 @@ export class GameScene extends Phaser.Scene {
         case 'kingSpell': {
           if (!this.zoneVisible(ev.zoneId)) break;
           sfx.play('kingSpell');
-          this.setKingFrame(this.sim.state.teams[ev.teamId].kingUnitId, 'cast', 360);
           const sp = this.screenOf(ev.zoneId, ev.pos);
-          const ring = this.add.circle(sp.x, sp.y, 12, 0xf5c542, 0.35).setDepth(DEPTH_FX);
-          this.tweens.add({
-            targets: ring,
-            scale: 5,
-            alpha: 0,
-            duration: 400,
-            onComplete: () => ring.destroy()
-          });
+          const target = this.screenOf(ev.zoneId, ev.targetPos ?? ev.pos);
+          if (ev.style === 'laser') {
+            const g = this.add.graphics().setDepth(DEPTH_FX); g.lineStyle(4, 0x62d8ff, 0.9); g.lineBetween(sp.x, sp.y - 42, target.x, target.y);
+            this.tweens.add({ targets: g, alpha: 0, duration: 220, onComplete: () => g.destroy() });
+          } else if (ev.style === 'chain') {
+            for (let i = 0; i < 3; i++) { const bolt = this.add.line(target.x, target.y, -10, 8, 10, -8, 0x8eeaff, 0.9).setDepth(DEPTH_FX); this.tweens.add({ targets: bolt, alpha: 0, delay: i * 55, duration: 180, onComplete: () => bolt.destroy() }); }
+          } else {
+            const ring = this.add.circle(target.x, target.y, 12, 0x63b9ff, 0.38).setDepth(DEPTH_FX); this.tweens.add({ targets: ring, scale: 4.2, alpha: 0, duration: 360, onComplete: () => ring.destroy() });
+          }
           break;
         }
         case 'heal': {

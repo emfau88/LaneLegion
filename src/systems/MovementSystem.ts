@@ -31,7 +31,7 @@ const leakCreep = (state: GameState, u: CombatUnit): void => {
   u.hp = Math.max(1, u.hp * CFG.leakHpFactor);
   u.leaked = true;
   u.zoneId = arenaZoneId(defender.teamId);
-  u.pos = { x: CFG.arena.kingPos.x, y: 0.25 };
+  u.pos = { ...CFG.gate.arenaEntry };
   u.targetId = null;
   u.retargetAt = state.time;
   state.events.push({ type: 'leak', unitId: u.id, laneId: defender.laneId, teamId: defender.teamId });
@@ -115,8 +115,8 @@ const creepMove = (state: GameState, u: CombatUnit, dt: number): void => {
   // While defenders live, creeps seek them out instead of slipping past;
   // only with no fighters left do they run straight for the leak gate.
   const hostiles = livingHostilesInZone(state, u.zoneId, u.teamId);
-  let gx = u.pos.x;
-  let gy = CFG.grid.rows + 1;
+  let gx = CFG.gate.lanePos.x;
+  let gy = CFG.gate.lanePos.y;
   let bd = Infinity;
   for (const h of hostiles) {
     const d = dist(u.pos, h.pos);
@@ -127,7 +127,7 @@ const creepMove = (state: GameState, u: CombatUnit, dt: number): void => {
     }
   }
   moveToward(u, gx, gy, u.moveSpeed, dt);
-  if (u.pos.y >= CFG.grid.rows - 0.3) leakCreep(state, u);
+  if (hostiles.length === 0 && dist(u.pos, CFG.gate.lanePos) <= CFG.gate.reachRadius) leakCreep(state, u);
 };
 
 /** Gently push apart overlapping same-team units so they don't stack into one dot. */

@@ -2,10 +2,12 @@ import Phaser from 'phaser';
 import { HIT_EFFECT_SPRITES, SUPPORT_EFFECT_SPRITES } from '../assets/effectSprites';
 import { FACTION_PREVIEWS } from '../assets/factionPreviews';
 import { FIGHTER_SHEETS, fighterSheetAnimKey } from '../assets/fighterSheets';
-import { KING_SHEET } from '../assets/kingSprites';
+import { HUD_ASSETS } from '../assets/hudAssets';
+import { KING_SHEET, KING_SPRITE } from '../assets/kingSprites';
 import laneArenaBoardUrl from '../assets/lane-arena-board.png';
 import buttonFrameUrl from '../assets/menu/button-frame.png';
 import mainMenuBgUrl from '../assets/menu/main-menu-bg.png';
+import mainMenuBgV2Url from '../assets/menu/main-menu-bg-v2.png';
 import titlePlateUrl from '../assets/menu/title-plate.png';
 import { FIGHTER_SPRITES } from '../assets/unitSprites';
 import { WAVE_SHEETS, waveSheetAnimKey } from '../assets/waveSheets';
@@ -20,7 +22,11 @@ export class BootScene extends Phaser.Scene {
     this.load.image('lane-arena-board', laneArenaBoardUrl);
     this.load.image('button-frame', buttonFrameUrl);
     this.load.image('main-menu-bg', mainMenuBgUrl);
+    this.load.image('main-menu-bg-v2', mainMenuBgV2Url);
     this.load.image('title-plate', titlePlateUrl);
+    for (const sprite of Object.values(HUD_ASSETS)) {
+      this.load.image(sprite.key, sprite.url);
+    }
     for (const sprite of Object.values(FIGHTER_SPRITES)) {
       this.load.image(sprite.key, sprite.url);
     }
@@ -37,6 +43,7 @@ export class BootScene extends Phaser.Scene {
       frameWidth: KING_SHEET.frameWidth,
       frameHeight: KING_SHEET.frameHeight
     });
+    this.load.image(KING_SPRITE.key, KING_SPRITE.url);
     for (const sprite of Object.values(WAVE_SPRITES)) {
       this.load.image(sprite.key, sprite.url);
     }

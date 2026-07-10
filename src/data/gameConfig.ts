@@ -6,13 +6,18 @@ export const CFG = {
     /** Rows 4-8 are the build zone. Row 0 = spawn, rows 1-3 = approach, row 9 = leak gate. */
     buildRowStart: 4,
     buildRowEnd: 8,
-    spawnCols: [1, 2, 3, 4],
-    extraSpawnCol: 5
+    spawnCols: [2, 3],
+    extraSpawnCol: 3
+  },
+  gate: {
+    lanePos: { x: 3, y: 9.35 },
+    arenaEntry: { x: 3, y: 0.12 },
+    reachRadius: 0.18
   },
   arena: {
     width: 6,
     height: 4,
-    kingPos: { x: 2.75, y: 2.55 }
+    kingPos: { x: 3, y: 2.55 }
   },
 
   tickRate: 20,
