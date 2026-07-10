@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { HIT_EFFECT_SPRITES, SUPPORT_EFFECT_SPRITES } from '../assets/effectSprites';
+import { HIT_EFFECT_SPRITES, KING_VFX_SHEET, SUPPORT_EFFECT_SPRITES } from '../assets/effectSprites';
 import { FACTION_PREVIEWS } from '../assets/factionPreviews';
 import { FIGHTER_SHEETS, fighterSheetAnimKey } from '../assets/fighterSheets';
 import { HUD_ASSETS } from '../assets/hudAssets';
@@ -59,6 +59,7 @@ export class BootScene extends Phaser.Scene {
     for (const sprite of Object.values(SUPPORT_EFFECT_SPRITES)) {
       this.load.image(sprite.key, sprite.url);
     }
+    this.load.image(KING_VFX_SHEET.key, KING_VFX_SHEET.url);
   }
 
   create(): void {

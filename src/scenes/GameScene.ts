@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { SUPPORT_EFFECT_SPRITES, hitEffectKey } from '../assets/effectSprites';
+import { KING_VFX_SHEET, SUPPORT_EFFECT_SPRITES, hitEffectKey } from '../assets/effectSprites';
 import { FIGHTER_SHEET_FRAME, type FighterSheetAnim, fighterSheet, fighterSheetAnimKey, fighterSheetFrame } from '../assets/fighterSheets';
 import { KING_SHEET, KING_SHEET_FRAME, KING_SPRITE, type KingSheetFrame } from '../assets/kingSprites';
 import { fighterSpriteKey } from '../assets/unitSprites';
@@ -854,6 +854,27 @@ export class GameScene extends Phaser.Scene {
             this.playMeleeSlash(this.screenOf(ev.zoneId, ev.fromPos), to, ev.attackType);
             playHit();
           }
+          // Per-unit signatures keep the shared combat rules readable without changing balance.
+          const attacker = this.sim.state.units.get(ev.fromId);
+          if (attacker?.defId === 'shield_guard') {
+            const ring = this.add.circle(to.x, to.y, 14, 0x78b9ff, 0.18).setDepth(DEPTH_FX);
+            this.tweens.add({ targets: ring, scale: 1.6, alpha: 0, duration: 180, onComplete: () => ring.destroy() });
+          } else if (attacker?.defId === 'hammer_recruit') {
+            const shock = this.add.rectangle(to.x, to.y, 26, 5, 0xd9a94d, 0.7).setDepth(DEPTH_FX);
+            this.tweens.add({ targets: shock, scaleX: 2, alpha: 0, duration: 150, onComplete: () => shock.destroy() });
+          } else if (attacker?.defId === 'ballista_scout') {
+            const bolt = this.add.line(to.x, to.y, -16, 6, 16, -6, 0xddeeff, 0.95).setDepth(DEPTH_FX);
+            this.tweens.add({ targets: bolt, alpha: 0, duration: 130, onComplete: () => bolt.destroy() });
+          } else if (attacker?.defId === 'banner_bearer') {
+            const pulse = this.add.circle(this.screenOf(ev.zoneId, ev.fromPos).x, this.screenOf(ev.zoneId, ev.fromPos).y, 10, 0x6f8fb5, 0.22).setDepth(DEPTH_FX);
+            this.tweens.add({ targets: pulse, scale: 2.4, alpha: 0, duration: 260, onComplete: () => pulse.destroy() });
+          } else if (attacker?.defId === 'steel_hound') {
+            const streak = this.add.line(to.x, to.y, -20, 0, 8, 0, 0x94d8ff, 0.8).setDepth(DEPTH_FX);
+            this.tweens.add({ targets: streak, alpha: 0, duration: 110, onComplete: () => streak.destroy() });
+          } else if (attacker?.defId === 'fortress_golem') {
+            const crater = this.add.circle(to.x, to.y, 18, 0x7d8a98, 0.18).setDepth(DEPTH_FX);
+            this.tweens.add({ targets: crater, scale: 1.8, alpha: 0, duration: 240, onComplete: () => crater.destroy() });
+          }
           break;
         }
         case 'death': {
@@ -914,12 +935,14 @@ export class GameScene extends Phaser.Scene {
           const sp = this.screenOf(ev.zoneId, ev.pos);
           const target = this.screenOf(ev.zoneId, ev.targetPos ?? ev.pos);
           if (ev.style === 'laser') {
-            const g = this.add.graphics().setDepth(DEPTH_FX); g.lineStyle(4, 0x62d8ff, 0.9); g.lineBetween(sp.x, sp.y - 42, target.x, target.y);
-            this.tweens.add({ targets: g, alpha: 0, duration: 220, onComplete: () => g.destroy() });
+            const fx = this.add.image((sp.x + target.x) / 2, (sp.y + target.y) / 2, KING_VFX_SHEET.key).setCrop(0, 0, 682, 768).setDisplaySize(112, 126).setRotation(Phaser.Math.Angle.Between(sp.x, sp.y - 42, target.x, target.y) + Math.PI / 2).setDepth(DEPTH_FX);
+            this.tweens.add({ targets: fx, alpha: 0, duration: 260, onComplete: () => fx.destroy() });
           } else if (ev.style === 'chain') {
-            for (let i = 0; i < 3; i++) { const bolt = this.add.line(target.x, target.y, -10, 8, 10, -8, 0x8eeaff, 0.9).setDepth(DEPTH_FX); this.tweens.add({ targets: bolt, alpha: 0, delay: i * 55, duration: 180, onComplete: () => bolt.destroy() }); }
+            const fx = this.add.image(target.x, target.y, KING_VFX_SHEET.key).setCrop(682, 0, 682, 768).setDisplaySize(102, 114).setDepth(DEPTH_FX);
+            this.tweens.add({ targets: fx, alpha: 0, duration: 300, onComplete: () => fx.destroy() });
           } else {
-            const ring = this.add.circle(target.x, target.y, 12, 0x63b9ff, 0.38).setDepth(DEPTH_FX); this.tweens.add({ targets: ring, scale: 4.2, alpha: 0, duration: 360, onComplete: () => ring.destroy() });
+            const fx = this.add.image(target.x, target.y, KING_VFX_SHEET.key).setCrop(1364, 0, 684, 768).setDisplaySize(118, 102).setDepth(DEPTH_FX);
+            this.tweens.add({ targets: fx, scale: 1.18, alpha: 0, duration: 360, onComplete: () => fx.destroy() });
           }
           break;
         }

@@ -3,6 +3,7 @@ import pierceHitUrl from './effects/pierce-hit.png';
 import magicHitUrl from './effects/magic-hit.png';
 import pureHitUrl from './effects/pure-hit.png';
 import healPulseUrl from './effects/heal-pulse.png';
+import kingVfxSheetUrl from './effects/king-vfx-sheet.png';
 import type { UnitSpriteAsset } from './unitSprites';
 import type { AttackType } from '../model/Types';
 
@@ -16,5 +17,7 @@ export const HIT_EFFECT_SPRITES: Record<AttackType, UnitSpriteAsset> = {
 export const SUPPORT_EFFECT_SPRITES = {
   heal: { key: 'fx-heal-pulse', url: healPulseUrl }
 } satisfies Record<string, UnitSpriteAsset>;
+
+export const KING_VFX_SHEET = { key: 'fx-king-vfx-sheet', url: kingVfxSheetUrl };
 
 export const hitEffectKey = (attackType: AttackType): string => HIT_EFFECT_SPRITES[attackType].key;
