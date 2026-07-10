@@ -144,12 +144,6 @@ export class UIButton {
     this.baseColor = c;
     if (this.enabled) this.bg.setFillStyle(c);
   }
-  /** Optional state accent for framed buttons without covering their artwork. */
-  setFrameTint(tint?: number): void {
-    if (!this.frame) return;
-    if (tint === undefined) this.frame.clearTint();
-    else this.frame.setTint(tint);
-  }
   get isEnabled(): boolean {
     return this.enabled;
   }

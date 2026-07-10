@@ -5,11 +5,15 @@ import { sfx } from '../audio/sfx';
 import { COLORS, txt, UIButton } from '../ui/theme';
 import { L } from '../ui/layout';
 
+interface FramedMenuButton {
+  setSelected(selected: boolean): void;
+}
+
 export class MainMenuScene extends Phaser.Scene {
   private mode: GameMode = '1v1';
   private difficulty: Difficulty = 'normal';
-  private modeBtns: Partial<Record<GameMode, UIButton>> = {};
-  private diffBtns: Partial<Record<Difficulty, UIButton>> = {};
+  private modeBtns: Partial<Record<GameMode, FramedMenuButton>> = {};
+  private diffBtns: Partial<Record<Difficulty, FramedMenuButton>> = {};
 
   constructor() {
     super('MainMenu');
@@ -36,21 +40,16 @@ export class MainMenuScene extends Phaser.Scene {
       sfx.toggleMuted();
       soundBtn.setText(t('menu.sound', { state: soundState() }));
     });
-    const menuFrame = { normal: 'button-frame' };
-
     txt(this, L.width / 2, 330, t('menu.gameMode'), 16).setOrigin(0.5).setShadow(0, 2, '#000000', 4);
     (['1v1', '2v2'] as GameMode[]).forEach((mode, i) => {
-      const btn = new UIButton(
-        this,
+      const btn = this.createFramedMenuButton(
         L.width / 2 - 95 + i * 190,
         385,
-        170,
-        56,
+        196,
+        64,
         mode === '1v1' ? '1 vs 1' : '2 vs 2',
         20,
-        () => this.setMode(mode),
-        COLORS.panelLight,
-        menuFrame
+        () => this.setMode(mode)
       );
       this.modeBtns[mode] = btn;
     });
@@ -58,26 +57,22 @@ export class MainMenuScene extends Phaser.Scene {
 
     txt(this, L.width / 2, 545, t('menu.difficulty'), 16).setOrigin(0.5).setShadow(0, 2, '#000000', 4);
     (['easy', 'normal', 'hard'] as Difficulty[]).forEach((d, i) => {
-      const btn = new UIButton(
-        this,
+      const btn = this.createFramedMenuButton(
         L.width / 2 - 130 + i * 130,
         600,
-        118,
-        46,
+        138,
+        54,
         t(`diff.${d}` as StringKey),
         15,
-        () => this.setDifficulty(d),
-        COLORS.panelLight,
-        menuFrame
+        () => this.setDifficulty(d)
       );
       this.diffBtns[d] = btn;
     });
 
-    const factionBtn = new UIButton(this, L.width / 2, 790, 260, 66, t('menu.chooseFaction'), 18, () => {
+    const factionBtn = this.createFramedMenuButton(L.width / 2, 790, 292, 78, t('menu.chooseFaction'), 18, () => {
       this.scene.start('FactionSelect', { mode: this.mode, difficulty: this.difficulty });
-    }, 0x2f6b3a, menuFrame);
-    factionBtn.setFrameTint(0xbff0c0);
-    factionBtn.setTextColor('#e7ffe8');
+    }, '#ddffdf');
+    factionBtn.setSelected(true);
 
     txt(this, L.width / 2, 1100, t('menu.offline'), 11, '#b7c1d8').setOrigin(0.5).setShadow(0, 2, '#000000', 4);
 
@@ -88,18 +83,48 @@ export class MainMenuScene extends Phaser.Scene {
   private setMode(mode: GameMode): void {
     this.mode = mode;
     for (const [id, btn] of Object.entries(this.modeBtns)) {
-      btn!.setBaseColor(id === mode ? 0x3c5a8a : COLORS.panelLight);
-      btn!.setFrameTint(undefined);
-      btn!.setTextColor(id === mode ? '#ffe6a0' : COLORS.textMain);
+      btn!.setSelected(id === mode);
     }
   }
 
   private setDifficulty(d: Difficulty): void {
     this.difficulty = d;
     for (const [id, btn] of Object.entries(this.diffBtns)) {
-      btn!.setBaseColor(id === d ? 0x3c5a8a : COLORS.panelLight);
-      btn!.setFrameTint(undefined);
-      btn!.setTextColor(id === d ? '#ffe6a0' : COLORS.textMain);
+      btn!.setSelected(id === d);
     }
+  }
+
+  /** A menu-only control: the artwork is always fully visible, never covered by a fill rectangle. */
+  private createFramedMenuButton(
+    x: number,
+    y: number,
+    w: number,
+    h: number,
+    labelText: string,
+    fontSize: number,
+    onClick: () => void,
+    selectedColor = '#ffe6a0'
+  ): FramedMenuButton {
+    const frame = this.add.image(0, 0, 'button-frame').setDisplaySize(w, h);
+    const hit = this.add
+      .rectangle(0, 0, w - 18, h - 12, 0xffffff, 0.001)
+      .setInteractive({ useHandCursor: true });
+    const marker = this.add.star(-w / 2 + 17, 0, 4, 2.2, 4.6, 0xf3cf76, 1).setVisible(false);
+    const label = txt(this, 0, 0, labelText, fontSize, COLORS.textMain).setOrigin(0.5).setShadow(0, 2, '#000000', 3);
+    this.add.container(x, y, [frame, hit, marker, label]);
+
+    hit.on('pointerdown', () => {
+      frame.setTint(0xbfd0ff);
+      this.time.delayedCall(90, () => frame.clearTint());
+      sfx.play('tap');
+      onClick();
+    });
+
+    return {
+      setSelected: (selected: boolean) => {
+        marker.setVisible(selected);
+        label.setColor(selected ? selectedColor : COLORS.textMain);
+      }
+    };
   }
 }
