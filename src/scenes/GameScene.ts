@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { KING_VFX_SHEET, SUPPORT_EFFECT_SPRITES, hitEffectKey } from '../assets/effectSprites';
+import { KING_VFX_SHEET, SUPPORT_EFFECT_SPRITES, WORKER_WISP, hitEffectKey } from '../assets/effectSprites';
 import { FIGHTER_SHEET_FRAME, type FighterSheetAnim, fighterSheet, fighterSheetAnimKey, fighterSheetFrame } from '../assets/fighterSheets';
 import { KING_SHEET, KING_SHEET_FRAME, KING_SPRITE, type KingSheetFrame } from '../assets/kingSprites';
 import { fighterSpriteKey } from '../assets/unitSprites';
@@ -60,6 +60,8 @@ export class GameScene extends Phaser.Scene {
   private highlightGfx!: Phaser.GameObjects.Graphics;
   private mapOverlayGfx!: Phaser.GameObjects.Graphics;
   private workerCountText!: Phaser.GameObjects.Text;
+  private workerWisps: Phaser.GameObjects.Image[] = [];
+  private lastShownMythium = 0;
 
   private actionMenu!: Phaser.GameObjects.Container;
   private actionTitle!: Phaser.GameObjects.Text;
@@ -105,6 +107,11 @@ export class GameScene extends Phaser.Scene {
     this.workerCountText = txt(this, L.board.left + 95, L.board.top + 895, '', 9, COLORS.mythium)
       .setOrigin(0.5)
       .setDepth(DEPTH_MAP_OVERLAY);
+    for (let i = 0; i < 10; i++) {
+      const wisp = this.add.image(0, 0, WORKER_WISP.key).setDisplaySize(18, 18).setDepth(DEPTH_MAP_OVERLAY).setVisible(false);
+      this.tweens.add({ targets: wisp, y: '-=3', alpha: 0.72, duration: 520, yoyo: true, repeat: -1, delay: i * 70 });
+      this.workerWisps.push(wisp);
+    }
 
     this.topBar = new TopBar(this, {
       onReady: () => this.sim.ready(),
@@ -379,9 +386,9 @@ export class GameScene extends Phaser.Scene {
       const pulse = Math.sin(state.time * 5 + i) * 1.5;
       const x = mineX + 12 + col * 20;
       const y = mineY + row * 18 + pulse;
-      g.fillStyle(0xc9a0f0, 0.95).fillCircle(x, y, 4);
-      g.lineStyle(1, 0x5fd4e0, 0.85).lineBetween(x + 4, y - 3, x + 10, y - 8);
+      this.workerWisps[i].setPosition(x, y).setVisible(true);
     }
+    for (let i = shownWorkers; i < this.workerWisps.length; i++) this.workerWisps[i].setVisible(false);
     this.workerCountText.setPosition(L.board.left + 95, L.board.top + 895);
     this.workerCountText.setText(human.workers > 10 ? `+${human.workers - 10}` : `${human.workers}`);
   }
@@ -874,6 +881,16 @@ export class GameScene extends Phaser.Scene {
           } else if (attacker?.defId === 'fortress_golem') {
             const crater = this.add.circle(to.x, to.y, 18, 0x7d8a98, 0.18).setDepth(DEPTH_FX);
             this.tweens.add({ targets: crater, scale: 1.8, alpha: 0, duration: 240, onComplete: () => crater.destroy() });
+          } else if (attacker?.factionId === 'ember') {
+            const from = this.screenOf(ev.zoneId, ev.fromPos);
+            const color = attacker.defId === 'sun_archer' ? 0xffdc72 : attacker.defId === 'ash_guard' ? 0x7b6258 : 0xff743b;
+            const size = attacker.defId === 'phoenix_vessel' ? 20 : attacker.defId === 'ember_mage' ? 18 : 12;
+            const flare = this.add.circle(to.x, to.y, size, color, 0.35).setDepth(DEPTH_FX);
+            this.tweens.add({ targets: flare, scale: attacker.defId === 'ember_mage' ? 2.2 : 1.55, alpha: 0, duration: attacker.defId === 'fire_imp' ? 120 : 230, onComplete: () => flare.destroy() });
+            if (attacker.defId === 'phoenix_vessel' || attacker.defId === 'sun_archer') {
+              const trail = this.add.line((from.x + to.x) / 2, (from.y + to.y) / 2, -14, 0, 14, 0, color, 0.85).setDepth(DEPTH_FX).setRotation(Phaser.Math.Angle.Between(from.x, from.y, to.x, to.y));
+              this.tweens.add({ targets: trail, alpha: 0, duration: 180, onComplete: () => trail.destroy() });
+            }
           }
           break;
         }
@@ -992,6 +1009,11 @@ export class GameScene extends Phaser.Scene {
     this.drawMapOverlays();
     this.drawHighlights();
     this.topBar.update(state);
+    const mythiumWhole = Math.floor(state.players[state.humanPlayerId].mythium);
+    if (mythiumWhole > this.lastShownMythium) {
+      this.lastShownMythium = mythiumWhole;
+      this.floatText(L.board.left + 54, L.board.top + 790, '+1', COLORS.mythium);
+    }
     this.statusCards.update(state);
     this.shop.update(state);
     if (this.actionMenu.visible) this.refreshActionMenu();
