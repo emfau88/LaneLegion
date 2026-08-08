@@ -1,5 +1,7 @@
 # Lane Legion — Verbesserungs-Roadmap
 
+> **Legacy direction:** This roadmap describes the original lane-defense game. The active isolated Compact Arena pivot is tracked in `docs/compact-arena-roadmap.md`.
+
 Stand: 2026-07-06. Basis: Abgleich des Projekts mit Legion TD 2 (Steam) als Referenz
 und UX-Review der aktuellen UI. Ziel: spielbares, verständliches Android-Spiel mit
 dem Suchtfaktor des LTD2-Loops.

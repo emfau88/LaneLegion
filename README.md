@@ -3,6 +3,37 @@
 Offline, portrait-first lane-defense autobattler (HTML5 / Phaser 3 / TypeScript / Vite).
 No backend, no accounts, no network — fully playable against AI.
 
+## Compact Arena — playable isolated pivot
+
+**[Play the Compact Arena build](https://emfau88.github.io/LaneLegion/arena.html)**
+
+Compact Arena is an isolated four-fight autobattler prototype built alongside the
+original lane-defense game. It focuses the experience on one readable loop:
+
+1. Inspect the next enemy formation.
+2. Recruit, upgrade, field, reserve, and reposition up to five fighters.
+3. Start the battle and watch the deterministic simulation resolve automatically.
+4. Earn gold, adapt the formation, and defeat the fourth-fight boss.
+
+The pivot has its own entry point (`arena.html`), state, combat model, shop, roster,
+four encounters, and headless smoke simulation under `src/arena/`. The legacy game
+remains available through `index.html`; the two modes do not share runtime state.
+
+### Test Compact Arena locally
+
+```bash
+npm install
+npm run dev
+# Open the printed URL with /arena.html, usually:
+# http://localhost:5173/arena.html
+
+npm run arena:sim  # deterministic formation and four-fight campaign smoke test
+```
+
+Visual direction and implementation status are documented in
+[`docs/design/compact-arena-p0.md`](docs/design/compact-arena-p0.md) and
+[`docs/compact-arena-roadmap.md`](docs/compact-arena-roadmap.md).
+
 ## Run locally
 
 ```bash
