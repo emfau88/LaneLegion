@@ -66,18 +66,18 @@ const TOP_BAR_Y = 8;
 const BOARD_X = TOUCH_INPUT ? 24 : 180;
 const BOARD_Y = TOUCH_INPUT ? 72 : 120;
 const CELL_W = TOUCH_INPUT ? 176 : 132;
-const CELL_H = TOUCH_INPUT ? Math.min(72, Math.floor((GAME_HEIGHT - 205) / ARENA_ROWS)) : 72;
+const CELL_H = TOUCH_INPUT ? Math.min(64, Math.floor((GAME_HEIGHT - 255) / ARENA_ROWS)) : 72;
 const BOARD_W = ARENA_COLS * CELL_W;
 const BOARD_H = ARENA_ROWS * CELL_H;
-const DRAWER_X = TOUCH_INPUT ? 880 : 850;
+const DRAWER_X = TOUCH_INPUT ? 800 : 850;
 const DRAWER_Y = TOUCH_INPUT ? 72 : 92;
 const DRAWER_W = 410;
 const DRAWER_H = 508;
-const DRAWER_SCALE = TOUCH_INPUT ? 0.82 : 1;
+const DRAWER_SCALE = TOUCH_INPUT ? 0.78 : 1;
 const ROSTER_LABEL_Y = TOUCH_INPUT ? BOARD_Y + BOARD_H + 5 : 594;
 const BENCH_LABEL_Y = TOUCH_INPUT ? ROSTER_LABEL_Y + 17 : 613;
-const RESERVE_Y = TOUCH_INPUT ? GAME_HEIGHT - 77 : 650;
-const ACTION_Y = TOUCH_INPUT ? GAME_HEIGHT - 38 : 681;
+const RESERVE_Y = TOUCH_INPUT ? GAME_HEIGHT - 133 : 650;
+const ACTION_Y = TOUCH_INPUT ? GAME_HEIGHT - 90 : 681;
 const FIXED_STEP = 1 / 30;
 
 interface UnitView {
@@ -165,6 +165,10 @@ export class ArenaScene extends Phaser.Scene {
 
   private drawTopBar(): void {
     const top = TOP_BAR_Y;
+    const goldIconX = TOUCH_INPUT ? 820 : 918;
+    const goldTextX = TOUCH_INPUT ? 844 : 942;
+    const teamIconX = TOUCH_INPUT ? 930 : 1035;
+    const teamTextX = TOUCH_INPUT ? 954 : 1059;
     arenaPanel(this, 8, top, 1264, 58, ARENA_COLORS.brassLight, 0.98);
     arenaButton(this, 52, top + 28, 76, 32, 'MENU', () => {
       window.location.assign('./index.html');
@@ -181,24 +185,24 @@ export class ArenaScene extends Phaser.Scene {
       .setLetterSpacing(1);
     arenaTitle(this, 560, top + 21, encounter.name, 15, encounter.boss ? ARENA_COLORS.danger : ARENA_COLORS.text);
 
-    this.add.circle(918, top + 27, 14, 0xf5c55b, 1).setStrokeStyle(2, 0xb37619, 0.9);
-    arenaText(this, 918, top + 26, 'G', 11, '#70480d').setOrigin(0.5).setFontStyle('bold');
-    arenaText(this, 942, top + 8, 'GOLD', 9, ARENA_COLORS.muted).setFontStyle('bold');
-    this.goldLabel = arenaTitle(this, 942, top + 20, `${this.run.gold}`, 21);
+    this.add.circle(goldIconX, top + 27, 14, 0xf5c55b, 1).setStrokeStyle(2, 0xb37619, 0.9);
+    arenaText(this, goldIconX, top + 26, 'G', 11, '#70480d').setOrigin(0.5).setFontStyle('bold');
+    arenaText(this, goldTextX, top + 8, 'GOLD', 9, ARENA_COLORS.muted).setFontStyle('bold');
+    this.goldLabel = arenaTitle(this, goldTextX, top + 20, `${this.run.gold}`, 21);
 
-    this.add.circle(1035, top + 27, 14, 0x8ed5e8, 1).setStrokeStyle(2, 0x3087ad, 0.9);
-    arenaText(this, 1035, top + 26, 'T', 11, '#1f607d').setOrigin(0.5).setFontStyle('bold');
-    arenaText(this, 1059, top + 8, 'TEAM CAP', 9, ARENA_COLORS.muted).setFontStyle('bold');
+    this.add.circle(teamIconX, top + 27, 14, 0x8ed5e8, 1).setStrokeStyle(2, 0x3087ad, 0.9);
+    arenaText(this, teamIconX, top + 26, 'T', 11, '#1f607d').setOrigin(0.5).setFontStyle('bold');
+    arenaText(this, teamTextX, top + 8, 'TEAM CAP', 9, ARENA_COLORS.muted).setFontStyle('bold');
     arenaTitle(
       this,
-      1059,
+      teamTextX,
       top + 20,
       `${deployedFighters(this.run).length} / ${fieldLimitForFight(this.run.fightIndex)}`,
       18,
       ARENA_COLORS.text
     );
 
-    this.speedButton = arenaButton(this, 1190, top + 28, 132, 34, 'SPEED 1x', () => {
+    this.speedButton = arenaButton(this, TOUCH_INPUT ? 1080 : 1190, top + 28, TOUCH_INPUT ? 136 : 132, 34, 'SPEED 1x', () => {
       this.setSpeed(this.state.speed === 1 ? 2 : 1);
     }, 0x4b9bc1);
   }
@@ -292,7 +296,7 @@ export class ArenaScene extends Phaser.Scene {
       });
     }
 
-    this.shopButton = arenaButton(this, 974, ACTION_Y, 174, 48, 'OPEN SHOP', () => {
+    this.shopButton = arenaButton(this, TOUCH_INPUT ? 870 : 974, ACTION_Y, TOUCH_INPUT ? 150 : 174, 48, 'OPEN SHOP', () => {
       if (this.state.phase !== 'planning') return;
       this.sidebarMode = 'shop';
       this.drawerOpen = !this.drawerOpen || !this.detailPanel?.visible;
@@ -303,9 +307,9 @@ export class ArenaScene extends Phaser.Scene {
       && deployedFighters(this.run).length < fieldLimitForFight(this.run.fightIndex);
     this.startButton = arenaButton(
       this,
-      1167,
+      TOUCH_INPUT ? 1055 : 1167,
       ACTION_Y,
-      194,
+      TOUCH_INPUT ? 174 : 194,
       48,
       firstRecruitNeeded ? 'RECRUIT 1 MORE' : 'START BATTLE',
       () => {
