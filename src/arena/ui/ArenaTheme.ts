@@ -1,10 +1,20 @@
 import Phaser from 'phaser';
 
+const compactViewport = (window.matchMedia?.('(pointer: coarse)').matches ?? false)
+  || Math.min(window.innerWidth, window.innerHeight) <= 600;
+
+const readableSize = (size: number): number => {
+  if (!compactViewport) return size;
+  if (size <= 12) return Math.round(size * 1.38);
+  if (size <= 18) return Math.round(size * 1.2);
+  return size;
+};
+
 export const ARENA_COLORS = {
-  bg: 0xe9f4ee,
-  panel: 0xfffaf0,
-  panelLight: 0xfffffb,
-  panelDeep: 0xf1dfbf,
+  bg: 0x263c43,
+  panel: 0xead8b7,
+  panelLight: 0xf3e4c9,
+  panelDeep: 0xd7bd91,
   line: 0xb18248,
   brass: 0xc68a2d,
   brassLight: 0xf0c45d,
@@ -27,7 +37,7 @@ export const arenaText = (
 ): Phaser.GameObjects.Text =>
   scene.add.text(x, y, value, {
     fontFamily: 'Trebuchet MS, Arial, sans-serif',
-    fontSize: `${size}px`,
+    fontSize: `${readableSize(size)}px`,
     color,
     lineSpacing: 4
   }).setResolution(Math.min(window.devicePixelRatio || 1, 2));
@@ -42,10 +52,10 @@ export const arenaTitle = (
 ): Phaser.GameObjects.Text =>
   scene.add.text(x, y, value, {
     fontFamily: 'Georgia, Times New Roman, serif',
-    fontSize: `${size}px`,
+    fontSize: `${readableSize(size)}px`,
     color,
     fontStyle: 'bold',
-    stroke: '#fff7e5',
+    stroke: '#ead7b2',
     strokeThickness: 1,
     shadow: { offsetX: 0, offsetY: 1, color: '#a77b43', blur: 1, fill: true }
   }).setResolution(Math.min(window.devicePixelRatio || 1, 2));
@@ -64,7 +74,7 @@ export const arenaPanel = (
   panel.fillStyle(ARENA_COLORS.panelLight, alpha).fillRoundedRect(x, y, width, height, 10);
   panel.lineStyle(3, 0xd2ad75, 1).strokeRoundedRect(x, y, width, height, 10);
   panel.lineStyle(1, accent, 0.8).strokeRoundedRect(x + 3, y + 3, width - 6, height - 6, 7);
-  panel.fillStyle(0xffffff, 0.72).fillRect(x + 10, y + 8, width - 20, 2);
+  panel.fillStyle(0xffefd0, 0.46).fillRect(x + 10, y + 8, width - 20, 2);
   panel.fillStyle(accent, 0.62);
   panel.fillTriangle(x + 4, y + 4, x + 18, y + 4, x + 4, y + 18);
   panel.fillTriangle(x + width - 4, y + 4, x + width - 18, y + 4, x + width - 4, y + 18);
@@ -105,17 +115,17 @@ export const arenaButton = (
   const root = scene.add.container(x, y, [frame, hit, text]);
   const paint = (): void => {
     const activeAccent = enabled ? accent : 0x514b42;
-    const fill = !enabled ? 0xe2d9c9 : hovered ? 0xffedbd : 0xfff8e9;
+    const fill = !enabled ? 0xcfc1a8 : hovered ? 0xf8d991 : 0xead2a6;
     frame.clear();
     frame.fillStyle(0x6f4a25, 0.2).fillRoundedRect(-width / 2 + 3, -height / 2 + 5, width, height, 7);
-    frame.fillStyle(0xf4e2bf, 1).fillRoundedRect(-width / 2, -height / 2, width, height, 7);
+    frame.fillStyle(0xd9bc8a, 1).fillRoundedRect(-width / 2, -height / 2, width, height, 7);
     frame.lineStyle(3, 0xd2ad75, 1).strokeRoundedRect(-width / 2, -height / 2, width, height, 7);
     frame.fillStyle(fill, 1).fillRoundedRect(-width / 2 + 4, -height / 2 + 4, width - 8, height - 8, 4);
     frame.lineStyle(1, activeAccent, enabled ? 0.95 : 0.35).strokeRoundedRect(-width / 2 + 3, -height / 2 + 3, width - 6, height - 6, 4);
     frame.fillStyle(activeAccent, enabled ? 0.82 : 0.28);
     frame.fillTriangle(-width / 2 + 2, 0, -width / 2 + 11, -7, -width / 2 + 11, 7);
     frame.fillTriangle(width / 2 - 2, 0, width / 2 - 11, -7, width / 2 - 11, 7);
-    frame.fillStyle(0xffffff, enabled ? 0.72 : 0.2).fillRect(-width / 2 + 8, -height / 2 + 7, width - 16, 2);
+    frame.fillStyle(0xffecc8, enabled ? 0.46 : 0.16).fillRect(-width / 2 + 8, -height / 2 + 7, width - 16, 2);
   };
   paint();
   hit.setInteractive({ useHandCursor: true });
