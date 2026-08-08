@@ -5,7 +5,12 @@ No backend, no accounts, no network — fully playable against AI.
 
 ## Compact Arena — playable isolated pivot
 
-**[Play the Compact Arena build](https://emfau88.github.io/LaneLegion/arena.html)**
+**[Run the Compact Arena branch in StackBlitz](https://stackblitz.com/github/emfau88/LaneLegion/tree/pivot/compact-arena?file=arena.html&startScript=dev)**
+
+The preview loads this isolated branch and starts the Vite development server. Open
+`/arena.html` in the preview, or choose **Compact Arena** from the main menu. After
+the branch is merged into `main`, the static build will also be available at
+`https://emfau88.github.io/LaneLegion/arena.html`.
 
 Compact Arena is an isolated four-fight autobattler prototype built alongside the
 original lane-defense game. It focuses the experience on one readable loop:
