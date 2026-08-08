@@ -53,26 +53,31 @@ import {
 
 const TOUCH_INPUT = (window.matchMedia?.('(pointer: coarse)').matches ?? false)
   || Math.min(window.innerWidth, window.innerHeight) <= 600;
+const SHORT_EDGE = Math.min(window.innerWidth, window.innerHeight);
+const LONG_EDGE = Math.max(window.innerWidth, window.innerHeight);
+const GAME_HEIGHT = TOUCH_INPUT
+  ? Math.max(593, Math.min(720, Math.round(1280 * SHORT_EDGE / LONG_EDGE)))
+  : 720;
 const ART_X = TOUCH_INPUT ? -304 : -80;
-const ART_Y = TOUCH_INPUT ? -171 : -45;
 const ART_W = TOUCH_INPUT ? 1888 : 1440;
 const ART_H = TOUCH_INPUT ? 1063 : 810;
-const TOP_BAR_Y = TOUCH_INPUT ? 70 : 8;
+const ART_Y = TOUCH_INPUT ? Math.round((GAME_HEIGHT - ART_H) / 2) : -45;
+const TOP_BAR_Y = 8;
 const BOARD_X = TOUCH_INPUT ? 24 : 180;
-const BOARD_Y = TOUCH_INPUT ? 132 : 120;
+const BOARD_Y = TOUCH_INPUT ? 72 : 120;
 const CELL_W = TOUCH_INPUT ? 176 : 132;
-const CELL_H = 72;
+const CELL_H = TOUCH_INPUT ? Math.min(72, Math.floor((GAME_HEIGHT - 205) / ARENA_ROWS)) : 72;
 const BOARD_W = ARENA_COLS * CELL_W;
 const BOARD_H = ARENA_ROWS * CELL_H;
-const DRAWER_X = TOUCH_INPUT ? 900 : 850;
-const DRAWER_Y = TOUCH_INPUT ? 132 : 92;
+const DRAWER_X = TOUCH_INPUT ? 880 : 850;
+const DRAWER_Y = TOUCH_INPUT ? 72 : 92;
 const DRAWER_W = 410;
 const DRAWER_H = 508;
-const DRAWER_SCALE = TOUCH_INPUT ? 0.86 : 1;
-const ROSTER_LABEL_Y = TOUCH_INPUT ? 568 : 594;
-const BENCH_LABEL_Y = TOUCH_INPUT ? 582 : 613;
-const RESERVE_Y = TOUCH_INPUT ? 614 : 650;
-const ACTION_Y = TOUCH_INPUT ? 622 : 681;
+const DRAWER_SCALE = TOUCH_INPUT ? 0.82 : 1;
+const ROSTER_LABEL_Y = TOUCH_INPUT ? BOARD_Y + BOARD_H + 5 : 594;
+const BENCH_LABEL_Y = TOUCH_INPUT ? ROSTER_LABEL_Y + 17 : 613;
+const RESERVE_Y = TOUCH_INPUT ? GAME_HEIGHT - 77 : 650;
+const ACTION_Y = TOUCH_INPUT ? GAME_HEIGHT - 38 : 681;
 const FIXED_STEP = 1 / 30;
 
 interface UnitView {
@@ -155,7 +160,7 @@ export class ArenaScene extends Phaser.Scene {
     this.cameras.main.setBackgroundColor(ARENA_COLORS.bg);
     const graphics = this.add.graphics().setDepth(-3);
     graphics.fillGradientStyle(0xe4f3ea, 0xfff1cf, 0xd6ece7, 0xf7e7c7, 1);
-    graphics.fillRect(0, 0, 1280, 720);
+    graphics.fillRect(0, 0, 1280, GAME_HEIGHT);
   }
 
   private drawTopBar(): void {
@@ -222,7 +227,7 @@ export class ArenaScene extends Phaser.Scene {
     const reset = arenaButton(this, 90, TOUCH_INPUT ? ACTION_Y : 219, TOUCH_INPUT ? 132 : 112, TOUCH_INPUT ? 44 : 32, 'RESET LINE', resetFormation, 0x4b9bc1);
     reset.root.setDepth(82);
 
-    const hint = arenaText(this, BOARD_X, TOUCH_INPUT ? 558 : 570, TOUCH_INPUT ? 'TAP A FIGHTER, THEN A BLUE TILE' : 'SELECT OR DRAG A FIGHTER', 10, ARENA_COLORS.text)
+    const hint = arenaText(this, BOARD_X, TOUCH_INPUT ? ROSTER_LABEL_Y : 570, TOUCH_INPUT ? 'TAP A FIGHTER, THEN A BLUE TILE' : 'SELECT OR DRAG A FIGHTER', 10, ARENA_COLORS.text)
       .setFontStyle('bold')
       .setLetterSpacing(1)
       .setShadow(0, 1, '#ffffff', 2)
@@ -344,7 +349,7 @@ export class ArenaScene extends Phaser.Scene {
     const slotXs = TOUCH_INPUT ? [544, 640, 736] : [512, 640, 768];
     const bench = this.add.graphics().setDepth(13);
     const benchX = TOUCH_INPUT ? 495 : 450;
-    const benchY = TOUCH_INPUT ? 583 : 620;
+    const benchY = TOUCH_INPUT ? RESERVE_Y - 31 : 620;
     const benchW = TOUCH_INPUT ? 290 : 380;
     const benchH = TOUCH_INPUT ? 64 : 66;
     bench.fillStyle(0x3d281c, 0.3).fillRoundedRect(benchX + 3, benchY + 5, benchW, benchH, 20);
@@ -884,7 +889,7 @@ export class ArenaScene extends Phaser.Scene {
     this.startButton.setLabel(runComplete ? 'BOSS DEFEATED' : won ? 'VICTORY' : 'DEFEAT');
     sfx.play(won ? 'victory' : 'defeat');
 
-    const shade = this.add.rectangle(0, 0, 1280, 720, 0x24434c, 0.46).setOrigin(0).setInteractive();
+    const shade = this.add.rectangle(0, 0, 1280, GAME_HEIGHT, 0x24434c, 0.46).setOrigin(0).setInteractive();
     const panel = arenaPanel(this, -270, -155, 540, 310, won ? 0x67b98f : 0xc75950, 1);
     const crestGlow = this.add.circle(0, -116, 30, won ? 0x2d8065 : 0x8c302e, 0.22).setStrokeStyle(2, won ? 0x7dd7ae : 0xe27a70, 0.75);
     const crest = arenaTitle(this, 0, -116, won ? '★' : '◆', 24, won ? '#a6f2cf' : '#ffaaa2').setOrigin(0.5);
@@ -903,7 +908,11 @@ export class ArenaScene extends Phaser.Scene {
       16,
       ARENA_COLORS.text
     ).setOrigin(0.5).setAlign('center').setWordWrapWidth(450);
-    this.resultOverlay = this.add.container(640, 360, [shade.setPosition(-640, -360), panel, crestGlow, crest, title, body]).setDepth(500);
+    this.resultOverlay = this.add.container(
+      640,
+      GAME_HEIGHT / 2,
+      [shade.setPosition(-640, -GAME_HEIGHT / 2), panel, crestGlow, crest, title, body]
+    ).setDepth(500);
 
     if (runComplete) {
       const restart = arenaButton(this, 0, 76, 260, 56, 'START NEW RUN', () => {
