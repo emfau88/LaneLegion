@@ -74,6 +74,14 @@ export class MainMenuScene extends Phaser.Scene {
     }, '#ddffdf');
     factionBtn.setSelected(true);
 
+    const arenaBtn = this.createFramedMenuButton(L.width / 2, 930, 340, 76, 'COMPACT ARENA', 18, () => {
+      window.location.assign('./arena.html');
+    }, '#a9ddff');
+    arenaBtn.setSelected(true);
+    txt(this, L.width / 2, 982, 'New isolated formation prototype', 11, '#9fc8e8')
+      .setOrigin(0.5)
+      .setShadow(0, 2, '#000000', 4);
+
     txt(this, L.width / 2, 1100, t('menu.offline'), 11, '#b7c1d8').setOrigin(0.5).setShadow(0, 2, '#000000', 4);
 
     this.setMode(this.mode);

@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "arena:sim": "npx -y tsx src/arena/sim/arenaSmoke.ts",
     "balance:sim": "npx -y tsx balance-sim.ts",
     "balance:experiments": "npx -y tsx balance-experiments.ts",
     "build": "tsc --noEmit && vite build",
