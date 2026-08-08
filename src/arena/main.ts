@@ -15,7 +15,7 @@ const game = new Phaser.Game({
   // device-pixel ratios; the arena does not need WebGL-only effects.
   type: Phaser.CANVAS,
   parent: 'arena-game',
-  backgroundColor: '#263c43',
+  backgroundColor: '#10272d',
   width: 1280,
   height: gameHeight,
   roundPixels: true,
