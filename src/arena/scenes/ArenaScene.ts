@@ -65,6 +65,8 @@ const SIDEBAR_X = 904;
 const SIDEBAR_W = 364;
 const ROSTER_Y = 600;
 const FIXED_STEP = 1 / 30;
+const TOUCH_INPUT = (window.matchMedia?.('(pointer: coarse)').matches ?? false)
+  || Math.min(window.innerWidth, window.innerHeight) <= 600;
 
 interface UnitView {
   root: Phaser.GameObjects.Container;
@@ -199,7 +201,7 @@ export class ArenaScene extends Phaser.Scene {
     }, 0x7184a6);
     reset.root.setDepth(82);
 
-    const hint = arenaText(this, 22, 540, 'SELECT OR DRAG A FIGHTER', 9, '#bdcbd3')
+    const hint = arenaText(this, 22, 540, TOUCH_INPUT ? 'TAP FIGHTER, THEN BLUE TILE' : 'SELECT OR DRAG A FIGHTER', 9, '#bdcbd3')
       .setFontStyle('bold')
       .setLetterSpacing(1)
       .setShadow(0, 2, '#000000', 3)
@@ -454,7 +456,7 @@ export class ArenaScene extends Phaser.Scene {
       bench.setEnabled(reserveFighters(this.run).length < MAX_RESERVE_FIGHTERS && deployedFighters(this.run).length > 1);
       nodes.push(bench.root);
     } else {
-      nodes.push(arenaText(this, 168, 250, 'SELECTED RESERVE\nClick an empty blue cell.', 10, '#d6a9d6').setAlign('center'));
+      nodes.push(arenaText(this, 168, 250, `SELECTED RESERVE\n${TOUCH_INPUT ? 'Tap' : 'Click'} an empty blue cell.`, 10, '#d6a9d6').setAlign('center'));
     }
     nodes.push(arenaText(this, 0, 292, this.unitAdvice(definition.id), 10, ARENA_COLORS.muted).setWordWrapWidth(328));
     this.sidebarContent.add(nodes);
@@ -640,7 +642,14 @@ export class ArenaScene extends Phaser.Scene {
       const body = arenaText(this, 168, 82, 'Your fighters now act on their own.', 12, ARENA_COLORS.muted).setOrigin(0.5).setAlign('center');
       const pulse = this.add.circle(168, 144, 34, 0x2477a7, 0.25).setStrokeStyle(2, 0x72cfff, 0.8);
       const icon = arenaTitle(this, 168, 143, '⚔', 26, '#d8efff').setOrigin(0.5);
-      const hint = arenaText(this, 168, 198, 'WATCH THE CORE • 1 / 2 CHANGE SPEED', 9, '#b7c9cf').setOrigin(0.5).setFontStyle('bold');
+      const hint = arenaText(
+        this,
+        168,
+        198,
+        TOUCH_INPUT ? 'WATCH THE CORE • TAP SPEED TO ACCELERATE' : 'WATCH THE CORE • 1 / 2 CHANGE SPEED',
+        9,
+        '#b7c9cf'
+      ).setOrigin(0.5).setFontStyle('bold');
       this.detailPanel.add([battlePanel, title, body, pulse, icon, hint]);
       this.tweens.add({ targets: pulse, scale: 1.16, alpha: 0.1, duration: 850, yoyo: true, repeat: -1 });
     }

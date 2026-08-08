@@ -91,8 +91,12 @@ export const arenaButton = (
 ): ArenaButton => {
   let enabled = true;
   let hovered = false;
+  const touchSizedViewport = (window.matchMedia?.('(pointer: coarse)').matches ?? false)
+    || Math.min(window.innerWidth, window.innerHeight) <= 600;
+  const hitWidth = touchSizedViewport ? Math.max(width, 72) : width;
+  const hitHeight = touchSizedViewport ? Math.max(height, Math.min(56, height + 24)) : height;
   const frame = scene.add.graphics();
-  const hit = scene.add.rectangle(0, 0, width, height, 0xffffff, 0.001).setOrigin(0.5);
+  const hit = scene.add.rectangle(0, 0, hitWidth, hitHeight, 0xffffff, 0.001).setOrigin(0.5);
   const text = arenaText(scene, 0, 0, label, 14, ARENA_COLORS.text)
     .setOrigin(0.5)
     .setFontFamily('Georgia, Times New Roman, serif')
@@ -131,6 +135,7 @@ export const arenaButton = (
     root.setScale(1);
     if (enabled) onClick();
   });
+  hit.on('pointerupoutside', () => root.setScale(1));
   return {
     root,
     setEnabled(value: boolean): void {
