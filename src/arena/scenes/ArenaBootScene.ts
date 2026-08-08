@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import arenaFloorUrl from '../../assets/arena/compact-arena-floor-p1.png';
+import arenaFloorUrl from '../../assets/arena/compact-arena-floor-p3.png';
 import { HIT_EFFECT_SPRITES, SUPPORT_EFFECT_SPRITES } from '../../assets/effectSprites';
 import { FIGHTER_SHEETS, fighterSheetAnimKey } from '../../assets/fighterSheets';
 import { WAVE_SHEETS, waveSheetAnimKey } from '../../assets/waveSheets';

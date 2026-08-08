@@ -70,7 +70,7 @@ export const ARENA_ENCOUNTERS: ArenaEncounterDefinition[] = [
   {
     id: 'gloom_throne',
     name: 'GLOOM THRONE',
-    subtitle: 'Boss fight. Break the tyrant before the core.',
+    subtitle: 'Boss fight. Break the tyrant and clear the arena.',
     reward: 0,
     boss: true,
     enemyPlacements: [

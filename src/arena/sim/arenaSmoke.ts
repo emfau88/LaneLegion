@@ -44,7 +44,6 @@ const layouts: Record<string, ArenaPlacement[]> = {
 interface Result {
   outcome: string;
   time: number;
-  coreHp: number;
   playerSurvivors: string[];
   enemySurvivors: string[];
 }
@@ -59,7 +58,6 @@ const simulate = (placements: ArenaPlacement[], fightIndex = 0): Result => {
   return {
     outcome: state.phase,
     time: Number(state.time.toFixed(2)),
-    coreHp: Math.ceil(state.coreHp),
     playerSurvivors: state.units.filter((unit) => unit.team === 'player' && unit.alive).map((unit) => unit.definitionId),
     enemySurvivors: state.units.filter((unit) => unit.team === 'enemy' && unit.alive).map((unit) => unit.definitionId)
   };

@@ -7,8 +7,6 @@ import {
   type ArenaUnitState
 } from '../model/ArenaTypes';
 
-const CORE_POS: ArenaPoint = { x: ARENA_COLS / 2, y: ARENA_ROWS + 0.34 };
-
 const distance = (a: ArenaPoint, b: ArenaPoint): number => Math.hypot(a.x - b.x, a.y - b.y);
 
 const livingUnits = (state: ArenaBattleState, team: ArenaUnitState['team']): ArenaUnitState[] =>
@@ -115,14 +113,6 @@ const attackUnit = (state: ArenaBattleState, attacker: ArenaUnitState, target: A
   }
 };
 
-const attackCore = (state: ArenaBattleState, attacker: ArenaUnitState): void => {
-  const damage = attacker.combat.coreDamage ?? 10;
-  attacker.attackCooldown = attacker.combat.attackInterval;
-  attacker.activity = 'attacking';
-  state.coreHp = Math.max(0, state.coreHp - damage);
-  state.events.push({ type: 'core-hit', attackerId: attacker.id, at: { ...CORE_POS }, damage });
-};
-
 const separateUnits = (state: ArenaBattleState): void => {
   const alive = state.units.filter((unit) => unit.alive);
   for (let i = 0; i < alive.length; i++) {
@@ -145,7 +135,7 @@ const separateUnits = (state: ArenaBattleState): void => {
   }
   for (const unit of alive) {
     unit.pos.x = Math.max(0.22, Math.min(ARENA_COLS - 0.22, unit.pos.x));
-    unit.pos.y = Math.max(0.18, Math.min(ARENA_ROWS + 0.38, unit.pos.y));
+    unit.pos.y = Math.max(0.18, Math.min(ARENA_ROWS - 0.18, unit.pos.y));
   }
 };
 
@@ -196,24 +186,13 @@ export const tickArenaBattle = (state: ArenaBattleState, dt: number): void => {
       continue;
     }
 
-    if (unit.team === 'enemy') {
-      const coreReach = unit.combat.range + 0.38;
-      if (distance(unit.pos, CORE_POS) <= coreReach) {
-        if (unit.attackCooldown <= 0) attackCore(state, unit);
-        else unit.activity = 'attacking';
-      } else {
-        unit.activity = 'moving';
-        moveToward(unit, CORE_POS, unit.combat.moveSpeed * dt);
-      }
-    } else {
-      unit.activity = 'idle';
-    }
+    unit.activity = 'idle';
   }
 
   separateUnits(state);
 
   if (livingUnits(state, 'enemy').length === 0) finishBattle(state, 'victory');
-  else if (state.coreHp <= 0) finishBattle(state, 'defeat');
+  else if (livingUnits(state, 'player').length === 0) finishBattle(state, 'defeat');
   else if (state.time >= 40) finishBattle(state, 'defeat');
 };
 

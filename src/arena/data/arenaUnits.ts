@@ -119,8 +119,7 @@ export const ARENA_UNIT_DEFINITIONS: ArenaUnitDefinition[] = [
     radius: 0.32,
     attackStyle: 'impact',
     assetKind: 'enemy',
-    assetId: 'grubling',
-    coreDamage: 12
+    assetId: 'grubling'
   },
   {
     id: 'enemy_fast',
@@ -135,8 +134,7 @@ export const ARENA_UNIT_DEFINITIONS: ArenaUnitDefinition[] = [
     radius: 0.29,
     attackStyle: 'pierce',
     assetKind: 'enemy',
-    assetId: 'swift_stalker',
-    coreDamage: 10
+    assetId: 'swift_stalker'
   },
   {
     id: 'enemy_tank',
@@ -151,8 +149,7 @@ export const ARENA_UNIT_DEFINITIONS: ArenaUnitDefinition[] = [
     radius: 0.39,
     attackStyle: 'impact',
     assetKind: 'enemy',
-    assetId: 'bulwark_brute',
-    coreDamage: 16
+    assetId: 'bulwark_brute'
   },
   {
     id: 'enemy_ranged',
@@ -167,8 +164,7 @@ export const ARENA_UNIT_DEFINITIONS: ArenaUnitDefinition[] = [
     radius: 0.3,
     attackStyle: 'magic',
     assetKind: 'enemy',
-    assetId: 'gloomspawn',
-    coreDamage: 11
+    assetId: 'gloomspawn'
   },
   {
     id: 'enemy_boss',
@@ -184,8 +180,7 @@ export const ARENA_UNIT_DEFINITIONS: ArenaUnitDefinition[] = [
     attackStyle: 'impact',
     assetKind: 'enemy',
     assetId: 'gloom_ogre',
-    splash: { radius: 1.15, multiplier: 0.42 },
-    coreDamage: 28
+    splash: { radius: 1.15, multiplier: 0.42 }
   }
 ];
 

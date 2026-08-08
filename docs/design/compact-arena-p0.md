@@ -1,6 +1,6 @@
 # Compact Arena P0 visual target
 
-Status: approved direction and implemented wide-layout baseline. P0 defines the target and responsive composition; P1 transfers its arena, Core and HUD language into the playable Phaser scene without changing the deterministic battle model.
+Status: historical P0 direction, superseded by the brighter P1.6 arena pivot. The responsive composition remains useful, but the dark-fantasy material language and Core objective are no longer current.
 
 ## Target screens
 
@@ -10,10 +10,10 @@ Status: approved direction and implemented wide-layout baseline. P0 defines the 
 
 ## Art direction
 
-- Heroic dark fantasy rather than a technical dashboard
-- Carved slate, dark wood, aged brass, leather tabs and parchment accents
-- Warm gold for primary actions, restrained ember red for danger, moon blue for allied magic
-- A luminous crystal core altar is the visual anchor
+- Friendly sunlit tournament fantasy rather than dark fantasy or a technical dashboard
+- Ivory sandstone, painted wood, cloth banners, greenery and restrained honey-gold accents
+- Sky blue and turquoise for the player, coral and terracotta for rivals
+- The formation itself is the visual anchor; fights end when one team is eliminated
 - The placement grid remains functional but is integrated as carved floor sigils
 - Fighter sprites are grounded by shadows, selection rings and the arena lighting
 - Panels use strong material frames and hierarchy rather than repeated thin rectangles
@@ -21,7 +21,7 @@ Status: approved direction and implemented wide-layout baseline. P0 defines the 
 ## Information hierarchy
 
 1. Arena and formation
-2. Fight number, gold and core health
+2. Fight number, gold and rival identity
 3. Next-fight preview and shop decisions
 4. Roster and reserve state
 5. One dominant `START BATTLE` action
@@ -64,5 +64,5 @@ The production arena page uses a safe-area-aware fullscreen landscape shell on c
 - No black letterboxed presentation as the intended layout
 - No spreadsheet rows or generic dashboard panels
 - No tiny body text or thin low-contrast outlines
-- No loss of visible enemy formation, gold, core health, roster, reserve or speed control
+- No loss of visible enemy formation, gold, field/reserve capacity or speed control
 - No changes to the deterministic battle model during the visual redesign
