@@ -13,15 +13,13 @@ export const MAX_DEPLOYED_FIGHTERS = 5;
 export const MAX_RESERVE_FIGHTERS = 3;
 export const STARTING_GOLD = 5;
 export const REROLL_COST = 1;
+export const TEAM_CAP_BY_FIGHT = [2, 3, 4, 5] as const;
 
-const START_CELLS: ArenaCell[] = [
+const DEPLOY_CELLS: ArenaCell[] = [
   { col: 3, row: 3 },
   { col: 1, row: 5 },
   { col: 5, row: 5 },
-  { col: 3, row: 5 }
-];
-
-const EXTRA_DEPLOY_CELLS: ArenaCell[] = [
+  { col: 3, row: 5 },
   { col: 3, row: 4 },
   { col: 2, row: 4 },
   { col: 4, row: 4 },
@@ -59,17 +57,20 @@ export const generateShopOffers = (fightIndex: number, roll: number): ArenaShopO
   }));
 };
 
+export const fieldLimitForFight = (fightIndex: number): number =>
+  TEAM_CAP_BY_FIGHT[Math.max(0, Math.min(TEAM_CAP_BY_FIGHT.length - 1, fightIndex))];
+
 export const createArenaRun = (): ArenaRunState => {
-  const fighters = PLAYER_DEFINITION_IDS.map((definitionId, index): ArenaOwnedFighter => ({
-    id: index + 1,
-    definitionId,
+  const fighters: ArenaOwnedFighter[] = [{
+    id: 1,
+    definitionId: 'shield_guard',
     tier: 0,
-    cell: { ...START_CELLS[index] }
-  }));
+    cell: { ...DEPLOY_CELLS[0] }
+  }];
   return {
     fightIndex: 0,
     gold: STARTING_GOLD,
-    nextFighterId: fighters.length + 1,
+    nextFighterId: 2,
     shopRoll: 0,
     rerollsLeft: 1,
     fighters,
@@ -94,7 +95,7 @@ export const arenaRunPlacements = (run: ArenaRunState): ArenaPlacement[] =>
 
 const firstOpenCell = (run: ArenaRunState): ArenaCell | null => {
   const used = new Set(deployedFighters(run).map((fighter) => `${fighter.cell!.col}:${fighter.cell!.row}`));
-  for (const cell of EXTRA_DEPLOY_CELLS) {
+  for (const cell of DEPLOY_CELLS) {
     if (!used.has(`${cell.col}:${cell.row}`)) return { ...cell };
   }
   for (let row = PLAYER_FIRST_ROW; row < 6; row++) {
@@ -114,7 +115,7 @@ export const canBuyArenaOffer = (run: ArenaRunState, offerId: number): boolean =
 export const buyArenaOffer = (run: ArenaRunState, offerId: number): boolean => {
   const offer = run.shopOffers.find((candidate) => candidate.id === offerId);
   if (!offer || !canBuyArenaOffer(run, offerId)) return false;
-  const cell = deployedFighters(run).length < MAX_DEPLOYED_FIGHTERS ? firstOpenCell(run) : null;
+  const cell = deployedFighters(run).length < fieldLimitForFight(run.fightIndex) ? firstOpenCell(run) : null;
   run.gold -= offer.cost;
   run.fighters.push({
     id: run.nextFighterId++,
@@ -155,7 +156,7 @@ export const benchArenaFighter = (run: ArenaRunState, fighterId: number): boolea
 
 export const deployArenaFighter = (run: ArenaRunState, fighterId: number, cell: ArenaCell): boolean => {
   const fighter = run.fighters.find((candidate) => candidate.id === fighterId);
-  if (!fighter || fighter.cell || deployedFighters(run).length >= MAX_DEPLOYED_FIGHTERS) return false;
+  if (!fighter || fighter.cell || deployedFighters(run).length >= fieldLimitForFight(run.fightIndex)) return false;
   if (cell.row < PLAYER_FIRST_ROW || run.fighters.some((candidate) => candidate.cell?.col === cell.col && candidate.cell.row === cell.row)) {
     return false;
   }
@@ -167,11 +168,11 @@ export const resetArenaFormation = (run: ArenaRunState): void => {
   const deployed = run.fighters.filter((fighter) => fighter.cell !== null);
   const reserve = run.fighters.filter((fighter) => fighter.cell === null);
   deployed.forEach((fighter, index) => {
-    fighter.cell = index < START_CELLS.length ? { ...START_CELLS[index] } : null;
+    fighter.cell = index < fieldLimitForFight(run.fightIndex) ? { ...DEPLOY_CELLS[index] } : null;
   });
   for (const fighter of reserve) fighter.cell = null;
   for (const fighter of run.fighters) {
-    if (deployedFighters(run).length >= MAX_DEPLOYED_FIGHTERS) break;
+    if (deployedFighters(run).length >= fieldLimitForFight(run.fightIndex)) break;
     if (fighter.cell === null) fighter.cell = firstOpenCell(run);
   }
 };

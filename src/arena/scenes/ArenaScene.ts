@@ -22,7 +22,7 @@ import {
   createArenaRun,
   deployArenaFighter,
   deployedFighters,
-  MAX_DEPLOYED_FIGHTERS,
+  fieldLimitForFight,
   MAX_RESERVE_FIGHTERS,
   REROLL_COST,
   rerollArenaShop,
@@ -125,7 +125,8 @@ export class ArenaScene extends Phaser.Scene {
     this.draggingUnitId = null;
     this.resultOverlay = undefined;
     this.sidebarMode = 'shop';
-    this.drawerOpen = false;
+    this.drawerOpen = deployedFighters(this.run).length < fieldLimitForFight(this.run.fightIndex)
+      && reserveFighters(this.run).length === 0;
 
     this.drawBackdrop();
     this.drawTopBar();
@@ -174,6 +175,18 @@ export class ArenaScene extends Phaser.Scene {
     arenaText(this, 942, 16, 'GOLD', 9, ARENA_COLORS.muted).setFontStyle('bold');
     this.goldLabel = arenaTitle(this, 942, 28, `${this.run.gold}`, 21);
 
+    this.add.circle(1035, 35, 14, 0x8ed5e8, 1).setStrokeStyle(2, 0x3087ad, 0.9);
+    arenaText(this, 1035, 34, 'T', 11, '#1f607d').setOrigin(0.5).setFontStyle('bold');
+    arenaText(this, 1059, 16, 'TEAM CAP', 9, ARENA_COLORS.muted).setFontStyle('bold');
+    arenaTitle(
+      this,
+      1059,
+      28,
+      `${deployedFighters(this.run).length} / ${fieldLimitForFight(this.run.fightIndex)}`,
+      18,
+      ARENA_COLORS.text
+    );
+
     this.speedButton = arenaButton(this, 1190, 36, 132, 34, 'SPEED 1x', () => {
       this.setSpeed(this.state.speed === 1 ? 2 : 1);
     }, 0x4b9bc1);
@@ -183,7 +196,14 @@ export class ArenaScene extends Phaser.Scene {
     arenaPanel(this, 18, 94, 144, 108, 0xe2a642, 0.96).setDepth(80);
     arenaText(this, 90, 109, 'YOUR GOAL', 10, ARENA_COLORS.muted).setOrigin(0.5).setFontStyle('bold').setLetterSpacing(1).setDepth(81);
     arenaTitle(this, 90, 130, 'CLEAR THE\nRIVAL TEAM', 14, ARENA_COLORS.text).setOrigin(0.5, 0).setAlign('center').setDepth(81);
-    arenaText(this, 90, 169, `REWARD  +${arenaEncounter(this.run.fightIndex).reward} GOLD`, 9, ARENA_COLORS.gold).setOrigin(0.5).setFontStyle('bold').setDepth(81);
+    arenaText(
+      this,
+      90,
+      169,
+      `CAP ${fieldLimitForFight(this.run.fightIndex)}  |  +${arenaEncounter(this.run.fightIndex).reward} GOLD`,
+      9,
+      ARENA_COLORS.gold
+    ).setOrigin(0.5).setFontStyle('bold').setDepth(81);
     const reset = arenaButton(this, 90, 219, 112, 32, 'RESET LINE', () => {
       if (this.state.phase === 'planning') {
         const run = cloneArenaRun(this.run);
@@ -263,7 +283,26 @@ export class ArenaScene extends Phaser.Scene {
       this.refreshSidebar();
     }, 0x4b9bc1);
 
-    this.startButton = arenaButton(this, 1167, 681, 194, 48, 'START BATTLE', () => this.beginBattle(), 0xe0a83c);
+    const firstRecruitNeeded = this.run.fightIndex === 0
+      && deployedFighters(this.run).length < fieldLimitForFight(this.run.fightIndex);
+    this.startButton = arenaButton(
+      this,
+      1167,
+      681,
+      194,
+      48,
+      firstRecruitNeeded ? 'RECRUIT 1 MORE' : 'START BATTLE',
+      () => {
+        if (firstRecruitNeeded) {
+          this.sidebarMode = 'shop';
+          this.drawerOpen = true;
+          this.refreshSidebar();
+          return;
+        }
+        this.beginBattle();
+      },
+      0xe0a83c
+    );
     this.startButton.setEnabled(deployedFighters(this.run).length > 0);
 
     this.detailPanel = this.add.container(DRAWER_X, DRAWER_Y).setDepth(1000).setVisible(false);
@@ -283,7 +322,7 @@ export class ArenaScene extends Phaser.Scene {
   }
 
   private drawRoster(): void {
-    arenaText(this, 640, 594, `${deployedFighters(this.run).length}/${MAX_DEPLOYED_FIGHTERS} FIELD  •  ${reserveFighters(this.run).length}/${MAX_RESERVE_FIGHTERS} RESERVE`, 10, ARENA_COLORS.text)
+    arenaText(this, 640, 594, `${deployedFighters(this.run).length}/${fieldLimitForFight(this.run.fightIndex)} FIELD  •  ${reserveFighters(this.run).length}/${MAX_RESERVE_FIGHTERS} RESERVE`, 10, ARENA_COLORS.text)
       .setOrigin(0.5)
       .setFontStyle('bold')
       .setLetterSpacing(1)
@@ -342,7 +381,17 @@ export class ArenaScene extends Phaser.Scene {
   private renderShopSidebar(): void {
     if (!this.sidebarContent) return;
     const nodes: Phaser.GameObjects.GameObject[] = [];
-    nodes.push(arenaText(this, 0, 0, 'CHOOSE YOUR REINFORCEMENT', 10, ARENA_COLORS.muted).setFontStyle('bold').setLetterSpacing(1));
+    const fieldSlotsOpen = Math.max(0, fieldLimitForFight(this.run.fightIndex) - deployedFighters(this.run).length);
+    nodes.push(arenaText(
+      this,
+      0,
+      0,
+      fieldSlotsOpen > 0
+        ? `CHOOSE A REINFORCEMENT  |  ${fieldSlotsOpen} FIELD SLOT${fieldSlotsOpen === 1 ? '' : 'S'} OPEN`
+        : 'TEAM CAP REACHED  |  BUILD YOUR BENCH',
+      10,
+      ARENA_COLORS.muted
+    ).setFontStyle('bold').setLetterSpacing(1));
     this.run.shopOffers.forEach((offer, index) => {
       const definition = arenaUnitById(offer.definitionId);
       const x = index * 110;
@@ -371,11 +420,14 @@ export class ArenaScene extends Phaser.Scene {
     }, 0x4b9bc1);
     reroll.setEnabled(this.run.rerollsLeft > 0 && this.run.gold >= REROLL_COST);
     nodes.push(reroll.root);
+    const nextCap = fieldLimitForFight(this.run.fightIndex + 1);
     nodes.push(arenaText(
       this,
       0,
       254,
-      this.run.rerollsLeft > 0 ? 'One reroll remains this fight.' : 'Reroll used for this fight.',
+      arenaEncounter(this.run.fightIndex).boss
+        ? 'Final fight: shape the strongest five-fighter team.'
+        : `${this.run.rerollsLeft > 0 ? 'One reroll remains.' : 'Reroll used.'} Win to unlock team cap ${nextCap}.`,
       10,
       ARENA_COLORS.muted
     ));
@@ -603,6 +655,12 @@ export class ArenaScene extends Phaser.Scene {
 
   private beginBattle(): void {
     if (this.state.phase !== 'planning') return;
+    if (this.run.fightIndex === 0 && deployedFighters(this.run).length < fieldLimitForFight(this.run.fightIndex)) {
+      this.sidebarMode = 'shop';
+      this.drawerOpen = true;
+      this.refreshSidebar();
+      return;
+    }
     startArenaBattle(this.state);
     this.startButton.setEnabled(false);
     this.shopButton.setEnabled(false);
@@ -792,6 +850,7 @@ export class ArenaScene extends Phaser.Scene {
     const won = outcome === 'victory';
     const encounter = arenaEncounter(this.run.fightIndex);
     const runComplete = won && encounter.boss;
+    const nextTeamCap = fieldLimitForFight(this.run.fightIndex + 1);
     this.phaseLabel.setText(runComplete ? 'RUN COMPLETE' : won ? 'FIGHT CLEARED' : 'TEAM DEFEATED');
     this.startButton.setLabel(runComplete ? 'BOSS DEFEATED' : won ? 'VICTORY' : 'DEFEAT');
     sfx.play(won ? 'victory' : 'defeat');
@@ -810,7 +869,7 @@ export class ArenaScene extends Phaser.Scene {
       runComplete
         ? `Four fights cleared. ${this.run.fighters.length} fighters made the final roster.`
         : won
-          ? `Fight ${this.run.fightIndex + 1} cleared in ${this.state.time.toFixed(1)}s. Claim ${encounter.reward} gold and prepare the next formation.`
+          ? `Fight ${this.run.fightIndex + 1} cleared in ${this.state.time.toFixed(1)}s. Gain ${encounter.reward} gold and unlock team cap ${nextTeamCap}.`
           : 'Your team was eliminated. Reposition the formation and try again.',
       16,
       ARENA_COLORS.text
@@ -823,7 +882,7 @@ export class ArenaScene extends Phaser.Scene {
       }, 0xe0b65d);
       this.resultOverlay.add(restart.root);
     } else if (won) {
-      const next = arenaButton(this, 0, 76, 300, 56, `CONTINUE  +${encounter.reward} GOLD`, () => {
+      const next = arenaButton(this, 0, 76, 340, 56, `CONTINUE  +${encounter.reward}G  |  CAP ${nextTeamCap}`, () => {
         const run = cloneArenaRun(this.run);
         if (advanceArenaRun(run)) this.scene.restart({ run });
       }, 0xe0b65d);

@@ -14,55 +14,50 @@ export const ARENA_ENCOUNTERS: ArenaEncounterDefinition[] = [
   {
     id: 'first_contact',
     name: 'FIRST CONTACT',
-    subtitle: 'A readable test of frontline and backline.',
-    reward: 3,
+    subtitle: 'Build your first duo and learn the formation line.',
+    reward: 4,
     boss: false,
     enemyPlacements: [
       { definitionId: 'enemy_melee', col: 2, row: 2 },
-      { definitionId: 'enemy_fast', col: 0, row: 1 },
-      { definitionId: 'enemy_tank', col: 5, row: 2 },
-      { definitionId: 'enemy_ranged', col: 3, row: 0 }
+      { definitionId: 'enemy_melee', col: 5, row: 2 }
     ],
     summary: [
-      { label: '2 FRONTLINE', detail: 'Grunt + Bulwark' },
-      { label: '1 RANGED', detail: 'Gloom Spitter' },
-      { label: '1 FAST', detail: 'Hunts exposed support', warning: true }
+      { label: '2 FRONTLINE', detail: 'A readable first line' },
+      { label: 'NO BACKLINE', detail: 'Learn basic positioning' },
+      { label: 'TEAM CAP 2', detail: 'Recruit your first partner' }
     ]
   },
   {
     id: 'broken_wedge',
     name: 'BROKEN WEDGE',
-    subtitle: 'More bodies, two attack angles.',
-    reward: 4,
+    subtitle: 'A third field slot opens against a balanced trio.',
+    reward: 5,
     boss: false,
     enemyPlacements: [
       { definitionId: 'enemy_melee', col: 1, row: 2 },
-      { definitionId: 'enemy_melee', col: 5, row: 2 },
-      { definitionId: 'enemy_fast', col: 6, row: 1 },
-      { definitionId: 'enemy_tank', col: 3, row: 2 },
-      { definitionId: 'enemy_ranged', col: 2, row: 0 }
+      { definitionId: 'enemy_tank', col: 4, row: 2 },
+      { definitionId: 'enemy_ranged', col: 3, row: 0 }
     ],
     summary: [
-      { label: '3 FRONTLINE', detail: 'A wide wedge' },
-      { label: '1 RANGED', detail: 'Left of center' },
-      { label: '1 FAST', detail: 'Approaches from right', warning: true }
+      { label: '2 FRONTLINE', detail: 'Grunt + Bulwark' },
+      { label: '1 RANGED', detail: 'Protected center', warning: true },
+      { label: 'TEAM CAP 3', detail: 'One new field slot' }
     ]
   },
   {
     id: 'red_tide',
     name: 'RED TIDE',
-    subtitle: 'A crowd built to punish a thin line.',
-    reward: 5,
+    subtitle: 'Four rivals test the shape of your growing squad.',
+    reward: 6,
     boss: false,
     enemyPlacements: [
       { definitionId: 'enemy_melee', col: 1, row: 2 },
-      { definitionId: 'enemy_melee', col: 5, row: 2 },
       { definitionId: 'enemy_fast', col: 0, row: 1 },
       { definitionId: 'enemy_tank', col: 3, row: 2 },
       { definitionId: 'enemy_ranged', col: 3, row: 0 }
     ],
     summary: [
-      { label: '3 FRONTLINE', detail: 'Centered pressure' },
+      { label: '2 FRONTLINE', detail: 'Centered pressure' },
       { label: '1 RANGED', detail: 'Protected center' },
       { label: '1 FAST', detail: 'Left flank threatens', warning: true }
     ]
@@ -75,13 +70,14 @@ export const ARENA_ENCOUNTERS: ArenaEncounterDefinition[] = [
     boss: true,
     enemyPlacements: [
       { definitionId: 'enemy_fast', col: 0, row: 1 },
+      { definitionId: 'enemy_melee', col: 1, row: 2 },
       { definitionId: 'enemy_boss', col: 3, row: 1 },
-      { definitionId: 'enemy_tank', col: 5, row: 2 },
+      { definitionId: 'enemy_melee', col: 5, row: 2 },
       { definitionId: 'enemy_ranged', col: 3, row: 0 }
     ],
     summary: [
       { label: 'BOSS', detail: 'Gloom Tyrant + splash', warning: true },
-      { label: '1 BULWARK', detail: 'Protects the advance' },
+      { label: '2 GRUNTS', detail: 'Guard the tyrant' },
       { label: '2 SUPPORT', detail: 'Fast flank + ranged' }
     ]
   }

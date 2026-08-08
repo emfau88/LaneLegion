@@ -12,8 +12,8 @@ Stand: 2026-08-08. This is the active roadmap for the isolated autobattler pivot
 - [x] Gold rewards and a four-fight run
 - [x] Three shop offers before each fight
 - [x] One reroll per fight for one gold
-- [x] Five deployed slots and three reserve slots
-- [x] Direct purchase into field or reserve according to capacity
+- [x] Team cap grows from two to five deployed fighters across the four fights
+- [x] One starter fighter, then direct recruitment into field or three-slot reserve according to the current cap
 - [x] Bench and redeploy controls
 - [x] One upgrade per fighter
 - [x] Upgrade definitions represented as paths for a later two-path choice
@@ -57,6 +57,13 @@ These items are not required for the compact four-fight proof of concept. They s
   - [x] Integrate the three-slot reserve bench into the physical arena
   - [x] Stop non-uniform mobile canvas stretching and render text at device-aware resolution
   - [x] Preserve deterministic four-fight balance under team-elimination rules
+- [x] P1.7 progressive team-building loop
+  - [x] Start each run with one Shield Guard instead of a complete four-role roster
+  - [x] Guide the first recruit before the opening battle
+  - [x] Unlock team caps 2, 3, 4 and 5 across the four fights
+  - [x] Scale rivals from two fighters to a five-unit boss formation
+  - [x] Make victory rewards fund one meaningful reinforcement per round
+  - [x] Surface current cap, next cap and open field slots in the HUD, shop and results
 - [ ] P2 guided first-run onboarding and clearer cause/effect combat feedback
   - [ ] Guided four-step first run: recruit, select, place, start battle
   - [ ] Explicit target/reach/threat visualization while a fighter is selected
