@@ -48,7 +48,7 @@ The permanent rules column is replaced by a compact contextual objective. The sh
 - Roster becomes a horizontal rail
 - Start Battle becomes a sticky full-width bottom action
 
-The production arena page fills the available width and aligns to the top at compact aspect ratios instead of remaining a small centered island. A dedicated portrait/4:5 Phaser reflow remains a later responsive task after first-run onboarding is validated.
+The production arena page uses a safe-area-aware fullscreen landscape shell on coarse-pointer phones instead of shrinking the full desktop HUD into portrait. A dedicated portrait/4:5 Phaser reflow remains a P2 responsive task alongside first-run onboarding.
 
 ## P1 implementation
 
