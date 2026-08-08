@@ -1,7 +1,6 @@
 import { arenaUnitById } from '../data/arenaUnits';
 import { arenaEncounter } from '../data/arenaEncounters';
 import {
-  ARENA_CORE_MAX_HP,
   cellCenter,
   type ArenaBattleState,
   type ArenaPlacement,
@@ -56,8 +55,7 @@ const createUnit = (id: number, team: ArenaTeam, placement: ArenaPlacement): Are
       moveSpeed: definition.moveSpeed,
       radius: definition.radius,
       splash,
-      healing,
-      coreDamage: definition.coreDamage
+      healing
     }
   };
 };
@@ -80,8 +78,6 @@ export const createArenaBattle = (
   return {
     phase: 'planning',
     time: 0,
-    coreHp: ARENA_CORE_MAX_HP,
-    coreMaxHp: ARENA_CORE_MAX_HP,
     speed: 1,
     units: [...playerUnits, ...enemyUnits],
     events: []

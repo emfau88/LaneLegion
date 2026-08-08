@@ -7,8 +7,10 @@ import {
   cloneArenaRun,
   createArenaRun,
   deployArenaFighter,
-  MAX_DEPLOYED_FIGHTERS,
+  deployedFighters,
+  fieldLimitForFight,
   rerollArenaShop,
+  reserveFighters,
   upgradeArenaFighter
 } from '../model/ArenaRunSystem';
 import type { ArenaPlacement } from '../model/ArenaTypes';
@@ -44,7 +46,6 @@ const layouts: Record<string, ArenaPlacement[]> = {
 interface Result {
   outcome: string;
   time: number;
-  coreHp: number;
   playerSurvivors: string[];
   enemySurvivors: string[];
 }
@@ -59,7 +60,6 @@ const simulate = (placements: ArenaPlacement[], fightIndex = 0): Result => {
   return {
     outcome: state.phase,
     time: Number(state.time.toFixed(2)),
-    coreHp: Math.ceil(state.coreHp),
     playerSurvivors: state.units.filter((unit) => unit.team === 'player' && unit.alive).map((unit) => unit.definitionId),
     enemySurvivors: state.units.filter((unit) => unit.team === 'enemy' && unit.alive).map((unit) => unit.definitionId)
   };
@@ -70,14 +70,16 @@ const assert = (condition: boolean, message: string): void => {
 };
 
 const formationResults = Object.entries(layouts).map(([name, placements]) => {
-  const first = simulate(placements);
-  const second = simulate(placements);
+  const first = simulate(placements, 2);
+  const second = simulate(placements, 2);
   assert(JSON.stringify(first) === JSON.stringify(second), `${name} is not deterministic`);
   return { name, ...first };
 });
 
 const verifyRunEconomy = (): void => {
   const run = createArenaRun();
+  assert(run.fighters.length === 1 && deployedFighters(run).length === 1, 'A run must begin with one starter fighter');
+  assert(fieldLimitForFight(run.fightIndex) === 2, 'Fight one must have a two-fighter team cap');
   assert(run.shopOffers.length === 3, 'Shop must begin with exactly three offers');
   const beforeReroll = run.shopOffers.map((offer) => offer.definitionId).join(',');
   assert(rerollArenaShop(run), 'The first reroll should succeed');
@@ -90,41 +92,57 @@ const verifyRunEconomy = (): void => {
   assert(Boolean(affordable), 'Initial shop needs an affordable offer');
   const goldBefore = purchaseRun.gold;
   assert(buyArenaOffer(purchaseRun, affordable!.id), 'Affordable offer should be purchasable');
-  assert(purchaseRun.fighters.length === 5, 'Purchase must add one fighter');
+  assert(purchaseRun.fighters.length === 2, 'Purchase must add one fighter');
+  assert(deployedFighters(purchaseRun).length === 2, 'The first recruit must fill the second field slot');
   assert(purchaseRun.gold === goldBefore - affordable!.cost, 'Purchase must deduct its listed cost');
 
   purchaseRun.gold = 20;
+  const benchOffer = purchaseRun.shopOffers[0];
+  assert(Boolean(benchOffer) && buyArenaOffer(purchaseRun, benchOffer.id), 'A recruit above the current cap should be purchasable');
+  assert(deployedFighters(purchaseRun).length === 2 && reserveFighters(purchaseRun).length === 1, 'Extra recruits must enter reserve');
+  const reserveId = reserveFighters(purchaseRun)[0].id;
+  assert(!deployArenaFighter(purchaseRun, reserveId, { col: 0, row: 4 }), 'The current team cap must block reserve deployment');
   assert(upgradeArenaFighter(purchaseRun, 1), 'A tier-I fighter should upgrade once');
   assert(!upgradeArenaFighter(purchaseRun, 1), 'A fighter must not upgrade twice');
   assert(advanceArenaRun(purchaseRun), 'A cleared non-boss fight should advance the run');
   assert(purchaseRun.fightIndex === 1 && purchaseRun.rerollsLeft === 1, 'Next fight must refresh shop and reroll');
-
-  const reserveRun = cloneArenaRun(purchaseRun);
-  while (reserveRun.fighters.filter((fighter) => fighter.cell !== null).length < MAX_DEPLOYED_FIGHTERS) {
-    const reserve = reserveRun.fighters.find((fighter) => fighter.cell === null);
-    if (!reserve) break;
-    assert(deployArenaFighter(reserveRun, reserve.id, { col: 0, row: 4 }), 'Reserve should deploy into an empty cell');
-  }
+  assert(fieldLimitForFight(purchaseRun.fightIndex) === 3, 'Winning fight one must unlock a third field slot');
+  assert(deployArenaFighter(purchaseRun, reserveId, { col: 0, row: 4 }), 'The unlocked slot must accept a reserve fighter');
 };
 
 const campaign = createArenaRun();
 const campaignResults = ARENA_ENCOUNTERS.map((encounter, fightIndex) => {
-  if (fightIndex === 1) {
-    const priorities = ['ranger', 'fire_mage', 'healer', 'shield_guard'];
-    const offer = [...campaign.shopOffers].sort(
-      (a, b) => priorities.indexOf(a.definitionId) - priorities.indexOf(b.definitionId)
-    )[0];
-    assert(buyArenaOffer(campaign, offer.id), 'Fight-two shop purchase should be affordable');
-    assert(upgradeArenaFighter(campaign, 1), 'Fight-two Shield Guard upgrade should be affordable');
+  const recruitmentPriorities = [
+    ['ranger', 'fire_mage', 'healer', 'shield_guard'],
+    ['healer', 'ranger', 'fire_mage', 'shield_guard'],
+    ['fire_mage', 'ranger', 'healer', 'shield_guard'],
+    ['shield_guard', 'ranger', 'fire_mage', 'healer']
+  ][fightIndex];
+  while (deployedFighters(campaign).length < fieldLimitForFight(fightIndex)) {
+    const offer = [...campaign.shopOffers]
+      .filter((candidate) => candidate.cost <= campaign.gold)
+      .sort((a, b) => recruitmentPriorities.indexOf(a.definitionId) - recruitmentPriorities.indexOf(b.definitionId))[0];
+    assert(Boolean(offer), `Fight ${fightIndex + 1} needs an affordable reinforcement`);
+    assert(buyArenaOffer(campaign, offer.id), `Fight ${fightIndex + 1} reinforcement should be purchasable`);
   }
-  if (fightIndex === 2) assert(upgradeArenaFighter(campaign, 2), 'Fight-three Ranger upgrade should be affordable');
-  if (fightIndex === 3) assert(upgradeArenaFighter(campaign, 3), 'Boss-prep Fire Mage upgrade should be affordable');
+  assert(
+    deployedFighters(campaign).length === fieldLimitForFight(fightIndex),
+    `Fight ${fightIndex + 1} should enter combat at its team cap`
+  );
+  if (fightIndex === 2) assert(upgradeArenaFighter(campaign, 1), 'Fight-three Shield Guard upgrade should be affordable');
   const run = cloneArenaRun(campaign);
   const placements = arenaRunPlacements(run);
   const first = simulate(placements, fightIndex);
   const second = simulate(placements, fightIndex);
   assert(JSON.stringify(first) === JSON.stringify(second), `${encounter.name} is not deterministic`);
-  const result = { fight: fightIndex + 1, name: encounter.name, gold: campaign.gold, ...first };
+  const result = {
+    fight: fightIndex + 1,
+    name: encounter.name,
+    teamSize: deployedFighters(campaign).length,
+    teamCap: fieldLimitForFight(fightIndex),
+    gold: campaign.gold,
+    ...first
+  };
   if (!encounter.boss) assert(advanceArenaRun(campaign), `Fight ${fightIndex + 1} should advance`);
   return result;
 });

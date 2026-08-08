@@ -1,7 +1,6 @@
 export const ARENA_COLS = 7;
 export const ARENA_ROWS = 6;
 export const PLAYER_FIRST_ROW = 3;
-export const ARENA_CORE_MAX_HP = 100;
 
 export type ArenaTeam = 'player' | 'enemy';
 export type ArenaPhase = 'planning' | 'battle' | 'victory' | 'defeat';
@@ -50,7 +49,6 @@ export interface ArenaUnitDefinition {
   upgradePaths?: ArenaUpgradeDefinition[];
   splash?: { radius: number; multiplier: number };
   healing?: { amount: number; interval: number; range: number };
-  coreDamage?: number;
 }
 
 export interface ArenaUnitState {
@@ -77,7 +75,6 @@ export interface ArenaUnitState {
     radius: number;
     splash?: { radius: number; multiplier: number };
     healing?: { amount: number; interval: number; range: number };
-    coreDamage?: number;
   };
 }
 
@@ -94,14 +91,11 @@ export type ArenaBattleEvent =
     }
   | { type: 'heal'; healerId: number; targetId: number; at: ArenaPoint; amount: number }
   | { type: 'death'; unitId: number; at: ArenaPoint }
-  | { type: 'core-hit'; attackerId: number; at: ArenaPoint; damage: number }
   | { type: 'battle-ended'; outcome: 'victory' | 'defeat' };
 
 export interface ArenaBattleState {
   phase: ArenaPhase;
   time: number;
-  coreHp: number;
-  coreMaxHp: number;
   speed: 1 | 2;
   units: ArenaUnitState[];
   events: ArenaBattleEvent[];

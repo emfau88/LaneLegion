@@ -19,12 +19,12 @@ Compact Arena is an isolated four-fight autobattler prototype built alongside th
 original lane-defense game. It focuses the experience on one readable loop:
 
 1. Inspect the next enemy formation.
-2. Recruit, upgrade, field, reserve, and reposition up to five fighters.
+2. Start with one Shield Guard, recruit a partner, and grow the field cap from two to five fighters across the run.
 3. Start the battle and watch the deterministic simulation resolve automatically.
 4. Earn gold, adapt the formation, and defeat the fourth-fight boss.
 
 The pivot has its own entry point (`arena.html`), state, combat model, shop, roster,
-four encounters, and headless smoke simulation under `src/arena/`. The legacy game
+four encounters, a progressive 2/3/4/5 team-building curve, and headless smoke simulation under `src/arena/`. The legacy game
 remains available through `index.html`; the two modes do not share runtime state.
 
 ### Test Compact Arena locally

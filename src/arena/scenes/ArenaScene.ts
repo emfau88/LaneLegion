@@ -22,7 +22,7 @@ import {
   createArenaRun,
   deployArenaFighter,
   deployedFighters,
-  MAX_DEPLOYED_FIGHTERS,
+  fieldLimitForFight,
   MAX_RESERVE_FIGHTERS,
   REROLL_COST,
   rerollArenaShop,
@@ -51,19 +51,21 @@ import {
   type ArenaButton
 } from '../ui/ArenaTheme';
 
-const ART_X = 8;
-const ART_Y = 72;
-const ART_W = 884;
-const ART_H = 530;
-const BOARD_X = 126;
-const BOARD_Y = 110;
-const CELL_W = 93;
-const CELL_H = 68;
+const ART_X = -80;
+const ART_Y = -45;
+const ART_W = 1440;
+const ART_H = 810;
+const BOARD_X = 180;
+const BOARD_Y = 120;
+const CELL_W = 132;
+const CELL_H = 72;
 const BOARD_W = ARENA_COLS * CELL_W;
 const BOARD_H = ARENA_ROWS * CELL_H;
-const SIDEBAR_X = 904;
-const SIDEBAR_W = 364;
-const ROSTER_Y = 600;
+const DRAWER_X = 850;
+const DRAWER_Y = 92;
+const DRAWER_W = 410;
+const DRAWER_H = 508;
+const RESERVE_Y = 650;
 const FIXED_STEP = 1 / 30;
 const TOUCH_INPUT = (window.matchMedia?.('(pointer: coarse)').matches ?? false)
   || Math.min(window.innerWidth, window.innerHeight) <= 600;
@@ -93,15 +95,14 @@ export class ArenaScene extends Phaser.Scene {
   private accumulator = 0;
   private startButton!: ArenaButton;
   private speedButton!: ArenaButton;
+  private shopButton!: ArenaButton;
   private phaseLabel!: Phaser.GameObjects.Text;
   private timerLabel!: Phaser.GameObjects.Text;
-  private coreLabel!: Phaser.GameObjects.Text;
   private goldLabel!: Phaser.GameObjects.Text;
-  private coreFill!: Phaser.GameObjects.Rectangle;
-  private coreGlow!: Phaser.GameObjects.Ellipse;
   private detailPanel?: Phaser.GameObjects.Container;
   private sidebarContent?: Phaser.GameObjects.Container;
   private sidebarMode: 'shop' | 'fighter' = 'shop';
+  private drawerOpen = false;
   private resultOverlay?: Phaser.GameObjects.Container;
   private cellHits: Phaser.GameObjects.Rectangle[] = [];
 
@@ -124,12 +125,13 @@ export class ArenaScene extends Phaser.Scene {
     this.draggingUnitId = null;
     this.resultOverlay = undefined;
     this.sidebarMode = 'shop';
+    this.drawerOpen = deployedFighters(this.run).length < fieldLimitForFight(this.run.fightIndex)
+      && reserveFighters(this.run).length === 0;
 
     this.drawBackdrop();
     this.drawTopBar();
     this.drawBoard();
     this.drawLeftPanel();
-    this.drawCore();
     this.drawRightPanel();
     this.drawRoster();
     for (const unit of this.state.units) this.createUnitView(unit);
@@ -146,65 +148,75 @@ export class ArenaScene extends Phaser.Scene {
 
   private drawBackdrop(): void {
     this.cameras.main.setBackgroundColor(ARENA_COLORS.bg);
-    const graphics = this.add.graphics();
-    graphics.fillGradientStyle(0x15120f, 0x101319, 0x07090c, 0x07090c, 1);
+    const graphics = this.add.graphics().setDepth(-3);
+    graphics.fillGradientStyle(0xe4f3ea, 0xfff1cf, 0xd6ece7, 0xf7e7c7, 1);
     graphics.fillRect(0, 0, 1280, 720);
-    graphics.fillStyle(0xd9b35e, 0.045);
-    for (let i = 0; i < 30; i++) {
-      const x = (i * 83 + 47) % 1280;
-      const y = (i * 137 + 31) % 720;
-      graphics.fillCircle(x, y, i % 4 === 0 ? 1.5 : 1);
-    }
-    graphics.fillStyle(0x000000, 0.32).fillRect(0, 690, 1280, 30);
   }
 
   private drawTopBar(): void {
-    arenaPanel(this, 8, 8, 1260, 56, ARENA_COLORS.brassLight);
+    arenaPanel(this, 8, 8, 1264, 58, ARENA_COLORS.brassLight, 0.98);
     arenaButton(this, 52, 36, 76, 32, 'MENU', () => {
       window.location.assign('./index.html');
-    }, 0x7184a6);
-    arenaTitle(this, 101, 16, 'LANE LEGION', 22);
-    arenaText(this, 103, 43, 'COMPACT ARENA', 9, ARENA_COLORS.muted).setFontStyle('bold').setLetterSpacing(2);
+    }, 0x4b9bc1);
+    arenaTitle(this, 101, 16, 'LANE LEGION', 21);
+    arenaText(this, 103, 43, 'SUNLIT ARENA', 9, ARENA_COLORS.muted).setFontStyle('bold').setLetterSpacing(2);
 
-    this.phaseLabel = arenaTitle(this, 420, 15, `FIGHT ${this.run.fightIndex + 1} / 4`, 18, ARENA_COLORS.text);
-    this.timerLabel = arenaText(this, 422, 42, 'PLAN YOUR FORMATION', 10, ARENA_COLORS.muted).setFontStyle('bold').setLetterSpacing(1);
+    this.phaseLabel = arenaTitle(this, 350, 15, `FIGHT ${this.run.fightIndex + 1} / 4`, 18, ARENA_COLORS.text);
+    this.timerLabel = arenaText(this, 352, 42, 'PLAN YOUR FORMATION', 10, ARENA_COLORS.muted).setFontStyle('bold').setLetterSpacing(1);
 
-    this.add.circle(741, 35, 13, 0x5d3d13, 1).setStrokeStyle(2, ARENA_COLORS.brassLight, 0.9);
-    arenaText(this, 741, 34, 'G', 11, ARENA_COLORS.gold).setOrigin(0.5).setFontStyle('bold');
-    arenaText(this, 764, 16, 'GOLD', 9, ARENA_COLORS.muted).setFontStyle('bold');
-    this.goldLabel = arenaTitle(this, 764, 28, `${this.run.gold}`, 21);
+    const encounter = arenaEncounter(this.run.fightIndex);
+    arenaText(this, 560, 16, encounter.boss ? 'FINAL · BOSS' : 'NEXT RIVAL', 9, encounter.boss ? ARENA_COLORS.danger : ARENA_COLORS.muted)
+      .setFontStyle('bold')
+      .setLetterSpacing(1);
+    arenaTitle(this, 560, 29, encounter.name, 15, encounter.boss ? ARENA_COLORS.danger : ARENA_COLORS.text);
 
-    this.coreLabel = arenaText(this, 848, 14, 'CORE 100 / 100', 10, '#b9dff5').setFontStyle('bold');
-    this.add.rectangle(848, 43, 188, 12, 0x050709, 1).setOrigin(0, 0.5).setStrokeStyle(2, 0x6e5531, 0.9);
-    this.coreFill = this.add.rectangle(851, 43, 182, 6, 0x51b9d8, 1).setOrigin(0, 0.5);
+    this.add.circle(918, 35, 14, 0xf5c55b, 1).setStrokeStyle(2, 0xb37619, 0.9);
+    arenaText(this, 918, 34, 'G', 11, '#70480d').setOrigin(0.5).setFontStyle('bold');
+    arenaText(this, 942, 16, 'GOLD', 9, ARENA_COLORS.muted).setFontStyle('bold');
+    this.goldLabel = arenaTitle(this, 942, 28, `${this.run.gold}`, 21);
+
+    this.add.circle(1035, 35, 14, 0x8ed5e8, 1).setStrokeStyle(2, 0x3087ad, 0.9);
+    arenaText(this, 1035, 34, 'T', 11, '#1f607d').setOrigin(0.5).setFontStyle('bold');
+    arenaText(this, 1059, 16, 'TEAM CAP', 9, ARENA_COLORS.muted).setFontStyle('bold');
+    arenaTitle(
+      this,
+      1059,
+      28,
+      `${deployedFighters(this.run).length} / ${fieldLimitForFight(this.run.fightIndex)}`,
+      18,
+      ARENA_COLORS.text
+    );
 
     this.speedButton = arenaButton(this, 1190, 36, 132, 34, 'SPEED 1x', () => {
       this.setSpeed(this.state.speed === 1 ? 2 : 1);
-    }, 0x79a8e8);
+    }, 0x4b9bc1);
   }
 
   private drawLeftPanel(): void {
-    arenaPanel(this, 18, 104, 108, 190, 0xb8883c, 0.94).setDepth(80);
-    arenaTitle(this, 72, 120, 'OATHS', 14).setOrigin(0.5).setDepth(81);
-    this.add.line(72, 145, -38, 0, 38, 0, 0x8e6a34, 0.8).setDepth(81);
-    this.add.star(36, 169, 5, 5, 10, 0xe0bd6a, 1).setDepth(81);
-    arenaText(this, 52, 155, 'WIN THE\nFIGHT', 11, ARENA_COLORS.text).setFontStyle('bold').setDepth(81);
-    arenaText(this, 52, 184, `+${arenaEncounter(this.run.fightIndex).reward} GOLD`, 9, ARENA_COLORS.gold).setDepth(81);
-    this.add.star(36, 219, 5, 5, 10, 0x6fbbe8, 1).setDepth(81);
-    arenaText(this, 52, 205, 'PROTECT\nTHE CORE', 11, '#d7ecf7').setFontStyle('bold').setDepth(81);
-    const reset = arenaButton(this, 72, 269, 82, 30, 'RESET', () => {
+    arenaPanel(this, 18, 94, 144, 108, 0xe2a642, 0.96).setDepth(80);
+    arenaText(this, 90, 109, 'YOUR GOAL', 10, ARENA_COLORS.muted).setOrigin(0.5).setFontStyle('bold').setLetterSpacing(1).setDepth(81);
+    arenaTitle(this, 90, 130, 'CLEAR THE\nRIVAL TEAM', 14, ARENA_COLORS.text).setOrigin(0.5, 0).setAlign('center').setDepth(81);
+    arenaText(
+      this,
+      90,
+      169,
+      `CAP ${fieldLimitForFight(this.run.fightIndex)}  |  +${arenaEncounter(this.run.fightIndex).reward} GOLD`,
+      9,
+      ARENA_COLORS.gold
+    ).setOrigin(0.5).setFontStyle('bold').setDepth(81);
+    const reset = arenaButton(this, 90, 219, 112, 32, 'RESET LINE', () => {
       if (this.state.phase === 'planning') {
         const run = cloneArenaRun(this.run);
         resetArenaFormation(run);
         this.scene.restart({ run });
       }
-    }, 0x7184a6);
+    }, 0x4b9bc1);
     reset.root.setDepth(82);
 
-    const hint = arenaText(this, 22, 540, TOUCH_INPUT ? 'TAP FIGHTER, THEN BLUE TILE' : 'SELECT OR DRAG A FIGHTER', 9, '#bdcbd3')
+    const hint = arenaText(this, BOARD_X, 570, TOUCH_INPUT ? 'TAP A FIGHTER, THEN A BLUE TILE' : 'SELECT OR DRAG A FIGHTER', 10, ARENA_COLORS.text)
       .setFontStyle('bold')
       .setLetterSpacing(1)
-      .setShadow(0, 2, '#000000', 3)
+      .setShadow(0, 1, '#ffffff', 2)
       .setDepth(82);
     hint.setAlpha(0.88);
   }
@@ -212,7 +224,15 @@ export class ArenaScene extends Phaser.Scene {
   private drawBoard(): void {
     this.add.image(ART_X + ART_W / 2, ART_Y + ART_H / 2, 'compact-arena-floor-p1')
       .setDisplaySize(ART_W, ART_H)
-      .setDepth(1);
+      .setDepth(-2);
+
+    const grid = this.add.graphics().setDepth(7);
+    grid.fillStyle(0xe97868, 0.055).fillRoundedRect(BOARD_X, BOARD_Y, BOARD_W, PLAYER_FIRST_ROW * CELL_H, 18);
+    grid.fillStyle(0x38a9d6, 0.065).fillRoundedRect(BOARD_X, BOARD_Y + PLAYER_FIRST_ROW * CELL_H, BOARD_W, (ARENA_ROWS - PLAYER_FIRST_ROW) * CELL_H, 18);
+    grid.lineStyle(1, 0xb88550, 0.34);
+    for (let col = 1; col < ARENA_COLS; col++) grid.lineBetween(BOARD_X + col * CELL_W, BOARD_Y, BOARD_X + col * CELL_W, BOARD_Y + BOARD_H);
+    for (let row = 1; row < ARENA_ROWS; row++) grid.lineBetween(BOARD_X, BOARD_Y + row * CELL_H, BOARD_X + BOARD_W, BOARD_Y + row * CELL_H);
+    grid.lineStyle(2, 0x9c7447, 0.45).strokeRoundedRect(BOARD_X, BOARD_Y, BOARD_W, BOARD_H, 18);
 
     for (let row = 0; row < ARENA_ROWS; row++) {
       for (let col = 0; col < ARENA_COLS; col++) {
@@ -220,16 +240,16 @@ export class ArenaScene extends Phaser.Scene {
         const x = BOARD_X + col * CELL_W;
         const y = BOARD_Y + row * CELL_H;
         const hit = this.add
-          .rectangle(x + CELL_W / 2, y + CELL_H / 2, CELL_W - 7, CELL_H - 5, isPlayerSide ? 0x4aa7ed : 0xcf574c, 0.015)
+          .rectangle(x + CELL_W / 2, y + CELL_H / 2, CELL_W - 10, CELL_H - 8, isPlayerSide ? 0x38a9d6 : 0xe27664, 0.008)
           .setDepth(8)
           .setInteractive({ useHandCursor: isPlayerSide });
         hit.setData('cell', { col, row } satisfies ArenaCell);
         hit.on('pointerover', () => {
           if (isPlayerSide && this.state.phase === 'planning') {
-            hit.setFillStyle(0x59baf7, 0.14).setStrokeStyle(2, 0x9ddcff, 0.92);
+            hit.setFillStyle(0x6fc9e8, 0.24).setStrokeStyle(3, 0x258fbd, 0.9);
           }
         });
-        hit.on('pointerout', () => hit.setFillStyle(isPlayerSide ? 0x4aa7ed : 0xcf574c, 0.015).setStrokeStyle());
+        hit.on('pointerout', () => hit.setFillStyle(isPlayerSide ? 0x38a9d6 : 0xe27664, 0.008).setStrokeStyle());
         hit.on('pointerdown', () => {
           if (isPlayerSide) this.placeSelectedAt({ col, row });
         });
@@ -237,77 +257,56 @@ export class ArenaScene extends Phaser.Scene {
       }
     }
 
-    this.add.rectangle(BOARD_X, BOARD_Y + PLAYER_FIRST_ROW * CELL_H - 2, BOARD_W, 3, 0xd4ad5b, 0.78).setOrigin(0).setDepth(9);
-    arenaText(this, BOARD_X + 10, BOARD_Y + 6, 'ENEMY GROUND', 9, '#d9988f').setFontStyle('bold').setLetterSpacing(1).setShadow(0, 2, '#000000', 3).setDepth(10);
-    arenaText(this, BOARD_X + 10, BOARD_Y + PLAYER_FIRST_ROW * CELL_H + 6, 'YOUR FORMATION', 9, '#8fcff4').setFontStyle('bold').setLetterSpacing(1).setShadow(0, 2, '#000000', 3).setDepth(10);
-  }
-
-  private drawCore(): void {
-    const x = ART_X + ART_W / 2;
-    const y = 548;
-    this.coreGlow = this.add.ellipse(x, y - 5, 178, 52, 0x42bfff, 0.2).setDepth(12);
-    const graphics = this.add.graphics().setDepth(8);
-    graphics.fillStyle(0x080b0e, 0.96).fillCircle(x, y, 50);
-    graphics.lineStyle(8, 0x302619, 1).strokeCircle(x, y, 46);
-    graphics.lineStyle(3, 0xb98638, 0.95).strokeCircle(x, y, 42);
-    graphics.lineStyle(1, 0xecd17e, 0.65).strokeCircle(x, y, 34);
-    graphics.fillStyle(0x112b3c, 1);
-    graphics.beginPath().moveTo(x, y - 74).lineTo(x + 28, y - 34).lineTo(x + 13, y + 4).lineTo(x - 13, y + 4).lineTo(x - 28, y - 34).closePath().fillPath();
-    graphics.lineStyle(2, 0xbbeeff, 0.95);
-    graphics.beginPath().moveTo(x, y - 74).lineTo(x + 28, y - 34).lineTo(x + 13, y + 4).lineTo(x - 13, y + 4).lineTo(x - 28, y - 34).closePath().strokePath();
-    graphics.fillStyle(0x45c9ff, 0.9).fillTriangle(x, y - 70, x, y - 2, x - 24, y - 34);
-    graphics.fillStyle(0x166ca9, 0.94).fillTriangle(x, y - 70, x + 25, y - 34, x, y - 2);
-    graphics.fillStyle(0xb8f2ff, 0.75).fillTriangle(x - 3, y - 63, x - 3, y - 12, x - 16, y - 35);
-    arenaTitle(this, x, y + 20, 'CORE', 12, '#d8f4ff').setOrigin(0.5).setDepth(14);
-    this.tweens.add({ targets: this.coreGlow, alpha: 0.36, scaleX: 1.08, scaleY: 1.12, duration: 1250, yoyo: true, repeat: -1, ease: 'Sine.InOut' });
+    this.add.rectangle(BOARD_X, BOARD_Y + PLAYER_FIRST_ROW * CELL_H - 2, BOARD_W, 4, 0xd9a441, 0.72).setOrigin(0).setDepth(9);
+    arenaText(this, BOARD_X + 12, BOARD_Y + 8, 'RIVAL SIDE', 10, '#9c493e').setFontStyle('bold').setLetterSpacing(1).setShadow(0, 1, '#ffffff', 2).setDepth(10);
+    arenaText(this, BOARD_X + 12, BOARD_Y + PLAYER_FIRST_ROW * CELL_H + 8, 'YOUR FORMATION', 10, '#267ca4').setFontStyle('bold').setLetterSpacing(1).setShadow(0, 1, '#ffffff', 2).setDepth(10);
   }
 
   private drawRightPanel(): void {
-    const x = SIDEBAR_X;
     const encounter = arenaEncounter(this.run.fightIndex);
-    arenaPanel(this, x, ART_Y, SIDEBAR_W, 638, ARENA_COLORS.brassLight);
-    this.add.rectangle(x + 12, 84, SIDEBAR_W - 24, 48, encounter.boss ? 0x601f1b : 0x4a211c, 0.95)
-      .setOrigin(0)
-      .setStrokeStyle(1, 0xc16f42, 0.75);
-    arenaTitle(this, x + SIDEBAR_W / 2, 91, encounter.boss ? 'BOSS FIGHT' : encounter.name, 19, encounter.boss ? '#ffad86' : ARENA_COLORS.gold).setOrigin(0.5, 0);
-    arenaText(this, x + SIDEBAR_W / 2, 116, `${encounter.reward} GOLD REWARD`, 9, '#d9b986').setOrigin(0.5).setFontStyle('bold').setLetterSpacing(1);
-
-    arenaText(this, x + 18, 145, 'ENEMY WARBAND', 10, '#d98f83').setFontStyle('bold').setLetterSpacing(1);
-    this.add.rectangle(x + 14, 164, SIDEBAR_W - 28, 67, 0x090b0e, 0.82)
-      .setOrigin(0)
-      .setStrokeStyle(1, 0x713a30, 0.65);
-    const preview = encounter.enemyPlacements.slice(0, 5);
-    preview.forEach((placement, index) => {
-      const px = x + 42 + index * 68;
-      this.add.ellipse(px, 213, 54, 16, 0x000000, 0.55);
-      this.addUnitPortrait(placement.definitionId, px, 194, 60);
-    });
+    arenaPanel(this, 830, 76, 430, 42, encounter.boss ? 0xe27664 : 0xf0c45d, 0.94);
+    arenaText(this, 846, 88, 'RIVAL PLAN', 9, ARENA_COLORS.muted).setFontStyle('bold').setLetterSpacing(1);
     encounter.summary.forEach((entry, index) => {
-      const chipX = x + 14 + index * 112;
-      this.add.rectangle(chipX, 238, 106, 28, entry.warning ? 0x3c2515 : 0x241a18, 0.98)
+      const chipX = 930 + index * 106;
+      this.add.rectangle(chipX, 84, 98, 26, entry.warning ? 0xffe2b5 : 0xfff4e4, 0.96)
         .setOrigin(0)
-        .setStrokeStyle(1, entry.warning ? 0xb97834 : 0x754238, 0.8);
-      arenaText(this, chipX + 53, 252, entry.label, 8, entry.warning ? '#f0bd7b' : '#e9b0a8')
+        .setStrokeStyle(1, entry.warning ? 0xd49132 : 0xd6a092, 0.8);
+      arenaText(this, chipX + 49, 97, entry.label, 8, entry.warning ? '#8a5510' : '#884d45')
         .setOrigin(0.5)
         .setFontStyle('bold');
     });
 
-    arenaButton(this, x + 94, 289, 160, 34, 'SHOP', () => {
+    this.shopButton = arenaButton(this, 974, 681, 174, 48, 'OPEN SHOP', () => {
       if (this.state.phase !== 'planning') return;
       this.sidebarMode = 'shop';
+      this.drawerOpen = !this.drawerOpen || !this.detailPanel?.visible;
       this.refreshSidebar();
-    }, 0xe2b861);
-    arenaButton(this, x + 270, 289, 160, 34, 'FIGHTER', () => {
-      if (this.state.phase !== 'planning') return;
-      this.sidebarMode = 'fighter';
-      this.refreshSidebar();
-    }, 0x79a8e8);
-    this.detailPanel = this.add.container(x + 14, 314);
-    this.sidebarContent = this.detailPanel;
-    this.refreshSidebar();
+    }, 0x4b9bc1);
 
-    this.startButton = arenaButton(this, x + SIDEBAR_W / 2, 678, SIDEBAR_W - 30, 50, 'START BATTLE', () => this.beginBattle(), 0xe2b861);
+    const firstRecruitNeeded = this.run.fightIndex === 0
+      && deployedFighters(this.run).length < fieldLimitForFight(this.run.fightIndex);
+    this.startButton = arenaButton(
+      this,
+      1167,
+      681,
+      194,
+      48,
+      firstRecruitNeeded ? 'RECRUIT 1 MORE' : 'START BATTLE',
+      () => {
+        if (firstRecruitNeeded) {
+          this.sidebarMode = 'shop';
+          this.drawerOpen = true;
+          this.refreshSidebar();
+          return;
+        }
+        this.beginBattle();
+      },
+      0xe0a83c
+    );
     this.startButton.setEnabled(deployedFighters(this.run).length > 0);
+
+    this.detailPanel = this.add.container(DRAWER_X, DRAWER_Y).setDepth(1000).setVisible(false);
+    this.refreshSidebar();
   }
 
   private addUnitPortrait(definitionId: string, x: number, y: number, size: number): Phaser.GameObjects.Sprite {
@@ -323,44 +322,58 @@ export class ArenaScene extends Phaser.Scene {
   }
 
   private drawRoster(): void {
-    arenaPanel(this, 8, ROSTER_Y, ART_W, 112, 0x9d783d);
-    arenaTitle(this, 22, ROSTER_Y + 7, 'ROSTER', 13);
-    arenaText(
-      this,
-      126,
-      ROSTER_Y + 10,
-      `${deployedFighters(this.run).length}/${MAX_DEPLOYED_FIGHTERS} FIELD  •  ${reserveFighters(this.run).length}/${MAX_RESERVE_FIGHTERS} RESERVE`,
-      9,
-      '#b7c9cf'
-    ).setFontStyle('bold').setLetterSpacing(1);
-    this.run.fighters.forEach((fighter, index) => {
+    arenaText(this, 640, 594, `${deployedFighters(this.run).length}/${fieldLimitForFight(this.run.fightIndex)} FIELD  •  ${reserveFighters(this.run).length}/${MAX_RESERVE_FIGHTERS} RESERVE`, 10, ARENA_COLORS.text)
+      .setOrigin(0.5)
+      .setFontStyle('bold')
+      .setLetterSpacing(1)
+      .setShadow(0, 1, '#ffffff', 2);
+    arenaText(this, 640, 613, 'RESERVE BENCH', 9, ARENA_COLORS.muted).setOrigin(0.5).setFontStyle('bold').setLetterSpacing(2);
+
+    const reserves = reserveFighters(this.run);
+    const slotXs = [512, 640, 768];
+    slotXs.forEach((x, index) => {
+      const fighter = reserves[index];
+      const selected = fighter?.id === this.selectedFighterId;
+      this.add.circle(x, RESERVE_Y, 37, selected ? 0xfff0b5 : 0xffffff, fighter ? 0.86 : 0.28)
+        .setStrokeStyle(selected ? 4 : 2, selected ? 0xd79b2e : 0x7fb9c9, selected ? 1 : 0.64)
+        .setDepth(14);
+      if (!fighter) {
+        arenaText(this, x, RESERVE_Y, `${index + 1}`, 12, '#78909b').setOrigin(0.5).setDepth(15);
+        return;
+      }
       const definition = arenaUnitById(fighter.definitionId);
-      const x = 20 + index * 108;
-      const y = ROSTER_Y + 30;
-      const reserve = fighter.cell === null;
-      const selected = fighter.id === this.selectedFighterId;
-      const card = this.add.rectangle(x, y, 100, 72, reserve ? 0x211922 : 0x111c22, 1).setOrigin(0)
-        .setStrokeStyle(selected ? 3 : 1, selected ? 0xf1cc76 : reserve ? 0x8d638d : 0x477a9c, selected ? 1 : 0.9);
-      card.setInteractive({ useHandCursor: true });
-      card.on('pointerdown', () => {
-        this.selectFighter(fighter.id);
-      });
-      this.add.rectangle(x + 2, y + 51, 96, 19, 0x07090b, 0.9).setOrigin(0);
-      const portrait = this.addUnitPortrait(fighter.definitionId, x + 50, y + 31, 64);
+      const portrait = this.addUnitPortrait(fighter.definitionId, x, RESERVE_Y - 4, 72).setDepth(15);
       portrait.setInteractive({ useHandCursor: true }).on('pointerdown', () => this.selectFighter(fighter.id));
-      arenaText(this, x + 50, y + 55, definition.name.toUpperCase(), 8, ARENA_COLORS.text).setOrigin(0.5).setFontStyle('bold');
-      this.add.rectangle(x + 76, y + 5, 20, 14, reserve ? 0x633a68 : 0x235a4b, 0.95).setOrigin(0);
-      arenaText(this, x + 86, y + 12, reserve ? 'R' : 'F', 8, reserve ? '#e0b4e4' : '#9ff0c9').setOrigin(0.5).setFontStyle('bold');
+      arenaText(this, x, RESERVE_Y + 35, definition.name.toUpperCase(), 8, ARENA_COLORS.text).setOrigin(0.5).setFontStyle('bold').setDepth(16);
       if (fighter.tier === 1) {
-        arenaText(this, x + 6, y + 4, '★', 13, ARENA_COLORS.gold).setFontStyle('bold');
+        arenaText(this, x - 28, RESERVE_Y - 30, '★', 14, ARENA_COLORS.gold).setFontStyle('bold').setDepth(16);
       }
     });
   }
 
   private refreshSidebar(): void {
-    if (!this.sidebarContent) return;
-    this.sidebarContent.removeAll(true);
-    if (this.state.phase !== 'planning') return;
+    if (!this.detailPanel) return;
+    this.detailPanel.removeAll(true);
+    for (const view of this.views.values()) {
+      const coveredByDrawer = this.drawerOpen && view.root.x >= DRAWER_X - 46;
+      view.root.setVisible(!view.deathStarted && !coveredByDrawer);
+    }
+    if (this.state.phase !== 'planning' || !this.drawerOpen) {
+      this.detailPanel.setVisible(false);
+      this.sidebarContent = undefined;
+      return;
+    }
+    this.detailPanel.setVisible(true);
+    const blocker = this.add.rectangle(DRAWER_W / 2, DRAWER_H / 2, DRAWER_W, DRAWER_H, 0xffffff, 0.001).setInteractive();
+    const frame = arenaPanel(this, 0, 0, DRAWER_W, DRAWER_H, this.sidebarMode === 'shop' ? 0xe0a83c : 0x4b9bc1, 0.985);
+    const heading = arenaTitle(this, 22, 18, this.sidebarMode === 'shop' ? 'RECRUIT FIGHTERS' : 'FIGHTER DETAILS', 18, ARENA_COLORS.text);
+    const close = arenaButton(this, DRAWER_W - 34, 27, 46, 34, '×', () => {
+      this.drawerOpen = false;
+      this.refreshSidebar();
+    }, 0xe27664);
+    const body = this.add.container(34, 64);
+    this.detailPanel.add([blocker, frame, heading, close.root, body]);
+    this.sidebarContent = body;
     if (this.sidebarMode === 'shop') this.renderShopSidebar();
     else this.renderFighterSidebar();
   }
@@ -368,18 +381,28 @@ export class ArenaScene extends Phaser.Scene {
   private renderShopSidebar(): void {
     if (!this.sidebarContent) return;
     const nodes: Phaser.GameObjects.GameObject[] = [];
-    nodes.push(arenaText(this, 0, 0, 'CHOOSE YOUR REINFORCEMENT', 10, ARENA_COLORS.muted).setFontStyle('bold').setLetterSpacing(1));
+    const fieldSlotsOpen = Math.max(0, fieldLimitForFight(this.run.fightIndex) - deployedFighters(this.run).length);
+    nodes.push(arenaText(
+      this,
+      0,
+      0,
+      fieldSlotsOpen > 0
+        ? `CHOOSE A REINFORCEMENT  |  ${fieldSlotsOpen} FIELD SLOT${fieldSlotsOpen === 1 ? '' : 'S'} OPEN`
+        : 'TEAM CAP REACHED  |  BUILD YOUR BENCH',
+      10,
+      ARENA_COLORS.muted
+    ).setFontStyle('bold').setLetterSpacing(1));
     this.run.shopOffers.forEach((offer, index) => {
       const definition = arenaUnitById(offer.definitionId);
       const x = index * 110;
-      const frame = arenaPanel(this, x, 23, 104, 184, definition.role === 'support' ? 0x508f69 : definition.role === 'aoe' ? 0xa36335 : 0x637da0, 0.98);
+      const frame = arenaPanel(this, x, 23, 104, 184, definition.role === 'support' ? 0x55a879 : definition.role === 'aoe' ? 0xe28a52 : 0x4b9bc1, 0.98);
       const portrait = this.addUnitPortrait(offer.definitionId, x + 52, 68, 76);
       const title = arenaText(this, x + 52, 108, definition.name.toUpperCase(), 10, ARENA_COLORS.text)
         .setOrigin(0.5, 0)
         .setAlign('center')
         .setWordWrapWidth(94)
         .setFontStyle('bold');
-      const meta = arenaText(this, x + 52, 137, definition.role.toUpperCase(), 8, '#9ab6c1').setOrigin(0.5).setFontStyle('bold');
+      const meta = arenaText(this, x + 52, 137, definition.role.toUpperCase(), 8, '#54717d').setOrigin(0.5).setFontStyle('bold');
       const cost = arenaTitle(this, x + 52, 147, `${offer.cost} GOLD`, 12, ARENA_COLORS.gold).setOrigin(0.5, 0);
       const buy = arenaButton(this, x + 52, 187, 84, 28, 'RECRUIT', () => {
         const run = cloneArenaRun(this.run);
@@ -394,14 +417,17 @@ export class ArenaScene extends Phaser.Scene {
     const reroll = arenaButton(this, 168, 231, 330, 34, `REROLL  •  ${REROLL_COST} GOLD`, () => {
       const run = cloneArenaRun(this.run);
       if (rerollArenaShop(run)) this.scene.restart({ run });
-    }, 0x79a8e8);
+    }, 0x4b9bc1);
     reroll.setEnabled(this.run.rerollsLeft > 0 && this.run.gold >= REROLL_COST);
     nodes.push(reroll.root);
+    const nextCap = fieldLimitForFight(this.run.fightIndex + 1);
     nodes.push(arenaText(
       this,
       0,
       254,
-      this.run.rerollsLeft > 0 ? 'One reroll remains this fight.' : 'Reroll used for this fight.',
+      arenaEncounter(this.run.fightIndex).boss
+        ? 'Final fight: shape the strongest five-fighter team.'
+        : `${this.run.rerollsLeft > 0 ? 'One reroll remains.' : 'Reroll used.'} Win to unlock team cap ${nextCap}.`,
       10,
       ARENA_COLORS.muted
     ));
@@ -417,25 +443,25 @@ export class ArenaScene extends Phaser.Scene {
     const unit = this.state.units.find((candidate) => candidate.rosterId === fighter.id);
     const hp = unit?.maxHp ?? definition.hp * (fighter.tier === 1 ? upgrade?.hpMultiplier ?? 1 : 1);
     const damage = unit?.combat.damage ?? definition.damage * (fighter.tier === 1 ? upgrade?.damageMultiplier ?? 1 : 1);
-    const portraitFrame = arenaPanel(this, 0, 20, 98, 98, fighter.tier === 1 ? ARENA_COLORS.brassLight : 0x52799a, 0.98);
+    const portraitFrame = arenaPanel(this, 0, 20, 98, 98, fighter.tier === 1 ? ARENA_COLORS.brassLight : 0x4b9bc1, 0.98);
     const portrait = this.addUnitPortrait(fighter.definitionId, 49, 69, 88);
     const nodes: Phaser.GameObjects.GameObject[] = [portraitFrame, portrait];
     nodes.push(arenaTitle(this, 112, 22, definition.name.toUpperCase(), 18, ARENA_COLORS.text).setWordWrapWidth(210));
-    nodes.push(arenaText(this, 112, 49, `${definition.role.toUpperCase()}  •  ${fighter.tier === 1 ? 'TIER II' : 'TIER I'}`, 10, fighter.tier === 1 ? ARENA_COLORS.gold : '#86c9ff').setFontStyle('bold'));
-    nodes.push(arenaText(this, 112, 73, definition.blurb, 11, '#d7c49e').setFontStyle('italic').setWordWrapWidth(214));
+    nodes.push(arenaText(this, 112, 49, `${definition.role.toUpperCase()}  •  ${fighter.tier === 1 ? 'TIER II' : 'TIER I'}`, 10, fighter.tier === 1 ? ARENA_COLORS.gold : '#267ca4').setFontStyle('bold'));
+    nodes.push(arenaText(this, 112, 73, definition.blurb, 11, ARENA_COLORS.muted).setFontStyle('italic').setWordWrapWidth(214));
     [
       { label: 'HP', value: Math.round(hp) },
       { label: 'DMG', value: Math.round(damage) },
       { label: 'RANGE', value: definition.range.toFixed(1) }
     ].forEach((stat, index) => {
       const x = index * 112;
-      const box = this.add.rectangle(x, 130, 104, 34, 0x0b1014, 0.94).setOrigin(0).setStrokeStyle(1, 0x4d6572, 0.7);
+      const box = this.add.rectangle(x, 130, 104, 34, 0xf2f8f3, 0.96).setOrigin(0).setStrokeStyle(1, 0x91b2b4, 0.7);
       nodes.push(box);
       nodes.push(arenaText(this, x + 8, 137, stat.label, 8, ARENA_COLORS.muted).setFontStyle('bold'));
-      nodes.push(arenaTitle(this, x + 96, 134, `${stat.value}`, 13, '#d7ebf4').setOrigin(1, 0));
+      nodes.push(arenaTitle(this, x + 96, 134, `${stat.value}`, 13, ARENA_COLORS.text).setOrigin(1, 0));
     });
     if (upgrade) {
-      const box = this.add.rectangle(0, 174, 328, 66, 0x17130f, 0.98).setOrigin(0).setStrokeStyle(1, fighter.tier === 1 ? 0xd3b85f : 0x76613d, 0.85);
+      const box = this.add.rectangle(0, 174, 328, 66, 0xfff3d4, 0.98).setOrigin(0).setStrokeStyle(1, fighter.tier === 1 ? 0xd3a23b : 0xc7a66c, 0.85);
       nodes.push(box);
       nodes.push(arenaTitle(this, 12, 182, fighter.tier === 1 ? `${upgrade.name} • OWNED` : upgrade.name, 13, fighter.tier === 1 ? ARENA_COLORS.gold : ARENA_COLORS.text));
       nodes.push(arenaText(this, 12, 207, upgrade.blurb, 10, ARENA_COLORS.muted));
@@ -443,7 +469,7 @@ export class ArenaScene extends Phaser.Scene {
         const upgradeButton = arenaButton(this, 80, 263, 152, 34, `UPGRADE • ${upgrade.cost}`, () => {
           const run = cloneArenaRun(this.run);
           if (upgradeArenaFighter(run, fighter.id)) this.scene.restart({ run });
-        }, 0xe2b861);
+        }, 0xe0a83c);
         upgradeButton.setEnabled(this.run.gold >= upgrade.cost);
         nodes.push(upgradeButton.root);
       }
@@ -452,11 +478,11 @@ export class ArenaScene extends Phaser.Scene {
       const bench = arenaButton(this, 248, 263, 152, 34, 'TO RESERVE', () => {
         const run = cloneArenaRun(this.run);
         if (benchArenaFighter(run, fighter.id)) this.scene.restart({ run });
-      }, 0xa479c1);
+      }, 0x6e9dc2);
       bench.setEnabled(reserveFighters(this.run).length < MAX_RESERVE_FIGHTERS && deployedFighters(this.run).length > 1);
       nodes.push(bench.root);
     } else {
-      nodes.push(arenaText(this, 168, 250, `SELECTED RESERVE\n${TOUCH_INPUT ? 'Tap' : 'Click'} an empty blue cell.`, 10, '#d6a9d6').setAlign('center'));
+      nodes.push(arenaText(this, 168, 250, `SELECTED RESERVE\n${TOUCH_INPUT ? 'Tap' : 'Click'} an empty blue cell.`, 10, '#267ca4').setAlign('center'));
     }
     nodes.push(arenaText(this, 0, 292, this.unitAdvice(definition.id), 10, ARENA_COLORS.muted).setWordWrapWidth(328));
     this.sidebarContent.add(nodes);
@@ -465,7 +491,7 @@ export class ArenaScene extends Phaser.Scene {
   private createUnitView(unit: ArenaUnitState): void {
     const definition = arenaUnitById(unit.definitionId);
     const teamColor = unit.team === 'player' ? ARENA_COLORS.player : ARENA_COLORS.enemy;
-    const shadow = this.add.ellipse(0, 19, definition.role === 'tank' ? 62 : 52, 17, 0x000000, 0.48);
+    const shadow = this.add.ellipse(0, 19, definition.role === 'tank' ? 62 : 52, 17, 0x405b55, 0.24);
     const selection = this.add.ellipse(0, 17, definition.role === 'tank' ? 68 : 58, 25, 0xffdc78, 0.1)
       .setStrokeStyle(2, 0xffdc78, 0.9)
       .setVisible(false);
@@ -482,10 +508,10 @@ export class ArenaScene extends Phaser.Scene {
       sprite.setFrame(fighterSheetFrame(FIGHTER_SHEETS[definition.assetId], 'idle'));
     }
     const hpBar = this.add.graphics();
-    const name = arenaText(this, 0, 35, definition.name, 9, unit.team === 'player' ? '#d9efff' : '#ffd9dc')
+    const name = arenaText(this, 0, 35, definition.name, 10, unit.team === 'player' ? '#174f70' : '#7e3835')
       .setOrigin(0.5)
       .setFontStyle('bold')
-      .setShadow(0, 1, '#000000', 2);
+      .setShadow(0, 1, '#ffffff', 2);
     const root = this.add.container(0, 0, [shadow, selection, ring, sprite, hpBar, name]);
     root.setSize(CELL_W * 0.78, CELL_H * 1.05);
     const screen = this.logicalToScreen(unit.pos);
@@ -610,7 +636,10 @@ export class ArenaScene extends Phaser.Scene {
       const unit = this.state.units.find((candidate) => candidate.id === id);
       view.selection.setVisible(unit?.rosterId === fighterId);
     }
-    if (showSidebar) this.sidebarMode = 'fighter';
+    if (showSidebar) {
+      this.sidebarMode = 'fighter';
+      this.drawerOpen = true;
+    }
     this.refreshSidebar();
   }
 
@@ -626,8 +655,15 @@ export class ArenaScene extends Phaser.Scene {
 
   private beginBattle(): void {
     if (this.state.phase !== 'planning') return;
+    if (this.run.fightIndex === 0 && deployedFighters(this.run).length < fieldLimitForFight(this.run.fightIndex)) {
+      this.sidebarMode = 'shop';
+      this.drawerOpen = true;
+      this.refreshSidebar();
+      return;
+    }
     startArenaBattle(this.state);
     this.startButton.setEnabled(false);
+    this.shopButton.setEnabled(false);
     this.startButton.setLabel('BATTLE IN PROGRESS');
     this.phaseLabel.setText('LIVE COMBAT');
     for (const [id, view] of this.views) {
@@ -635,24 +671,18 @@ export class ArenaScene extends Phaser.Scene {
       const unit = this.state.units.find((candidate) => candidate.id === id);
       if (unit?.team === 'player') this.input.setDraggable(view.root, false);
     }
-    this.detailPanel?.removeAll(true);
-    if (this.detailPanel) {
-      const battlePanel = arenaPanel(this, 0, 16, 336, 226, 0x8a6736, 0.95);
-      const title = arenaTitle(this, 168, 42, 'FORMATION LOCKED', 18).setOrigin(0.5);
-      const body = arenaText(this, 168, 82, 'Your fighters now act on their own.', 12, ARENA_COLORS.muted).setOrigin(0.5).setAlign('center');
-      const pulse = this.add.circle(168, 144, 34, 0x2477a7, 0.25).setStrokeStyle(2, 0x72cfff, 0.8);
-      const icon = arenaTitle(this, 168, 143, '⚔', 26, '#d8efff').setOrigin(0.5);
-      const hint = arenaText(
-        this,
-        168,
-        198,
-        TOUCH_INPUT ? 'WATCH THE CORE • TAP SPEED TO ACCELERATE' : 'WATCH THE CORE • 1 / 2 CHANGE SPEED',
-        9,
-        '#b7c9cf'
-      ).setOrigin(0.5).setFontStyle('bold');
-      this.detailPanel.add([battlePanel, title, body, pulse, icon, hint]);
-      this.tweens.add({ targets: pulse, scale: 1.16, alpha: 0.1, duration: 850, yoyo: true, repeat: -1 });
-    }
+    this.drawerOpen = false;
+    this.refreshSidebar();
+    const toastFrame = arenaPanel(this, 494, 76, 292, 48, 0x4b9bc1, 0.96).setDepth(290);
+    const toast = arenaText(
+      this,
+      640,
+      100,
+      TOUCH_INPUT ? 'FORMATION LOCKED  •  TAP SPEED TO ACCELERATE' : 'FORMATION LOCKED  •  1 / 2 CHANGE SPEED',
+      11,
+      ARENA_COLORS.text
+    ).setOrigin(0.5).setFontStyle('bold').setDepth(291);
+    this.tweens.add({ targets: [toastFrame, toast], alpha: 0, delay: 1500, duration: 500, onComplete: () => { toastFrame.destroy(); toast.destroy(); } });
     sfx.play('waveStart');
   }
 
@@ -751,9 +781,6 @@ export class ArenaScene extends Phaser.Scene {
         case 'death':
           this.playDeath(event.unitId);
           break;
-        case 'core-hit':
-          this.playCoreHit(event.at, event.damage);
-          break;
         case 'battle-ended':
           this.showResult(event.outcome);
           break;
@@ -818,33 +845,21 @@ export class ArenaScene extends Phaser.Scene {
     sfx.play('heal');
   }
 
-  private playCoreHit(at: ArenaPoint, damage: number): void {
-    const screen = this.logicalToScreen(at);
-    const flash = this.add.circle(screen.x, screen.y, 36, 0xff626b, 0.48).setDepth(280);
-    const text = arenaText(this, screen.x, screen.y - 26, `-${damage} CORE`, 15, ARENA_COLORS.danger)
-      .setOrigin(0.5)
-      .setDepth(282)
-      .setFontStyle('bold');
-    this.tweens.add({ targets: flash, scale: 2, alpha: 0, duration: 280, onComplete: () => flash.destroy() });
-    this.tweens.add({ targets: text, y: text.y - 22, alpha: 0, duration: 650, onComplete: () => text.destroy() });
-    this.tweens.add({ targets: this.coreGlow, alpha: 0.65, duration: 70, yoyo: true });
-    sfx.play('leak');
-  }
-
   private showResult(outcome: 'victory' | 'defeat'): void {
     if (this.resultOverlay) return;
     const won = outcome === 'victory';
     const encounter = arenaEncounter(this.run.fightIndex);
     const runComplete = won && encounter.boss;
-    this.phaseLabel.setText(runComplete ? 'RUN COMPLETE' : won ? 'FIGHT CLEARED' : 'CORE LOST');
+    const nextTeamCap = fieldLimitForFight(this.run.fightIndex + 1);
+    this.phaseLabel.setText(runComplete ? 'RUN COMPLETE' : won ? 'FIGHT CLEARED' : 'TEAM DEFEATED');
     this.startButton.setLabel(runComplete ? 'BOSS DEFEATED' : won ? 'VICTORY' : 'DEFEAT');
     sfx.play(won ? 'victory' : 'defeat');
 
-    const shade = this.add.rectangle(0, 0, 1280, 720, 0x03050a, 0.66).setOrigin(0).setInteractive();
+    const shade = this.add.rectangle(0, 0, 1280, 720, 0x24434c, 0.46).setOrigin(0).setInteractive();
     const panel = arenaPanel(this, -270, -155, 540, 310, won ? 0x67b98f : 0xc75950, 1);
     const crestGlow = this.add.circle(0, -116, 30, won ? 0x2d8065 : 0x8c302e, 0.22).setStrokeStyle(2, won ? 0x7dd7ae : 0xe27a70, 0.75);
     const crest = arenaTitle(this, 0, -116, won ? '★' : '◆', 24, won ? '#a6f2cf' : '#ffaaa2').setOrigin(0.5);
-    const title = arenaTitle(this, 0, -78, runComplete ? 'THE TYRANT FELL' : won ? 'THE LINE HELD' : 'THE CORE FELL', 29, won ? ARENA_COLORS.ok : ARENA_COLORS.danger)
+    const title = arenaTitle(this, 0, -78, runComplete ? 'THE TYRANT FELL' : won ? 'THE RIVALS FELL' : 'YOUR TEAM FELL', 29, won ? ARENA_COLORS.ok : ARENA_COLORS.danger)
       .setOrigin(0.5)
       .setFontStyle('bold');
     const body = arenaText(
@@ -854,8 +869,8 @@ export class ArenaScene extends Phaser.Scene {
       runComplete
         ? `Four fights cleared. ${this.run.fighters.length} fighters made the final roster.`
         : won
-          ? `Fight ${this.run.fightIndex + 1} cleared in ${this.state.time.toFixed(1)}s. Claim ${encounter.reward} gold and prepare the next formation.`
-          : 'Same roster, same shop state. Reposition the formation and try again.',
+          ? `Fight ${this.run.fightIndex + 1} cleared in ${this.state.time.toFixed(1)}s. Gain ${encounter.reward} gold and unlock team cap ${nextTeamCap}.`
+          : 'Your team was eliminated. Reposition the formation and try again.',
       16,
       ARENA_COLORS.text
     ).setOrigin(0.5).setAlign('center').setWordWrapWidth(450);
@@ -867,7 +882,7 @@ export class ArenaScene extends Phaser.Scene {
       }, 0xe0b65d);
       this.resultOverlay.add(restart.root);
     } else if (won) {
-      const next = arenaButton(this, 0, 76, 300, 56, `CONTINUE  +${encounter.reward} GOLD`, () => {
+      const next = arenaButton(this, 0, 76, 340, 56, `CONTINUE  +${encounter.reward}G  |  CAP ${nextTeamCap}`, () => {
         const run = cloneArenaRun(this.run);
         if (advanceArenaRun(run)) this.scene.restart({ run });
       }, 0xe0b65d);
@@ -884,10 +899,6 @@ export class ArenaScene extends Phaser.Scene {
   }
 
   private updateHud(): void {
-    const hpRatio = Phaser.Math.Clamp(this.state.coreHp / this.state.coreMaxHp, 0, 1);
-    this.coreLabel.setText(`CORE ${Math.ceil(this.state.coreHp)} / ${this.state.coreMaxHp}`);
-    this.coreFill.displayWidth = 182 * hpRatio;
-    this.coreFill.setFillStyle(hpRatio > 0.5 ? 0x51b9d8 : hpRatio > 0.25 ? 0xe0b85c : 0xe35e68);
     this.goldLabel.setText(`${this.run.gold}`);
     if (this.state.phase === 'planning') {
       this.timerLabel.setText('PLAN YOUR FORMATION');
