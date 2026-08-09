@@ -55,13 +55,15 @@ const TOUCH_INPUT = (window.matchMedia?.('(pointer: coarse)').matches ?? false)
   || Math.min(window.innerWidth, window.innerHeight) <= 600;
 const SHORT_EDGE = Math.min(window.innerWidth, window.innerHeight);
 const LONG_EDGE = Math.max(window.innerWidth, window.innerHeight);
-const GAME_HEIGHT = TOUCH_INPUT
-  ? Math.max(593, Math.min(720, Math.round(1280 * SHORT_EDGE / LONG_EDGE)))
-  : 720;
+const GAME_HEIGHT = Math.max(
+  TOUCH_INPUT ? 593 : 640,
+  Math.min(720, Math.round(1280 * SHORT_EDGE / LONG_EDGE))
+);
+const RENDER_SCALE = 2;
 const ART_X = TOUCH_INPUT ? -233 : -80;
 const ART_W = TOUCH_INPUT ? 1680 : 1440;
 const ART_H = TOUCH_INPUT ? 946 : 810;
-const ART_Y = TOUCH_INPUT ? Math.round((GAME_HEIGHT - ART_H) / 2) : -45;
+const ART_Y = Math.round((GAME_HEIGHT - ART_H) / 2);
 const TOP_BAR_Y = 8;
 const BOARD_X = TOUCH_INPUT ? 48 : 180;
 const BOARD_Y = TOUCH_INPUT ? 54 : 120;
@@ -69,16 +71,16 @@ const CELL_W = TOUCH_INPUT ? 160 : 132;
 const CELL_H = TOUCH_INPUT ? 68 : 72;
 const BOARD_W = ARENA_COLS * CELL_W;
 const BOARD_H = ARENA_ROWS * CELL_H;
-const DOCK_Y = TOUCH_INPUT ? GAME_HEIGHT - 104 : 598;
-const DRAWER_X = TOUCH_INPUT ? 28 : 850;
+const DOCK_Y = TOUCH_INPUT ? GAME_HEIGHT - 104 : GAME_HEIGHT - 72;
+const DRAWER_X = TOUCH_INPUT ? 28 : 940;
 const DRAWER_Y = TOUCH_INPUT ? GAME_HEIGHT - 250 : 92;
-const DRAWER_W = TOUCH_INPUT ? 1124 : 410;
-const DRAWER_H = TOUCH_INPUT ? 238 : 386;
+const DRAWER_W = TOUCH_INPUT ? 1124 : 320;
+const DRAWER_H = TOUCH_INPUT ? 238 : 360;
 const DRAWER_SCALE = 1;
-const ROSTER_LABEL_Y = TOUCH_INPUT ? DOCK_Y + 12 : 612;
-const BENCH_LABEL_Y = TOUCH_INPUT ? DOCK_Y + 13 : 631;
-const RESERVE_Y = TOUCH_INPUT ? DOCK_Y + 55 : 662;
-const ACTION_Y = TOUCH_INPUT ? DOCK_Y + 57 : 681;
+const ROSTER_LABEL_Y = TOUCH_INPUT ? DOCK_Y + 12 : DOCK_Y + 9;
+const BENCH_LABEL_Y = TOUCH_INPUT ? DOCK_Y + 13 : DOCK_Y + 31;
+const RESERVE_Y = TOUCH_INPUT ? DOCK_Y + 55 : DOCK_Y + 31;
+const ACTION_Y = TOUCH_INPUT ? DOCK_Y + 57 : DOCK_Y + 31;
 const FIXED_STEP = 1 / 30;
 
 interface UnitView {
@@ -127,6 +129,9 @@ export class ArenaScene extends Phaser.Scene {
   }
 
   create(): void {
+    this.cameras.main
+      .setZoom(RENDER_SCALE)
+      .setScroll(-640, -GAME_HEIGHT / 2);
     this.input.topOnly = true;
     this.state = createArenaBattle(arenaRunPlacements(this.run), this.run.fightIndex);
     this.views.clear();
@@ -163,60 +168,60 @@ export class ArenaScene extends Phaser.Scene {
 
   private drawTopBar(): void {
     const top = TOP_BAR_Y;
-    const panelX = TOUCH_INPUT ? 16 : 8;
-    const panelW = TOUCH_INPUT ? 1128 : 1264;
-    const panelH = TOUCH_INPUT ? 52 : 58;
-    const titleX = TOUCH_INPUT ? 94 : 101;
-    const phaseX = TOUCH_INPUT ? 286 : 350;
-    const rivalX = TOUCH_INPUT ? 458 : 560;
-    const goldIconX = TOUCH_INPUT ? 774 : 918;
-    const goldTextX = TOUCH_INPUT ? 798 : 942;
-    const teamIconX = TOUCH_INPUT ? 888 : 1035;
-    const teamTextX = TOUCH_INPUT ? 912 : 1059;
-    arenaPanel(this, panelX, top, panelW, panelH, ARENA_COLORS.brassLight, 0.96).setDepth(90);
-    const menu = arenaButton(this, TOUCH_INPUT ? 52 : 52, top + panelH / 2, TOUCH_INPUT ? 64 : 76, TOUCH_INPUT ? 34 : 36, 'MENU', () => {
+    const panelH = 46;
+    arenaPanel(this, 16, top, 244, panelH, ARENA_COLORS.brass, 0.88).setDepth(90);
+    arenaPanel(this, 272, top, 516, panelH, ARENA_COLORS.brass, 0.88).setDepth(90);
+    arenaPanel(this, 800, top, 464, panelH, ARENA_COLORS.brass, 0.88).setDepth(90);
+
+    const menu = arenaButton(this, 48, top + panelH / 2, 50, 30, 'MENU', () => {
       window.location.assign('./index.html');
-    }, ARENA_COLORS.player);
+    }, ARENA_COLORS.line);
     menu.root.setDepth(92);
-    arenaTitle(this, titleX, top + (TOUCH_INPUT ? 8 : 7), 'LANE LEGION', TOUCH_INPUT ? 17 : 20, ARENA_COLORS.text).setDepth(92);
-    arenaText(this, titleX + 2, top + (TOUCH_INPUT ? 31 : 35), 'COMPACT ARENA', 8, ARENA_COLORS.muted)
+    arenaTitle(this, 84, top + 7, 'LANE LEGION', TOUCH_INPUT ? 15 : 16, ARENA_COLORS.text).setDepth(92);
+    arenaText(this, 85, top + 27, 'COMPACT ARENA', 7, ARENA_COLORS.muted)
       .setFontStyle('bold')
-      .setLetterSpacing(1.7)
+      .setLetterSpacing(1.4)
       .setDepth(92);
 
-    this.phaseLabel = arenaTitle(this, phaseX, top + 8, `FIGHT ${this.run.fightIndex + 1} / 4`, TOUCH_INPUT ? 16 : 18, ARENA_COLORS.text).setDepth(92);
-    this.timerLabel = arenaText(this, phaseX + 2, top + (TOUCH_INPUT ? 31 : 35), 'BUILD YOUR FORMATION', 9, ARENA_COLORS.muted)
+    this.phaseLabel = arenaTitle(this, 292, top + 6, `FIGHT ${this.run.fightIndex + 1} / 4`, TOUCH_INPUT ? 14 : 15, ARENA_COLORS.text).setDepth(92);
+    this.timerLabel = arenaText(this, 293, top + 27, 'BUILD YOUR FORMATION', 8, ARENA_COLORS.muted)
       .setFontStyle('bold')
-      .setLetterSpacing(0.8)
+      .setLetterSpacing(0.6)
       .setDepth(92);
 
     const encounter = arenaEncounter(this.run.fightIndex);
-    arenaText(this, rivalX, top + 8, encounter.boss ? 'FINAL · BOSS' : 'NEXT RIVAL', 8, encounter.boss ? ARENA_COLORS.danger : ARENA_COLORS.muted)
+    arenaText(this, 486, top + 6, encounter.boss ? 'FINAL · BOSS' : 'NEXT RIVAL', 7, encounter.boss ? ARENA_COLORS.danger : ARENA_COLORS.muted)
       .setFontStyle('bold')
-      .setLetterSpacing(1)
+      .setLetterSpacing(0.9)
       .setDepth(92);
-    arenaTitle(this, rivalX, top + 24, encounter.name, TOUCH_INPUT ? 13 : 15, encounter.boss ? ARENA_COLORS.danger : ARENA_COLORS.text).setDepth(92);
+    arenaTitle(this, 486, top + 20, encounter.name, TOUCH_INPUT ? 12 : 13, encounter.boss ? ARENA_COLORS.danger : ARENA_COLORS.text).setDepth(92);
+    for (let index = 0; index < 4; index++) {
+      const complete = index < this.run.fightIndex;
+      const active = index === this.run.fightIndex;
+      this.add.circle(728 + index * 14, top + panelH / 2, active ? 4 : 3, complete ? 0x79c99d : active ? ARENA_COLORS.goldFill : ARENA_COLORS.line, active ? 1 : 0.58)
+        .setDepth(92);
+    }
 
-    this.add.circle(goldIconX, top + panelH / 2, 14, ARENA_COLORS.goldFill, 1).setStrokeStyle(2, 0x8e672e, 0.9).setDepth(92);
-    arenaText(this, goldIconX, top + panelH / 2 - 1, 'G', 10, '#173039').setOrigin(0.5).setFontStyle('bold').setDepth(93);
-    arenaText(this, goldTextX, top + 8, 'GOLD', 8, ARENA_COLORS.muted).setFontStyle('bold').setDepth(92);
-    this.goldLabel = arenaTitle(this, goldTextX, top + 22, `${this.run.gold}`, 18, ARENA_COLORS.gold).setDepth(92);
+    this.add.circle(828, top + panelH / 2, 12, ARENA_COLORS.goldFill, 1).setDepth(92);
+    arenaText(this, 828, top + panelH / 2 - 1, 'G', 9, '#211d16').setOrigin(0.5).setFontStyle('bold').setDepth(93);
+    arenaText(this, 848, top + 7, 'GOLD', 7, ARENA_COLORS.muted).setFontStyle('bold').setDepth(92);
+    this.goldLabel = arenaTitle(this, 848, top + 19, `${this.run.gold}`, 15, ARENA_COLORS.gold).setDepth(92);
 
-    this.add.circle(teamIconX, top + panelH / 2, 14, ARENA_COLORS.player, 1).setStrokeStyle(2, 0x236b76, 0.9).setDepth(92);
-    arenaText(this, teamIconX, top + panelH / 2 - 1, 'T', 10, '#173039').setOrigin(0.5).setFontStyle('bold').setDepth(93);
-    arenaText(this, teamTextX, top + 8, 'TEAM', 8, ARENA_COLORS.muted).setFontStyle('bold').setDepth(92);
+    this.add.circle(930, top + panelH / 2, 12, ARENA_COLORS.player, 1).setDepth(92);
+    arenaText(this, 930, top + panelH / 2 - 1, 'T', 9, '#152124').setOrigin(0.5).setFontStyle('bold').setDepth(93);
+    arenaText(this, 950, top + 7, 'TEAM', 7, ARENA_COLORS.muted).setFontStyle('bold').setDepth(92);
     arenaTitle(
       this,
-      teamTextX,
-      top + 22,
+      950,
+      top + 19,
       `${deployedFighters(this.run).length} / ${fieldLimitForFight(this.run.fightIndex)}`,
-      TOUCH_INPUT ? 16 : 18,
+      TOUCH_INPUT ? 14 : 15,
       ARENA_COLORS.text
     ).setDepth(92);
 
-    this.speedButton = arenaButton(this, TOUCH_INPUT ? 1066 : 1190, top + panelH / 2, TOUCH_INPUT ? 132 : 132, TOUCH_INPUT ? 36 : 38, 'SPEED 1x', () => {
+    this.speedButton = arenaButton(this, 1196, top + panelH / 2, 116, 32, 'SPEED 1x', () => {
       this.setSpeed(this.state.speed === 1 ? 2 : 1);
-    }, ARENA_COLORS.player);
+    }, ARENA_COLORS.line);
     this.speedButton.root.setDepth(92);
   }
 
@@ -228,28 +233,9 @@ export class ArenaScene extends Phaser.Scene {
         this.scene.restart({ run });
       }
     };
-    if (!TOUCH_INPUT) {
-      arenaPanel(this, 20, 92, 142, 70, ARENA_COLORS.enemy, 0.9).setDepth(80);
-      arenaText(this, 34, 106, 'OBJECTIVE', 9, ARENA_COLORS.muted).setFontStyle('bold').setLetterSpacing(1.2).setDepth(81);
-      arenaTitle(this, 34, 127, 'CLEAR ALL RIVALS', 13, ARENA_COLORS.text).setDepth(81);
-    }
-    const reset = arenaButton(
-      this,
-      TOUCH_INPUT ? 124 : 90,
-      TOUCH_INPUT ? ACTION_Y : 184,
-      TOUCH_INPUT ? 176 : 112,
-      TOUCH_INPUT ? 42 : 34,
-      TOUCH_INPUT ? 'RESET' : 'RESET LINE',
-      resetFormation,
-      ARENA_COLORS.player
-    );
-    reset.root.setDepth(82);
-    if (!TOUCH_INPUT) {
-      arenaText(this, BOARD_X, 570, 'SELECT OR DRAG A FIGHTER', 10, ARENA_COLORS.text)
-        .setFontStyle('bold')
-        .setLetterSpacing(1)
-        .setStroke('#10272d', 3)
-        .setDepth(82);
+    if (TOUCH_INPUT) {
+      const reset = arenaButton(this, 124, ACTION_Y, 176, 42, 'RESET', resetFormation, ARENA_COLORS.line);
+      reset.root.setDepth(82);
     }
   }
 
@@ -257,14 +243,14 @@ export class ArenaScene extends Phaser.Scene {
     this.add.image(ART_X + ART_W / 2, ART_Y + ART_H / 2, 'compact-arena-floor-p1')
       .setDisplaySize(ART_W, ART_H)
       .setDepth(-2);
-    this.add.rectangle(640, GAME_HEIGHT / 2, 1280, GAME_HEIGHT, 0x0b2b32, TOUCH_INPUT ? 0.12 : 0.1).setDepth(-1);
+    this.add.rectangle(640, GAME_HEIGHT / 2, 1280, GAME_HEIGHT, 0x11191c, TOUCH_INPUT ? 0.035 : 0.02).setDepth(-1);
 
     const zones = this.add.graphics().setDepth(7);
-    zones.fillStyle(ARENA_COLORS.enemy, 0.035)
+    zones.fillStyle(ARENA_COLORS.enemy, 0.018)
       .fillRoundedRect(BOARD_X, BOARD_Y, BOARD_W, PLAYER_FIRST_ROW * CELL_H, 24);
-    zones.fillStyle(ARENA_COLORS.player, 0.05)
+    zones.fillStyle(ARENA_COLORS.player, 0.026)
       .fillRoundedRect(BOARD_X, BOARD_Y + PLAYER_FIRST_ROW * CELL_H, BOARD_W, (ARENA_ROWS - PLAYER_FIRST_ROW) * CELL_H, 24);
-    zones.lineStyle(2, ARENA_COLORS.brassLight, 0.54)
+    zones.lineStyle(1.5, ARENA_COLORS.brassLight, 0.28)
       .lineBetween(BOARD_X + 18, BOARD_Y + PLAYER_FIRST_ROW * CELL_H, BOARD_X + BOARD_W - 18, BOARD_Y + PLAYER_FIRST_ROW * CELL_H);
 
     for (let row = PLAYER_FIRST_ROW; row < ARENA_ROWS; row++) {
@@ -277,8 +263,8 @@ export class ArenaScene extends Phaser.Scene {
           .setInteractive({ useHandCursor: true });
         hit.setData('cell', { col, row } satisfies ArenaCell);
         hit.on('pointerover', () => {
-          if (this.state.phase === 'planning') {
-            hit.setFillStyle(ARENA_COLORS.player, 0.18).setStrokeStyle(2, ARENA_COLORS.player, 0.9);
+          if (this.state.phase === 'planning' && this.selectedFighterId !== null) {
+            hit.setFillStyle(ARENA_COLORS.player, 0.09).setStrokeStyle(1.5, ARENA_COLORS.player, 0.48);
           }
         });
         hit.on('pointerout', () => this.paintPlacementCell(hit));
@@ -287,22 +273,12 @@ export class ArenaScene extends Phaser.Scene {
       }
     }
 
-    const enemyTag = this.add.rectangle(BOARD_X + 54, BOARD_Y + 18, 92, 25, 0x17343d, 0.86)
-      .setStrokeStyle(1, ARENA_COLORS.enemy, 0.62)
-      .setDepth(10);
-    const playerTag = this.add.rectangle(BOARD_X + 64, BOARD_Y + PLAYER_FIRST_ROW * CELL_H + 18, 112, 25, 0x17343d, 0.86)
-      .setStrokeStyle(1, ARENA_COLORS.player, 0.62)
-      .setDepth(10);
-    arenaText(this, enemyTag.x, enemyTag.y - 1, 'RIVAL SIDE', 9, '#ffc0ba').setOrigin(0.5).setFontStyle('bold').setLetterSpacing(1).setDepth(11);
-    arenaText(this, playerTag.x, playerTag.y - 1, 'FORMATION', 9, '#bceff4').setOrigin(0.5).setFontStyle('bold').setLetterSpacing(1).setDepth(11);
     this.refreshPlacementCells();
   }
 
   private paintPlacementCell(hit: Phaser.GameObjects.Rectangle): void {
-    const active = this.state.phase === 'planning' && this.selectedFighterId !== null;
-    hit.setFillStyle(ARENA_COLORS.player, active ? 0.055 : 0.008);
-    if (active) hit.setStrokeStyle(1, ARENA_COLORS.player, 0.22);
-    else hit.setStrokeStyle();
+    hit.setFillStyle(ARENA_COLORS.player, 0.001);
+    hit.setStrokeStyle();
   }
 
   private refreshPlacementCells(): void {
@@ -310,38 +286,23 @@ export class ArenaScene extends Phaser.Scene {
   }
 
   private drawRightPanel(): void {
-    const encounter = arenaEncounter(this.run.fightIndex);
-    if (!TOUCH_INPUT) {
-      arenaPanel(this, 830, 76, 430, 42, encounter.boss ? 0xe27664 : 0xf0c45d, 0.94);
-      arenaText(this, 846, 88, 'RIVAL PLAN', 9, ARENA_COLORS.muted).setFontStyle('bold').setLetterSpacing(1);
-      encounter.summary.forEach((entry, index) => {
-        const chipX = 930 + index * 106;
-        this.add.rectangle(chipX, 84, 98, 26, ARENA_COLORS.panelLight, 0.98)
-          .setOrigin(0)
-          .setStrokeStyle(1, entry.warning ? ARENA_COLORS.brassLight : ARENA_COLORS.line, 0.8);
-        arenaText(this, chipX + 49, 97, entry.label, 8, entry.warning ? ARENA_COLORS.gold : ARENA_COLORS.muted)
-          .setOrigin(0.5)
-          .setFontStyle('bold');
-      });
-    }
-
-    this.shopButton = arenaButton(this, TOUCH_INPUT ? 790 : 974, ACTION_Y, TOUCH_INPUT ? 154 : 174, TOUCH_INPUT ? 46 : 48, TOUCH_INPUT ? 'SHOP' : 'OPEN SHOP', () => {
+    this.shopButton = arenaButton(this, TOUCH_INPUT ? 790 : 1034, ACTION_Y, TOUCH_INPUT ? 154 : 158, TOUCH_INPUT ? 46 : 42, 'SHOP', () => {
       if (this.state.phase !== 'planning') return;
       this.sidebarMode = 'shop';
       this.drawerOpen = !this.drawerOpen || !this.detailPanel?.visible;
       this.refreshSidebar();
-    }, ARENA_COLORS.player);
+    }, ARENA_COLORS.line);
     this.shopButton.root.setDepth(40);
 
     const firstRecruitNeeded = this.run.fightIndex === 0
       && deployedFighters(this.run).length < fieldLimitForFight(this.run.fightIndex);
     this.startButton = arenaButton(
       this,
-      TOUCH_INPUT ? 1006 : 1167,
+      TOUCH_INPUT ? 1006 : 1181,
       ACTION_Y,
-      TOUCH_INPUT ? 218 : 194,
-      TOUCH_INPUT ? 50 : 48,
-      firstRecruitNeeded ? (TOUCH_INPUT ? 'RECRUIT FIGHTER' : 'RECRUIT 1 MORE') : (TOUCH_INPUT ? 'START FIGHT' : 'START BATTLE'),
+      TOUCH_INPUT ? 218 : 166,
+      TOUCH_INPUT ? 50 : 44,
+      firstRecruitNeeded ? (TOUCH_INPUT ? 'RECRUIT FIGHTER' : 'RECRUIT') : (TOUCH_INPUT ? 'START FIGHT' : 'START'),
       () => {
         if (firstRecruitNeeded) {
           this.sidebarMode = 'shop';
@@ -376,10 +337,10 @@ export class ArenaScene extends Phaser.Scene {
     const reserves = reserveFighters(this.run);
     const fieldCount = deployedFighters(this.run).length;
     const fieldCap = fieldLimitForFight(this.run.fightIndex);
-    const slotXs = TOUCH_INPUT ? [430, 510, 590] : [510, 610, 710];
+    const slotXs = TOUCH_INPUT ? [430, 510, 590] : [618, 674, 730];
     const dock = TOUCH_INPUT
       ? arenaPanel(this, 16, DOCK_Y, 1128, 92, ARENA_COLORS.player, 0.96)
-      : arenaPanel(this, 352, 598, 516, 110, ARENA_COLORS.player, 0.94);
+      : arenaPanel(this, 370, DOCK_Y, 490, 58, ARENA_COLORS.brass, 0.88);
     dock.setDepth(12);
     if (TOUCH_INPUT) {
       arenaTitle(this, 34, ROSTER_LABEL_Y, `FORMATION  ${fieldCount}/${fieldCap}`, 13, ARENA_COLORS.text).setDepth(14);
@@ -393,17 +354,23 @@ export class ArenaScene extends Phaser.Scene {
         .setLetterSpacing(1.2)
         .setDepth(14);
     } else {
-      arenaTitle(this, 610, ROSTER_LABEL_Y, `FORMATION ${fieldCount}/${fieldCap}`, 13, ARENA_COLORS.text).setOrigin(0.5).setDepth(14);
-      arenaText(this, 610, BENCH_LABEL_Y, `RESERVE  ${reserves.length}/${MAX_RESERVE_FIGHTERS}`, 9, ARENA_COLORS.muted)
-        .setOrigin(0.5)
+      arenaTitle(this, 390, ROSTER_LABEL_Y, `FORMATION  ${fieldCount}/${fieldCap}`, 11, ARENA_COLORS.text).setDepth(14);
+      arenaText(this, 390, BENCH_LABEL_Y, `RESERVE  ${reserves.length}/${MAX_RESERVE_FIGHTERS}`, 7, ARENA_COLORS.muted)
         .setFontStyle('bold')
-        .setLetterSpacing(1.2)
+        .setLetterSpacing(0.8)
         .setDepth(14);
+      const reset = arenaButton(this, 523, RESERVE_Y, 92, 28, 'RESET', () => {
+        if (this.state.phase !== 'planning') return;
+        const run = cloneArenaRun(this.run);
+        resetArenaFormation(run);
+        this.scene.restart({ run });
+      }, ARENA_COLORS.line);
+      reset.root.setDepth(15);
     }
     slotXs.forEach((x, index) => {
       const fighter = reserves[index];
       const selected = fighter?.id === this.selectedFighterId;
-      const radius = TOUCH_INPUT ? 29 : 30;
+      const radius = TOUCH_INPUT ? 29 : 19;
       this.add.circle(x, RESERVE_Y, radius + 3, 0x081b20, 0.72).setDepth(14);
       this.add.circle(x, RESERVE_Y, radius, selected ? ARENA_COLORS.goldFill : ARENA_COLORS.panelLight, fighter ? 0.96 : 0.7)
         .setStrokeStyle(selected ? 3 : 1.5, selected ? ARENA_COLORS.goldFill : ARENA_COLORS.line, selected ? 1 : 0.7)
@@ -412,16 +379,8 @@ export class ArenaScene extends Phaser.Scene {
         arenaText(this, x, RESERVE_Y - 1, '+', 18, ARENA_COLORS.muted).setOrigin(0.5).setDepth(15);
         return;
       }
-      const definition = arenaUnitById(fighter.definitionId);
-      const portrait = this.addUnitPortrait(fighter.definitionId, x, RESERVE_Y - 3, TOUCH_INPUT ? 62 : 64).setDepth(15);
+      const portrait = this.addUnitPortrait(fighter.definitionId, x, RESERVE_Y - 2, TOUCH_INPUT ? 62 : 42).setDepth(15);
       portrait.setInteractive({ useHandCursor: true }).on('pointerdown', () => this.selectFighter(fighter.id));
-      if (!TOUCH_INPUT) {
-        arenaText(this, x, RESERVE_Y + 30, definition.name.toUpperCase(), 8, ARENA_COLORS.text)
-          .setOrigin(0.5)
-          .setFontStyle('bold')
-          .setStroke('#10272d', 2)
-          .setDepth(16);
-      }
       if (fighter.tier === 1) {
         arenaText(this, x - 24, RESERVE_Y - 25, '★', 14, ARENA_COLORS.gold)
           .setFontStyle('bold')
@@ -435,7 +394,7 @@ export class ArenaScene extends Phaser.Scene {
     if (!this.detailPanel) return;
     this.detailPanel.removeAll(true);
     for (const view of this.views.values()) {
-      const coveredByDrawer = !TOUCH_INPUT && this.drawerOpen && view.root.x >= DRAWER_X - 46;
+      const coveredByDrawer = !TOUCH_INPUT && this.drawerOpen && view.root.x >= DRAWER_X - 140;
       view.root.setVisible(!view.deathStarted && !coveredByDrawer);
     }
     if (this.state.phase !== 'planning' || !this.drawerOpen) {
@@ -452,14 +411,22 @@ export class ArenaScene extends Phaser.Scene {
       });
       this.detailPanel.add(scrim);
     }
-    const blocker = this.add.rectangle(DRAWER_W / 2, DRAWER_H / 2, DRAWER_W, DRAWER_H, 0xffffff, 0.001).setInteractive();
-    const frame = arenaPanel(this, 0, 0, DRAWER_W, DRAWER_H, this.sidebarMode === 'shop' ? ARENA_COLORS.goldFill : ARENA_COLORS.player, 0.985);
-    const heading = arenaTitle(this, TOUCH_INPUT ? 24 : 22, TOUCH_INPUT ? 14 : 18, this.sidebarMode === 'shop' ? 'RECRUIT YOUR NEXT FIGHTER' : 'FIGHTER DETAILS', TOUCH_INPUT ? 16 : 18, ARENA_COLORS.text);
+    const panelHeight = TOUCH_INPUT ? DRAWER_H : this.sidebarMode === 'shop' ? 330 : 350;
+    const blocker = this.add.rectangle(DRAWER_W / 2, panelHeight / 2, DRAWER_W, panelHeight, 0xffffff, 0.001).setInteractive();
+    const frame = arenaPanel(this, 0, 0, DRAWER_W, panelHeight, this.sidebarMode === 'shop' ? ARENA_COLORS.brass : ARENA_COLORS.line, 0.94);
+    const heading = arenaTitle(
+      this,
+      TOUCH_INPUT ? 24 : 22,
+      TOUCH_INPUT ? 14 : 17,
+      this.sidebarMode === 'shop' ? (TOUCH_INPUT ? 'RECRUIT YOUR NEXT FIGHTER' : 'RECRUIT') : (TOUCH_INPUT ? 'FIGHTER DETAILS' : 'FIGHTER'),
+      TOUCH_INPUT ? 16 : 13,
+      TOUCH_INPUT ? ARENA_COLORS.text : ARENA_COLORS.muted
+    ).setLetterSpacing(TOUCH_INPUT ? 0 : 1.2);
     const close = arenaButton(this, DRAWER_W - (TOUCH_INPUT ? 54 : 34), TOUCH_INPUT ? 28 : 27, TOUCH_INPUT ? 82 : 46, 34, TOUCH_INPUT ? 'CLOSE' : 'X', () => {
       this.drawerOpen = false;
       this.refreshSidebar();
     }, ARENA_COLORS.enemy);
-    const body = this.add.container(TOUCH_INPUT ? 24 : 34, TOUCH_INPUT ? 52 : 64);
+    const body = this.add.container(TOUCH_INPUT ? 24 : 20, TOUCH_INPUT ? 52 : 54);
     this.detailPanel.add([blocker, frame, heading, close.root, body]);
     this.sidebarContent = body;
     if (this.sidebarMode === 'shop') this.renderShopSidebar();
@@ -486,17 +453,17 @@ export class ArenaScene extends Phaser.Scene {
     ).setFontStyle('bold').setLetterSpacing(1));
     this.run.shopOffers.forEach((offer, index) => {
       const definition = arenaUnitById(offer.definitionId);
-      const x = index * 110;
-      const frame = arenaPanel(this, x, 23, 104, 184, definition.role === 'support' ? 0x55a879 : definition.role === 'aoe' ? 0xe28a52 : 0x4b9bc1, 0.98);
-      const portrait = this.addUnitPortrait(offer.definitionId, x + 52, 68, 76);
-      const title = arenaText(this, x + 52, 108, definition.name.toUpperCase(), 10, ARENA_COLORS.text)
+      const x = index * 94;
+      const frame = arenaPanel(this, x, 23, 88, 174, definition.role === 'support' ? 0x55a879 : definition.role === 'aoe' ? 0xe28a52 : 0x4b9bc1, 0.82);
+      const portrait = this.addUnitPortrait(offer.definitionId, x + 44, 64, 68);
+      const title = arenaText(this, x + 44, 101, definition.name.toUpperCase(), 9, ARENA_COLORS.text)
         .setOrigin(0.5, 0)
         .setAlign('center')
-        .setWordWrapWidth(94)
+        .setWordWrapWidth(82)
         .setFontStyle('bold');
-      const meta = arenaText(this, x + 52, 137, definition.role.toUpperCase(), 8, '#54717d').setOrigin(0.5).setFontStyle('bold');
-      const cost = arenaTitle(this, x + 52, 147, `${offer.cost} GOLD`, 12, ARENA_COLORS.gold).setOrigin(0.5, 0);
-      const buy = arenaButton(this, x + 52, 187, 84, 28, 'RECRUIT', () => {
+      const meta = arenaText(this, x + 44, 131, definition.role.toUpperCase(), 7, ARENA_COLORS.muted).setOrigin(0.5).setFontStyle('bold');
+      const cost = arenaTitle(this, x + 44, 141, `${offer.cost} GOLD`, 11, ARENA_COLORS.gold).setOrigin(0.5, 0);
+      const buy = arenaButton(this, x + 44, 181, 74, 28, 'RECRUIT', () => {
         const run = cloneArenaRun(this.run);
         if (buyArenaOffer(run, offer.id)) this.scene.restart({ run });
       }, 0x7bd9a7);
@@ -506,7 +473,7 @@ export class ArenaScene extends Phaser.Scene {
     if (this.run.shopOffers.length === 0) {
       nodes.push(arenaTitle(this, 168, 92, 'THE MARKET IS EMPTY', 15, ARENA_COLORS.muted).setOrigin(0.5));
     }
-    const reroll = arenaButton(this, 168, 231, 330, 34, `REROLL  •  ${REROLL_COST} GOLD`, () => {
+    const reroll = arenaButton(this, 141, 221, 280, 32, `REROLL  ·  ${REROLL_COST} GOLD`, () => {
       const run = cloneArenaRun(this.run);
       if (rerollArenaShop(run)) this.scene.restart({ run });
     }, 0x4b9bc1);
@@ -516,11 +483,11 @@ export class ArenaScene extends Phaser.Scene {
     nodes.push(arenaText(
       this,
       0,
-      254,
+      243,
       arenaEncounter(this.run.fightIndex).boss
         ? 'Final fight: shape the strongest five-fighter team.'
         : `${this.run.rerollsLeft > 0 ? 'One reroll remains.' : 'Reroll used.'} Win to unlock team cap ${nextCap}.`,
-      10,
+      9,
       ARENA_COLORS.muted
     ));
     this.sidebarContent.add(nodes);
@@ -593,48 +560,48 @@ export class ArenaScene extends Phaser.Scene {
     const unit = this.state.units.find((candidate) => candidate.rosterId === fighter.id);
     const hp = unit?.maxHp ?? definition.hp * (fighter.tier === 1 ? upgrade?.hpMultiplier ?? 1 : 1);
     const damage = unit?.combat.damage ?? definition.damage * (fighter.tier === 1 ? upgrade?.damageMultiplier ?? 1 : 1);
-    const portraitFrame = arenaPanel(this, 0, 20, 98, 98, fighter.tier === 1 ? ARENA_COLORS.brassLight : 0x4b9bc1, 0.98);
-    const portrait = this.addUnitPortrait(fighter.definitionId, 49, 69, 88);
+    const portraitFrame = arenaPanel(this, 0, 8, 70, 70, fighter.tier === 1 ? ARENA_COLORS.brassLight : ARENA_COLORS.line, 0.78);
+    const portrait = this.addUnitPortrait(fighter.definitionId, 35, 43, 62);
     const nodes: Phaser.GameObjects.GameObject[] = [portraitFrame, portrait];
-    nodes.push(arenaTitle(this, 112, 22, definition.name.toUpperCase(), 18, ARENA_COLORS.text).setWordWrapWidth(210));
-    nodes.push(arenaText(this, 112, 49, `${definition.role.toUpperCase()}  •  ${fighter.tier === 1 ? 'TIER II' : 'TIER I'}`, 10, fighter.tier === 1 ? ARENA_COLORS.gold : '#267ca4').setFontStyle('bold'));
-    nodes.push(arenaText(this, 112, 73, definition.blurb, 11, ARENA_COLORS.muted).setFontStyle('italic').setWordWrapWidth(214));
+    nodes.push(arenaTitle(this, 82, 9, definition.name, 16, ARENA_COLORS.text).setWordWrapWidth(196));
+    nodes.push(arenaText(this, 82, 34, `${definition.role.toUpperCase()}  ·  ${fighter.tier === 1 ? 'TIER II' : 'TIER I'}`, 8, fighter.tier === 1 ? ARENA_COLORS.gold : '#80c9cc').setFontStyle('bold'));
+    nodes.push(arenaText(this, 82, 54, definition.blurb, 9, ARENA_COLORS.muted).setFontStyle('italic').setWordWrapWidth(196));
     [
       { label: 'HP', value: Math.round(hp) },
       { label: 'DMG', value: Math.round(damage) },
       { label: 'RANGE', value: definition.range.toFixed(1) }
     ].forEach((stat, index) => {
-      const x = index * 112;
-      const box = this.add.rectangle(x, 130, 104, 34, ARENA_COLORS.panelLight, 0.96).setOrigin(0).setStrokeStyle(1, ARENA_COLORS.line, 0.7);
+      const x = index * 94;
+      const box = this.add.rectangle(x, 90, 88, 38, ARENA_COLORS.panelLight, 0.72).setOrigin(0).setStrokeStyle(1, ARENA_COLORS.line, 0.32);
       nodes.push(box);
-      nodes.push(arenaText(this, x + 8, 137, stat.label, 8, ARENA_COLORS.muted).setFontStyle('bold'));
-      nodes.push(arenaTitle(this, x + 96, 134, `${stat.value}`, 13, ARENA_COLORS.text).setOrigin(1, 0));
+      nodes.push(arenaText(this, x + 7, 97, stat.label, 7, ARENA_COLORS.muted).setFontStyle('bold'));
+      nodes.push(arenaTitle(this, x + 80, 101, `${stat.value}`, 12, ARENA_COLORS.text).setOrigin(1, 0));
     });
     if (upgrade) {
-      const box = this.add.rectangle(0, 174, 328, 66, ARENA_COLORS.panelLight, 0.98).setOrigin(0).setStrokeStyle(1, fighter.tier === 1 ? ARENA_COLORS.goldFill : ARENA_COLORS.brass, 0.85);
+      const box = this.add.rectangle(0, 140, 276, 62, ARENA_COLORS.panelLight, 0.7).setOrigin(0).setStrokeStyle(1, fighter.tier === 1 ? ARENA_COLORS.goldFill : ARENA_COLORS.brass, 0.52);
       nodes.push(box);
-      nodes.push(arenaTitle(this, 12, 182, fighter.tier === 1 ? `${upgrade.name} • OWNED` : upgrade.name, 13, fighter.tier === 1 ? ARENA_COLORS.gold : ARENA_COLORS.text));
-      nodes.push(arenaText(this, 12, 207, upgrade.blurb, 10, ARENA_COLORS.muted));
+      nodes.push(arenaTitle(this, 11, 149, fighter.tier === 1 ? `${upgrade.name} · OWNED` : upgrade.name, 11, fighter.tier === 1 ? ARENA_COLORS.gold : ARENA_COLORS.text));
+      nodes.push(arenaText(this, 11, 172, upgrade.blurb, 8, ARENA_COLORS.muted).setWordWrapWidth(254));
       if (fighter.tier === 0) {
-        const upgradeButton = arenaButton(this, 80, 263, 152, 34, `UPGRADE • ${upgrade.cost}`, () => {
+        const upgradeButton = arenaButton(this, 63, 225, 122, 32, `UPGRADE · ${upgrade.cost}`, () => {
           const run = cloneArenaRun(this.run);
           if (upgradeArenaFighter(run, fighter.id)) this.scene.restart({ run });
-        }, 0xe0a83c);
+        }, ARENA_COLORS.goldFill);
         upgradeButton.setEnabled(this.run.gold >= upgrade.cost);
         nodes.push(upgradeButton.root);
       }
     }
     if (fighter.cell) {
-      const bench = arenaButton(this, 248, 263, 152, 34, 'TO RESERVE', () => {
+      const bench = arenaButton(this, 211, 225, 136, 32, 'TO RESERVE', () => {
         const run = cloneArenaRun(this.run);
         if (benchArenaFighter(run, fighter.id)) this.scene.restart({ run });
-      }, 0x6e9dc2);
+      }, ARENA_COLORS.line);
       bench.setEnabled(reserveFighters(this.run).length < MAX_RESERVE_FIGHTERS && deployedFighters(this.run).length > 1);
       nodes.push(bench.root);
     } else {
-      nodes.push(arenaText(this, 168, 250, `SELECTED RESERVE\n${TOUCH_INPUT ? 'Tap' : 'Click'} an empty blue cell.`, 10, '#267ca4').setAlign('center'));
+      nodes.push(arenaText(this, 138, 216, 'RESERVE SELECTED · CHOOSE A POSITION', 8, '#80c9cc').setOrigin(0.5));
     }
-    nodes.push(arenaText(this, 0, 292, this.unitAdvice(definition.id), 10, ARENA_COLORS.muted).setWordWrapWidth(328));
+    nodes.push(arenaText(this, 0, 251, this.unitAdvice(definition.id), 8, ARENA_COLORS.muted).setWordWrapWidth(276));
     this.sidebarContent.add(nodes);
   }
 
@@ -720,7 +687,7 @@ export class ArenaScene extends Phaser.Scene {
     const sprite = this.add.sprite(0, TOUCH_INPUT ? -10 : -7, sheet.key, 0);
     const size = TOUCH_INPUT
       ? (tank ? 116 : definition.role === 'fast' ? 100 : 108)
-      : (tank ? 100 : definition.role === 'fast' ? 86 : 92);
+      : (tank ? 108 : definition.role === 'fast' ? 92 : 98);
     sprite.setDisplaySize(size, size);
     if (definition.assetKind === 'fighter') {
       sprite.setFrame(fighterSheetFrame(FIGHTER_SHEETS[definition.assetId], 'idle'));
@@ -728,12 +695,13 @@ export class ArenaScene extends Phaser.Scene {
     const hpBar = this.add.graphics();
     const nameY = TOUCH_INPUT ? 48 : 40;
     const nameWidth = Phaser.Math.Clamp(definition.name.length * (TOUCH_INPUT ? 7 : 6) + 22, 68, TOUCH_INPUT ? 126 : 112);
-    const namePlate = this.add.rectangle(0, nameY + 1, nameWidth, TOUCH_INPUT ? 20 : 18, 0x10272d, 0.88)
-      .setStrokeStyle(1, teamColor, 0.78);
-    const name = arenaText(this, 0, nameY, definition.name, TOUCH_INPUT ? 9 : 9, unit.team === 'player' ? '#c8f5f8' : '#ffd1cc')
+    const namePlate = this.add.graphics();
+    namePlate.fillStyle(ARENA_COLORS.panelDeep, 0.74)
+      .fillRoundedRect(-nameWidth / 2, nameY - (TOUCH_INPUT ? 9 : 8), nameWidth, TOUCH_INPUT ? 19 : 17, 8);
+    const name = arenaText(this, 0, nameY, definition.name, TOUCH_INPUT ? 9 : 8, unit.team === 'player' ? '#dcf4f2' : '#f6d5ce')
       .setOrigin(0.5)
       .setFontStyle('bold')
-      .setLetterSpacing(0.2);
+      .setLetterSpacing(0.15);
     const root = this.add.container(0, 0, [shadow, selection, ring, sprite, hpBar, namePlate, name]);
     root.setSize(CELL_W * 0.78, CELL_H * 1.05);
     const screen = this.logicalToScreen(unit.pos);
