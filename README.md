@@ -1,87 +1,118 @@
 # Lane Legion
 
-Offline, portrait-first lane-defense autobattler (HTML5 / Phaser 3 / TypeScript / Vite).
-No backend, no accounts, no network — fully playable against AI.
+[![Deploy to GitHub Pages](https://github.com/emfau88/LaneLegion/actions/workflows/deploy.yml/badge.svg)](https://github.com/emfau88/LaneLegion/actions/workflows/deploy.yml)
 
-## Play in the browser
+Lane Legion ist ein positiver Fantasy-Autobattler für den Browser. Das Projekt enthält zwei eigenständig spielbare Varianten: das ursprüngliche Lane-Defense-Spiel und die neue, kompaktere Arena-Version. Beide laufen vollständig clientseitig mit Phaser 3, TypeScript und Vite – ohne Konto oder Backend.
 
-- **[Play the original Lane Legion](https://emfau88.github.io/LaneLegion/)**
-- **[Play the isolated Compact Arena](https://emfau88.github.io/LaneLegion/arena.html)**
+## Direkt im Browser spielen
 
-Both versions are deployed together on GitHub Pages but use separate entry points
-and runtime state. No external editor or preview service is required. On phones,
-Compact Arena starts with a landscape/fullscreen handoff; tap a fighter and then
-an empty blue tile to place it.
+| Version | Spielidee | Mobile | GitHub Pages |
+| --- | --- | --- | --- |
+| **Version 1 – Lane Legion Original** | Klassisches Lane-Defense-Spiel mit 15 Wellen, vier Fraktionen, 1v1/2v2, Einheitenbau, Söldnern und King-Upgrades | Hochformat, Touch und Vollbild | **[Original spielen](https://emfau88.github.io/LaneLegion/)** |
+| **Version 2 – Compact Arena (neu)** | Kurze Kampagne aus vier Formationskämpfen; Team rekrutieren, Aufstellung anpassen und den Boss besiegen | Querformat, Touch, Drehhinweis und Vollbild | **[Compact Arena spielen](https://emfau88.github.io/LaneLegion/arena.html)** |
 
-## Compact Arena — playable isolated pivot
+Compact Arena ist damit ausdrücklich die **zweite, neue Version**. Sie liegt bewusst neben dem Original, besitzt einen eigenen Einstiegspunkt (`arena.html`), einen eigenen Spielzustand und ein eigenes Kampfsystem. Das Original bleibt unverändert über `index.html` erreichbar.
 
-Compact Arena is an isolated four-fight autobattler prototype built alongside the
-original lane-defense game. It focuses the experience on one readable loop:
+## Spielbeschreibung
 
-1. Inspect the next enemy formation.
-2. Start with one Shield Guard, recruit a partner, and grow the field cap from two to five fighters across the run.
-3. Start the battle and watch the deterministic simulation resolve automatically.
-4. Earn gold, adapt the formation, and defeat the fourth-fight boss.
+### Version 1 – Lane Legion Original
 
-The pivot has its own entry point (`arena.html`), state, combat model, shop, roster,
-four encounters, a progressive 2/3/4/5 team-building curve, and headless smoke simulation under `src/arena/`. The legacy game
-remains available through `index.html`; the two modes do not share runtime state.
+Im Original verteidigst du deine Lane mit einer stetig wachsenden Armee. Du wählst eine von vier Fantasy-Fraktionen, stellst Einheiten auf, schickst Söldner zur gegnerischen Seite und verbesserst deinen King. Die 15 Wellen werden automatisch ausgespielt; deine Entscheidungen bei Wirtschaft, Kontern und Positionierung bestimmen den Ausgang.
 
-### Test Compact Arena locally
+### Version 2 – Compact Arena
+
+Compact Arena konzentriert sich auf einen schnellen, gut lesbaren Ablauf:
+
+1. Gegnerische Formation ansehen.
+2. Einen Kämpfer rekrutieren und das Team von zwei auf fünf Einheiten ausbauen.
+3. Tanks, Fernkämpfer, Magier und Supporter sinnvoll aufstellen.
+4. Den automatischen Kampf starten, Gold verdienen und die Formation anpassen.
+5. Im vierten Kampf den Gloom Throne bezwingen.
+
+## Alle vier Compact-Arena-Level in Aktion
+
+Die neue Version besitzt genau vier klar getrennte Begegnungen. Die Bilder zeigen jeweils einen laufenden Kampf.
+
+### 1. First Contact
+
+Der Einstieg erklärt Frontlinie und Fernkampf mit einer kleinen 2-gegen-2-Formation.
+
+![First Contact – laufender Kampf](docs/screenshots/compact-arena-fight-1-first-contact.png)
+
+### 2. Broken Wedge
+
+Ein Bulwark Brute und ein Gloom Splitter zwingen das auf drei Kämpfer gewachsene Team zu einer stabileren Formation.
+
+![Broken Wedge – laufender Kampf](docs/screenshots/compact-arena-fight-2-broken-wedge.png)
+
+### 3. Red Tide
+
+Vier Gegner greifen aus mehreren Richtungen an; Flächenschaden und Schutz der hinteren Reihe werden wichtig.
+
+![Red Tide – laufender Kampf](docs/screenshots/compact-arena-fight-3-red-tide.png)
+
+### 4. Gloom Throne
+
+Der finale Bosskampf nutzt das vollständige Fünferteam gegen den Gloom Tyrant und seine Eskorte.
+
+![Gloom Throne – laufender Bosskampf](docs/screenshots/compact-arena-fight-4-gloom-throne.png)
+
+## Mobile spielen
+
+- **Original:** Das Spiel skaliert auf die komplette Hochformat-Fläche und verwendet große Touch-Ziele. Beim ersten Antippen wird – sofern der Browser es erlaubt – Vollbild angefordert.
+- **Compact Arena:** Für die breitere Formation ist Querformat vorgesehen. Im Hochformat erscheint eine eigene Drehansicht; im Querformat füllt die Arena den verfügbaren Bildschirm ohne Scrollen.
+- **iPhone/iPad:** Safari erlaubt eine erzwungene Bildschirmdrehung nicht immer. In diesem Fall das Gerät manuell drehen; das Spiel bleibt trotzdem bedienbar.
+- **Android:** Aktuelle Chrome-basierte Browser unterstützen den Querformat-/Vollbild-Übergang in der Regel direkt.
+- Beide Varianten benötigen keine Maus oder Tastatur. Ein Service Worker hält die Einstiegspunkte und bei weiteren Aufrufen geladene Spielressourcen im Browser-Cache.
+
+## GitHub Pages und Deployment
+
+Beide Versionen werden gemeinsam als statische Website veröffentlicht. Der Workflow [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) baut bei jedem Push auf `main` das Verzeichnis `dist/` und veröffentlicht es über GitHub Pages. Vites relative Basis (`base: './'`) sorgt dafür, dass Skripte, Grafiken und Sounds auch unter dem Repository-Pfad `/LaneLegion/` geladen werden.
+
+## Lokal starten
 
 ```bash
 npm install
 npm run dev
-# Open the printed URL with /arena.html, usually:
-# http://localhost:5173/arena.html
-
-npm run arena:sim  # deterministic formation and four-fight campaign smoke test
 ```
 
-Visual direction and implementation status are documented in
-[`docs/design/compact-arena-p0.md`](docs/design/compact-arena-p0.md) and
-[`docs/compact-arena-roadmap.md`](docs/compact-arena-roadmap.md).
+Danach die vom Terminal ausgegebene Adresse öffnen:
 
-## Run locally
+- `/` für das Original
+- `/arena.html` für Compact Arena
+
+Für einen Test auf einem Smartphone im selben WLAN den Dev-Server über die lokale Netzwerkadresse aufrufen.
+
+## Build und Tests
 
 ```bash
-npm install
-npm run dev      # dev server, open the printed URL (works on phone via LAN too)
-npm run build    # static web build in dist/
-npm run preview  # serve the production build
+npm run build       # statischer Produktions-Build in dist/
+npm run preview     # Produktions-Build lokal ansehen
+npm run arena:sim   # deterministischer Test aller vier Arena-Kämpfe
+npx -y tsx simcheck.ts  # Headless-Test des ursprünglichen Spiels
 ```
 
-## Headless simulation test
+## Projektstruktur
 
-The whole simulation runs without Phaser and can be smoke-tested headlessly
-(plays full 1v1/2v2 matches on all difficulties and asserts AI behavior):
+- `src/model/` – reine Datenmodelle des Originalspiels
+- `src/data/` – Fraktionen, Kämpfer, 15 Wellen, Söldner, Schadensmatrix und Balancing
+- `src/systems/` – Simulation für Phasen, Bewegung, Kampf, Wirtschaft und KI
+- `src/scenes/` – Phaser-Szenen des Originalspiels
+- `src/ui/` – wiederverwendbare UI-Komponenten
+- `src/arena/` – eigenständige Logik, Daten, Szenen und Simulation von Compact Arena
+- `docs/design/compact-arena-p0.md` – visuelle und spielerische Zielsetzung der Arena
+- `docs/compact-arena-roadmap.md` – Ausbauplan der neuen Version
 
-```bash
-npx -y tsx simcheck.ts
-```
+## Balancing anpassen
 
-## Architecture
-
-- `src/model/` — pure data types (GameState, CombatUnit, definitions). No logic.
-- `src/data/` — ALL gameplay values: factions, fighters, waves, mercenaries,
-  damage matrix, king upgrades, AI profiles, global config. Tune here.
-- `src/systems/` — simulation systems mutating GameState (Phase, Wave, Targeting,
-  Movement, Combat, King, Placement, Economy, Send, AI). No Phaser imports.
-- `src/core/` — `Simulation` (fixed 20 Hz deterministic tick + human action facade),
-  game factory, utilities, seeded RNG.
-- `src/scenes/` — Phaser scenes (Boot, MainMenu, FactionSelect, Game, Result).
-  Rendering reads GameState and drains visual events; it never contains game rules.
-- `src/ui/` — reusable UI components (TopBar, BottomShop, cards, panels).
-
-## Where to tune things
-
-| What | File |
+| Bereich | Datei |
 | --- | --- |
-| Start gold/workers, king stats, leak rules, grid | `src/data/gameConfig.ts` |
-| Factions & passives | `src/data/factions.ts` |
-| Fighters (stats, costs, upgrades, auras) | `src/data/fighters.ts` |
-| Waves 1–10 (add more for longer matches) | `src/data/waves.ts` |
-| Mercenaries (cost, income, stats) | `src/data/mercenaries.ts` |
-| Attack-vs-armor multipliers | `src/data/damageMatrix.ts` |
-| King upgrade costs/effects | `src/data/kingUpgrades.ts` |
-| AI difficulty behavior | `src/data/aiProfiles.ts` |
+| Startgold, King-Werte, Grid und globale Regeln | `src/data/gameConfig.ts` |
+| Fraktionen und passive Effekte | `src/data/factions.ts` |
+| Kämpfer, Kosten, Upgrades und Auren | `src/data/fighters.ts` |
+| Wellen 1–15 | `src/data/waves.ts` |
+| Söldner | `src/data/mercenaries.ts` |
+| Angriffs-/Rüstungsschaden | `src/data/damageMatrix.ts` |
+| King-Upgrades | `src/data/kingUpgrades.ts` |
+| KI-Schwierigkeitsgrade | `src/data/aiProfiles.ts` |
+| Arena-Begegnungen | `src/arena/data/arenaEncounters.ts` |

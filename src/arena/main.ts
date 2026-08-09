@@ -12,6 +12,13 @@ const gameHeight = Math.max(
 );
 const renderScale = 2;
 
+const registerServiceWorker = (): void => {
+  if (!('serviceWorker' in navigator) || !import.meta.env.PROD) return;
+  window.addEventListener('load', () => {
+    void navigator.serviceWorker.register('./sw.js').catch(() => undefined);
+  });
+};
+
 const game = new Phaser.Game({
   type: Phaser.AUTO,
   parent: 'arena-game',
@@ -44,3 +51,5 @@ requestAnimationFrame(() => {
   refreshScale();
   window.setTimeout(refreshScale, 120);
 });
+
+registerServiceWorker();
